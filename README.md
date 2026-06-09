@@ -81,3 +81,6 @@ python3 setup.py   # 플레이스홀더 자동 치환 + Hooks 설치
 # → .hermes.md Omission Constraints 작성
 # → Hermes에서 "NEO, 시작해줘"
 ```
+
+## Version History
+- **V2.02** — 소스 디렉토리 표준화 (src/be/, src/fe/)
