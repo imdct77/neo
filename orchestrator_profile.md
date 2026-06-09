@@ -330,7 +330,8 @@ docs/meta/src/
 
 | 트리거 | 동작 |
 |--------|------|
-| `src/{be\|fe}/{dir}/` 생성 + 첫 코드 파일 | INDEX.md 생성 (템플릿 복사) + 부모 INDEX.md에 행 추가 |
+| 프로젝트 초기화 (setup.py) | `docs/meta/src/INDEX.md` + `src/be/INDEX.md` + `src/fe/INDEX.md` 생성 (템플릿 복사) |
+| `src/{be\|fe}/{dir}/` 생성 + 첫 코드 파일 | INDEX.md 생성 (템플릿 복사) + 부모 INDEX.md에 하위 디렉토리 행 추가 |
 | 공용 함수·컴포넌트 발생 or 설계 의도 설명 필요 | DETAIL.md 생성 |
 | 파일이 복잡해져 수정·재사용 판단에 상세 정보 필요 | DETAIL.{filename}.md 생성 |
 | Task Brief 완료 | task_brief_templ.md의 "meta 갱신 항목" 기반 L1·L2·L3 갱신 |
@@ -339,7 +340,7 @@ docs/meta/src/
 #### 4-5-3. setup.py 연동
 
 프로젝트 최초 설치 시:
-- `docs/meta/src/be/INDEX.md`, `docs/meta/src/fe/INDEX.md` 생성 (템플릿 복사)
+- `docs/meta/src/INDEX.md` (BE/FE 통합 진입점), `docs/meta/src/be/INDEX.md`, `docs/meta/src/fe/INDEX.md` 생성 (템플릿 복사)
 - `.template` 파일들은 `docs/meta/src/`에 보관. 하위 디렉토리 meta는 코드 구현 시점에 생성.
 
 #### 4-5-4. BE/FE 프로필 §2-0 연동
