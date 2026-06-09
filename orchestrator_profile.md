@@ -330,7 +330,7 @@ docs/meta/src/
 
 | 트리거 | 동작 |
 |--------|------|
-| 프로젝트 초기화 (setup.py) | `docs/meta/src/INDEX.md` + `src/be/INDEX.md` + `src/fe/INDEX.md` 생성 (템플릿 복사) |
+| 프로젝트 초기화 (setup.py) | `docs/meta/src/INDEX.md` + `docs/meta/src/be/INDEX.md` + `docs/meta/src/fe/INDEX.md` 생성 (템플릿 복사) |
 | `src/{be\|fe}/{dir}/` 생성 + 첫 코드 파일 | INDEX.md 생성 (템플릿 복사) + 부모 INDEX.md에 하위 디렉토리 행 추가 |
 | 공용 함수·컴포넌트 발생 or 설계 의도 설명 필요 | DETAIL.md 생성 |
 | 파일이 복잡해져 수정·재사용 판단에 상세 정보 필요 | DETAIL.{filename}.md 생성 |
@@ -374,6 +374,18 @@ LLM이 구현보다 탐색에 더 많은 토큰을 쓰는 비효율을 해소한
   design/              ← 아키텍처·DB·API·화면 설계
     architecture.md·database.md·api/·screens/
   skills/              ← Neo V1 참조 문서 (스킬 파일)
+  meta/                ← 코드 메타 인덱스 (의미 기반 코드 탐색, grep 대체)
+    README.md          ← meta 체계 설명
+    src/
+      INDEX.md         ← L1: BE/FE 통합 진입점 (하위 디렉토리 목록)
+      be/
+        INDEX.md       ← L1: BE 디렉토리별 파일 목차
+        DETAIL.md      ← L2: 디렉토리 개요 + 설계 의도
+        DETAIL.{file}.md ← L3: 파일별 함수 시그니처·용도
+      fe/
+        INDEX.md       ← L1: FE 디렉토리별 파일 목차
+        DETAIL.md      ← L2: 디렉토리 개요 + 설계 의도
+        DETAIL.{file}.md ← L3: 컴포넌트 트리거·상태·의존성
   tasks_templ.md
   tests_templ.md
   task_brief_templ.md
@@ -445,6 +457,13 @@ tasks        : {DOMAIN}_{ROLE}_tasks.md
 tests        : {DOMAIN}_tests.md
 briefs       : {도메인 영문 전체}.{역할}.{순번:3자리}.md
                예) AUTH.BE.001.md, USER.FE.003.md
+
+meta (L1)    : docs/meta/src/INDEX.md                ← BE/FE 통합 진입점
+               docs/meta/src/{be|fe}/INDEX.md         ← scope 단위 파일 목차
+               docs/meta/src/{be|fe}/{subdir}/INDEX.md ← 하위 디렉토리 파일 목차
+meta (L2)    : docs/meta/src/{be|fe}/DETAIL.md        ← scope 단위 설계 의도
+               docs/meta/src/{be|fe}/{subdir}/DETAIL.md ← 하위 디렉토리 설계 의도
+meta (L3)    : docs/meta/src/{be|fe}/{subdir}/DETAIL.{filename}.md ← 파일 단위 상세
 ```
 
 ### 5-3. ID 체계
