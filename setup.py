@@ -1,0 +1,339 @@
+#!/usr/bin/env python3
+"""
+Neo V1 — 설치 자동화 스크립트
+실행: python3 setup.py
+
+새 프로젝트에 Neo V1을 설치하고 {플레이스홀더}를 자동으로 채운다.
+실행 후 "NEO, 시작해줘"로 바로 시작할 수 있다.
+"""
+
+import os
+import shutil
+import sys
+from pathlib import Path
+
+# ============================================================
+# 설정
+# ============================================================
+NEO_ROOT = Path(__file__).parent          # 이 스크립트가 있는 디렉토리
+HOME = Path.home()
+HERMES_DIR = HOME / ".hermes"
+
+PLACEHOLDER_FILES = [
+    "SOUL.md",
+    "AGENTS.md",
+    ".hermes.md",
+    "orchestrator_profile.md",
+]
+
+STACK_OPTIONS = {
+    "backend": [
+        ("1", "Python + FastAPI"),
+        ("2", "Python + Django"),
+        ("3", "Node.js + Express"),
+        ("4", "Node.js + NestJS"),
+        ("5", "Go + Gin"),
+        ("6", "직접 입력"),
+    ],
+    "frontend": [
+        ("1", "Next.js + TypeScript"),
+        ("2", "React + TypeScript (Vite)"),
+        ("3", "Vue.js + TypeScript"),
+        ("4", "SvelteKit"),
+        ("5", "없음 (API 서버만)"),
+        ("6", "직접 입력"),
+    ],
+    "database": [
+        ("1", "PostgreSQL"),
+        ("2", "MySQL"),
+        ("3", "SQLite (개발용)"),
+        ("4", "MongoDB"),
+        ("5", "직접 입력"),
+    ],
+}
+
+# ============================================================
+# 유틸
+# ============================================================
+
+BOLD  = "\033[1m"
+GREEN = "\033[92m"
+CYAN  = "\033[96m"
+YELLOW= "\033[93m"
+RED   = "\033[91m"
+RESET = "\033[0m"
+
+def p(msg, color=""):
+    print(f"{color}{msg}{RESET}")
+
+def ask(prompt, default=""):
+    suffix = f" [{default}]" if default else ""
+    try:
+        val = input(f"{CYAN}{prompt}{suffix}: {RESET}").strip()
+    except (KeyboardInterrupt, EOFError):
+        print()
+        sys.exit(0)
+    return val or default
+
+def choose(label, options):
+    p(f"\n{label}", BOLD)
+    for key, name in options:
+        print(f"  {key}. {name}")
+    while True:
+        choice = ask("선택")
+        for key, name in options:
+            if choice == key:
+                if key == "6" or key == str(len(options)):
+                    return ask("직접 입력")
+                return name
+        p("올바른 번호를 입력해주세요.", RED)
+
+def replace_in_file(file_path: Path, replacements: dict):
+    if not file_path.exists():
+        return
+    content = file_path.read_text(encoding="utf-8")
+    for old, new in replacements.items():
+        content = content.replace(old, new)
+    file_path.write_text(content, encoding="utf-8")
+
+# ============================================================
+# 메인 흐름
+# ============================================================
+
+def main():
+    p("\n" + "=" * 55, BOLD)
+    p("  Neo V1 — 새 프로젝트 설치 스크립트", BOLD)
+    p("=" * 55, BOLD)
+    p("\nNeo V1을 이 프로젝트에 설치합니다.")
+    p("완료 후 'NEO, 시작해줘'로 바로 시작할 수 있습니다.\n")
+
+    # --------------------------------------------------------
+    # Step 1. 프로젝트 정보 수집
+    # --------------------------------------------------------
+    p("── Step 1. 프로젝트 정보 ──", BOLD)
+
+    project_name = ask("서비스명 (예: MyApp)")
+    if not project_name:
+        p("서비스명은 필수입니다.", RED)
+        sys.exit(1)
+
+    project_desc = ask("한 줄 포지셔닝 (예: 요리 레시피 공유 플랫폼)")
+    target_user  = ask("타겟 사용자 (예: 요리를 즐기는 20-40대)")
+    mvp_goal     = ask("MVP 목표 (예: 2026년 9월 베타 출시)")
+
+    # --------------------------------------------------------
+    # Step 2. 기술 스택 선택
+    # --------------------------------------------------------
+    p("\n── Step 2. 기술 스택 ──", BOLD)
+
+    backend  = choose("백엔드 스택", STACK_OPTIONS["backend"])
+    frontend = choose("프론트엔드 스택", STACK_OPTIONS["frontend"])
+    database = choose("데이터베이스", STACK_OPTIONS["database"])
+
+    # --------------------------------------------------------
+    # Step 3. 설치 경로 확인
+    # --------------------------------------------------------
+    p("\n── Step 3. 설치 경로 ──", BOLD)
+
+    cwd = Path.cwd()
+    p(f"프로젝트 루트: {cwd}")
+    p(f"Hermes 전역:   {HERMES_DIR}")
+
+    confirm = ask("\n이 경로에 설치할까요? (y/n)", "y")
+    if confirm.lower() != "y":
+        p("설치를 취소했습니다.", YELLOW)
+        sys.exit(0)
+
+    # --------------------------------------------------------
+    # Step 4. 파일 복사 (프로젝트 루트)
+    # --------------------------------------------------------
+    p("\n── Step 4. 파일 설치 중... ──", BOLD)
+
+    # SOUL.md → ~/.hermes/SOUL.md (전역)
+    HERMES_DIR.mkdir(parents=True, exist_ok=True)
+    soul_src = NEO_ROOT / "SOUL.md"
+    soul_dst = HERMES_DIR / "SOUL.md"
+    if soul_dst.exists():
+        overwrite = ask("~/.hermes/SOUL.md가 이미 존재합니다. 덮어쓸까요? (y/n)", "n")
+        if overwrite.lower() == "y":
+            shutil.copy2(soul_src, soul_dst)
+            p("  ✓ SOUL.md 갱신", GREEN)
+        else:
+            p("  ⚠ SOUL.md 건너뜀 (기존 유지)", YELLOW)
+    else:
+        shutil.copy2(soul_src, soul_dst)
+        p("  ✓ SOUL.md → ~/.hermes/SOUL.md", GREEN)
+
+    # 프로젝트 루트 파일 복사
+    root_files = [".hermes.md", "AGENTS.md"]
+    for fname in root_files:
+        src = NEO_ROOT / fname
+        dst = cwd / fname
+        if src.exists():
+            shutil.copy2(src, dst)
+            p(f"  ✓ {fname}", GREEN)
+
+    # docs/ 디렉토리 복사
+    docs_dst = cwd / "docs"
+    docs_dst.mkdir(exist_ok=True)
+
+    # src/ 소스 디렉토리 생성 (orchestrator_profile.md §5-1 기준)
+    for subdir in ["src/be", "src/fe"]:
+        (cwd / subdir).mkdir(parents=True, exist_ok=True)
+    p("  ✓ src/be/, src/fe/ (하위 구조는 프로젝트 자유)", GREEN)
+
+    doc_files = [
+        "orchestrator_profile.md",
+        "architect_profile.md",
+        "backend_profile.md",
+        "frontend_profile.md",
+        "workflow.md",
+        "task_brief_templ.md",
+        "tasks_templ.md",
+        "tests_templ.md",
+    ]
+    for fname in doc_files:
+        src = NEO_ROOT / fname
+        dst = docs_dst / fname
+        if src.exists():
+            shutil.copy2(src, dst)
+            p(f"  ✓ docs/{fname}", GREEN)
+
+    # skills/ 복사
+    skills_src = NEO_ROOT / "skills"
+    skills_dst = docs_dst / "skills"
+    if skills_src.exists():
+        if skills_dst.exists():
+            shutil.rmtree(skills_dst)
+        shutil.copytree(skills_src, skills_dst)
+        skill_count = len(list(skills_dst.glob("*.md")))
+        p(f"  ✓ docs/skills/ ({skill_count}개 스킬)", GREEN)
+
+    # --------------------------------------------------------
+    # Step 5. 플레이스홀더 치환
+    # --------------------------------------------------------
+    p("\n── Step 5. 플레이스홀더 치환 중... ──", BOLD)
+
+    replacements = {
+        "{PROJECT_NAME}": project_name,
+    }
+
+    # SOUL.md (전역)
+    replace_in_file(soul_dst, replacements)
+    p(f"  ✓ SOUL.md — PROJECT_NAME → {project_name}", GREEN)
+
+    # .hermes.md (프로젝트 루트)
+    replace_in_file(cwd / ".hermes.md", replacements)
+    p(f"  ✓ .hermes.md — PROJECT_NAME → {project_name}", GREEN)
+
+    # AGENTS.md
+    agents_path = cwd / "AGENTS.md"
+    replace_in_file(agents_path, {
+        **replacements,
+        "- **서비스명**: {서비스명}": f"- **서비스명**: {project_name}",
+        "- **포지셔닝**: {한 줄 포지셔닝 — 무엇을 위한 서비스인가}":
+            f"- **포지셔닝**: {project_desc}",
+        "- **MVP 목표**: {목표일 또는 MVP 완성 기준}":
+            f"- **MVP 목표**: {mvp_goal}",
+        "- **핵심 루프**: {사용자가 반복하는 핵심 행동 3~5단계}":
+            f"- **타겟 사용자**: {target_user}",
+        # 기술 스택 테이블 첫 행 치환
+        "| 백엔드 | {예: Python + FastAPI} | {버전} |":
+            f"| 백엔드 | {backend} | - |",
+        "| 프론트엔드 | {예: Next.js + TypeScript} | {버전} |":
+            f"| 프론트엔드 | {frontend} | - |",
+        "| DB | {예: PostgreSQL} | {버전} |":
+            f"| DB | {database} | - |",
+    })
+    p(f"  ✓ AGENTS.md — 프로젝트 정보·기술스택 채움", GREEN)
+
+    # orchestrator_profile.md
+    replace_in_file(
+        docs_dst / "orchestrator_profile.md",
+        {**replacements,
+         "나는 **{PROJECT_NAME} 구현을 총괄하는 Orchestrator NEO(네오)**다.":
+             f"나는 **{project_name} 구현을 총괄하는 Orchestrator NEO(네오)**다.",
+         "- {PROJECT_NAME} 서비스 전체 목적과 MVP 범위":
+             f"- {project_name} 서비스 전체 목적과 MVP 범위"},
+    )
+    p(f"  ✓ orchestrator_profile.md — PROJECT_NAME 치환", GREEN)
+
+    # --------------------------------------------------------
+    # Step 6. Hooks 설치 (선택)
+    # --------------------------------------------------------
+    p("\n── Step 6. Hooks 설치 (선택) ──", BOLD)
+    p("Hooks는 실행 강제력을 95% 수준으로 높입니다.")
+    p("  - 절대 금지선 위반 차단 (pre_tool_call)")
+    p("  - 파일 저장 후 테스트 자동 실행 (post_tool_call)")
+    p("  - 컨텍스트 압축 후 금지선 복원 (pre_llm_call)")
+    p("  - 세션 시작 자동화 (on_session_start)")
+
+    install_hooks = ask("\nHermes Hooks를 설치할까요? (y/n)", "y")
+    if install_hooks.lower() == "y":
+        # Hermes Shell-Script Hook 설치 (.py 파일을 ~/.hermes/neo-hooks/에 복사)
+        neo_hooks_dst = HERMES_DIR / "neo-hooks"
+        neo_hooks_dst.mkdir(parents=True, exist_ok=True)
+
+        hook_files = [
+            "forbidden-check.py",
+            "auto-test.py",
+            "context-inject.py",
+            "session-start.py",
+        ]
+        hooks_src = NEO_ROOT / "hooks"
+        copied = 0
+        for fname in hook_files:
+            src = hooks_src / fname
+            if src.exists():
+                shutil.copy2(src, neo_hooks_dst / fname)
+                (neo_hooks_dst / fname).chmod(0o755)
+                copied += 1
+
+        if copied > 0:
+            p(f"  ✓ Hermes Hook 스크립트 {copied}개 → ~/.hermes/neo-hooks/", GREEN)
+        else:
+            p("  ⚠ hooks/*.py 파일을 찾을 수 없습니다.", YELLOW)
+            p("    포팅 수정 가이드의 Step 1-6을 직접 실행하세요.", YELLOW)
+
+        # config.yaml 덮어쓰기 금지
+        p("\n⚠️  config.yaml을 덮어쓰지 않습니다.", YELLOW)
+        p("   Hook 설정을 config.yaml에 직접 추가하세요:", YELLOW)
+        p("   hermes config edit", BOLD)
+        p("   → 포팅 수정 가이드 Step 1-7의 hooks: 블록을 추가\n", YELLOW)
+
+    install_git = ask("Git pre-commit Hook을 설치할까요? (y/n)", "y")
+    if install_git.lower() == "y":
+        git_hook_src = NEO_ROOT / "git-hooks" / "pre-commit"
+        git_dir = cwd / ".git" / "hooks"
+        if not git_dir.exists():
+            p("  ⚠ .git 디렉토리를 찾을 수 없습니다. 'git init'을 먼저 실행해주세요.", YELLOW)
+        elif git_hook_src.exists():
+            dst = git_dir / "pre-commit"
+            shutil.copy2(git_hook_src, dst)
+            dst.chmod(0o755)
+            p("  ✓ Git pre-commit Hook 설치 완료", GREEN)
+
+    # --------------------------------------------------------
+    # Step 7. 완료 안내
+    # --------------------------------------------------------
+    p("\n" + "=" * 55, GREEN)
+    p("  Neo V1 설치 완료!", GREEN + BOLD)
+    p("=" * 55, GREEN)
+    p(f"\n  프로젝트: {project_name}", BOLD)
+    p(f"  백엔드:   {backend}")
+    p(f"  프론트:   {frontend}")
+    p(f"  DB:       {database}")
+    p(f"\n  설치 위치:")
+    p(f"    ~/.hermes/SOUL.md")
+    p(f"    {cwd}/.hermes.md")
+    p(f"    {cwd}/AGENTS.md")
+    p(f"    {cwd}/docs/")
+    p(f"\n  다음 단계:")
+    p(f"    1. .hermes.md에 Omission Constraints를 작성하세요")
+    p(f"       (이 프로젝트의 절대 금지선 — 가장 중요)")
+    p(f"    2. Hermes에서 'NEO, 시작해줘'")
+    p(f"    → NEO가 아이디어 구체화부터 안내합니다.\n")
+
+
+if __name__ == "__main__":
+    main()
