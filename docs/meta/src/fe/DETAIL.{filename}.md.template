@@ -1,0 +1,39 @@
+# DETAIL.{filename}.md — {filename} 상세
+
+> 상위: [DETAIL.md](./DETAIL.md) | 디렉토리: [INDEX.md](./INDEX.md)
+
+## 컴포넌트 상세
+
+### {ComponentName}
+- **역할**: {화면에서 담당하는 UI 영역}
+- **Props**:
+  - `{propName}: {Type}` — {의미}. {필수/선택}.
+
+## 컴포넌트 구조 (복합 컴포넌트인 경우)
+```
+{ComponentName}
+├── {ChildA}    ← {역할}
+├── {ChildB}    ← {역할}
+└── {ChildC}    ← {역할}
+```
+
+## 리렌더 전파 분석
+
+| 컴포넌트 | 리렌더 트리거 | 전파 여부 |
+|---------|------------|----------|
+| {name} | {언제 리렌더되는가} | {자식 전파 여부} |
+
+**주의**: {React.memo 누락 등 최적화 함정}
+
+## 상태 흐름
+```
+STATE_{NAME}: {설명}
+  → {트리거}
+STATE_{NAME}: {설명}
+```
+
+## API 의존성
+- {METHOD} `{endpoint}` → {응답}. {호출 조건}.
+
+## 의존성
+- `{component/hook}` ({출처}) — {용도}
