@@ -6,6 +6,7 @@ Neo V1의 실행 강제력은 두 레이어로 구성됩니다.
 레이어 1: Hermes Hooks (세션 레벨)
   - 도구 호출 차단 (pre_tool_call)
   - 테스트 자동 실행 (post_tool_call)
+  - meta-코드 일관성 검증 (pre_llm_call)
   - 절대 금지선 매 턴 주입 (pre_llm_call)
   - 세션 시작 자동화 (on_session_start)
 
@@ -26,10 +27,11 @@ Neo V1의 실행 강제력은 두 레이어로 구성됩니다.
 mkdir -p ~/.hermes/neo-hooks/
 
 # 훅 파일 복사
-cp hooks/forbidden-check.py ~/.hermes/neo-hooks/
-cp hooks/auto-test.py       ~/.hermes/neo-hooks/
-cp hooks/context-inject.py  ~/.hermes/neo-hooks/
-cp hooks/session-start.py   ~/.hermes/neo-hooks/
+cp hooks/forbidden-check.py         ~/.hermes/neo-hooks/
+cp hooks/auto-test.py               ~/.hermes/neo-hooks/
+cp hooks/meta_consistency_check.py  ~/.hermes/neo-hooks/
+cp hooks/context-inject.py          ~/.hermes/neo-hooks/
+cp hooks/session-start.py           ~/.hermes/neo-hooks/
 chmod +x ~/.hermes/neo-hooks/*.py
 ```
 
@@ -52,6 +54,9 @@ hooks:
     command: ~/.hermes/neo-hooks/auto-test.py
     matcher: write_file|patch
     timeout: 60
+  - event: pre_llm_call
+    command: ~/.hermes/neo-hooks/meta_consistency_check.py
+    timeout: 5
   - event: pre_llm_call
     command: ~/.hermes/neo-hooks/context-inject.py
     timeout: 5
@@ -88,6 +93,7 @@ git add . && git commit -m "test" --dry-run
 |----|--------|-----------|-----------|
 | forbidden-check | pre_tool_call | 절대 금지선 위반 차단 | 결정론적 (100%) |
 | auto-test | post_tool_call | TDD 준수 | 결정론적 (100%) |
+| meta_consistency_check | pre_llm_call | meta 인덱스-코드 불일치 경고 | 매 턴 (100%) |
 | context-inject | pre_llm_call | 컨텍스트 압축 후 복원 | 매 턴 (100%) |
 | session-start | on_session_start | neo-start 자동 실행 | 자동 (100%) |
 | pre-commit (Git) | 커밋 시점 | 코드 품질·보안·브랜치 | 결정론적 (100%) |
@@ -129,6 +135,7 @@ Hermes Hooks + Git Hooks 조합:
   절대 금지선 위반:              ~95% (Hermes pre_tool_call)
   컨텍스트 압축 후 복원:         100% (매 턴 주입)
   TDD 준수:                    ~90% (파일 저장 후 자동 테스트)
+  meta 인덱스 일관성:            100% (매 턴 pre_llm_call — 불일치 경고)
   설계 문서 갱신 여부:           ~70% (스킬 흐름에 의존)
 
 전체 실행 강제력: ~95%

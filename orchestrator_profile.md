@@ -306,6 +306,53 @@ AGENTS.md 섹션 6-1의 검증 계약에 따라:
 컨텍스트 압축 후에도 .hermes.md는 최우선으로 살아남는다.
 추가 결정사항(ADR 등)은 mem0에서 검색해 보완한다.
 
+### 4-5. meta 인덱스 관리
+
+메타 인덱스(`docs/meta/src/`)는 grep/find 기반 코드 탐색을 대체하는 **의미 기반 코드 인덱스**다.
+3계층(L1→L2→L3)으로 구성되며, NEO가 생성·갱신을 주도한다.
+
+#### 4-5-1. 계층 구조
+
+```
+docs/meta/src/
+  INDEX.md              ← L1: BE/FE 통합 진입점 (하위 디렉토리 목록)
+  be/
+    INDEX.md            ← L1: BE 디렉토리별 파일 목차
+    DETAIL.md           ← L2: 디렉토리 개요 + 설계 의도
+    DETAIL.{file}.md    ← L3: 파일별 함수 시그니처 + 용도
+  fe/
+    INDEX.md            ← L1: FE 디렉토리별 파일 목차
+    DETAIL.md           ← L2: 디렉토리 개요 + 설계 의도
+    DETAIL.{file}.md    ← L3: 컴포넌트별 트리거·상태·의존성
+```
+
+#### 4-5-2. 생성 규칙
+
+| 트리거 | 동작 |
+|--------|------|
+| `src/{be\|fe}/{dir}/` 생성 + 첫 코드 파일 | INDEX.md 생성 (템플릿 복사) + 부모 INDEX.md에 행 추가 |
+| 공용 함수·컴포넌트 발생 or 설계 의도 설명 필요 | DETAIL.md 생성 |
+| 파일이 복잡해져 수정·재사용 판단에 상세 정보 필요 | DETAIL.{filename}.md 생성 |
+| Task Brief 완료 | task_brief_templ.md의 "meta 갱신 항목" 기반 L1·L2·L3 갱신 |
+| 파일 삭제로 디렉토리가 빔 | INDEX.md/DETAIL.md 삭제 |
+
+#### 4-5-3. setup.py 연동
+
+프로젝트 최초 설치 시:
+- `docs/meta/src/be/INDEX.md`, `docs/meta/src/fe/INDEX.md` 생성 (템플릿 복사)
+- `.template` 파일들은 `docs/meta/src/`에 보관. 하위 디렉토리 meta는 코드 구현 시점에 생성.
+
+#### 4-5-4. BE/FE 프로필 §2-0 연동
+
+BE/FE 프로필의 "구현 전 필수 확인" 절차는 meta 인덱스를 읽는 것으로 대체되었다:
+1. `docs/meta/src/{be\|fe}/INDEX.md` 읽기 → 하위 디렉토리 목록 (L1)
+2. 해당 디렉토리의 INDEX.md 읽기 → 파일 목록 (L1)
+3. (필요 시) DETAIL.md 읽기 → 설계 의도 (L2)
+4. (파일 수정·재사용 시) DETAIL.{파일명}.md 읽기 → 함수 상세 (L3)
+
+이 방식으로 grep의 키워드 의존성·언어 종속성·프레임워크 종속성을 제거하고,
+LLM이 구현보다 탐색에 더 많은 토큰을 쓰는 비효율을 해소한다.
+
 ---
 
 ## 5. 디렉토리 구조 및 파일 정책
