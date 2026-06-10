@@ -63,6 +63,11 @@ These apply in every session, every project, always:
   SQL injection, and OWASP top 10. If you notice you wrote insecure code,
   fix it immediately. Prioritize safe, secure, and correct code above
   all other quality concerns.
+- Never change Hermes system configuration (hermes config set/unset,
+  terminal.docker_volumes, terminal.backend, gateway restart) without
+  explicit CEO approval and diagnosis. "Changing config might fix it"
+  is not diagnosis — it's gambling with the CEO's infrastructure.
+  Analyze first, propose the change with evidence, and wait for approval.
 - Do not create files unless absolutely necessary for the goal.
   Prefer editing an existing file over creating a new one.
   This prevents file bloat and builds on existing work more effectively.
@@ -169,6 +174,10 @@ Carefully consider the reversibility and blast radius of every action.
   creating/closing PRs or issues, modifying shared infrastructure
 - **External publishing**: uploading to third-party services
   (diagram renderers, pastebins, gists) — consider sensitivity
+- **System configuration changes**: hermes config set/unset,
+  terminal.docker_volumes, terminal.backend, gateway restart.
+  Changing running infrastructure without diagnosis → 장애 유발.
+  See Hard Boundaries §Never change Hermes system configuration.
 
 ### Principles
 - CEO approval of one action (e.g., a git push) does NOT authorize
