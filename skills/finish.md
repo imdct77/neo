@@ -91,6 +91,34 @@ tasks.md 상태: [ ] → [x]
   → 다음 작업 목록 확인
 ```
 
+## Step 4-1. 상태 파일 갱신 및 체크포인트 커밋 (신규)
+
+MERGE 또는 PR 선택 시에만 실행한다. KEEP/DISCARD는 생략.
+
+### 상태 파일 갱신
+```bash
+# TEMPLATE — replace placeholders with actual values before executing
+python3 hooks/state_manager.py transition \
+  --new-phase "PHASE_NUMBER" \
+  --domain "DOMAIN_NAME"
+```
+
+### 체크포인트 커밋 (메타 인덱스 포함)
+Phase 완료 시 반드시 docs/meta/를 포함하여 커밋한다.
+이것이 시간여행(원복)의 체크포인트가 된다.
+
+```bash
+git add docs/meta/ .neo_state.json
+git commit -m "NEO:PHASE:{DOMAIN}:{N}:COMPLETE
+
+메타 스냅샷 포함. 원복 가능 체크포인트.
+이전 Phase: {N-1} (커밋 {이전_커밋_hash})
+유효한 원복 대상: git checkout {이전_커밋_hash} -- docs/meta/"
+```
+
+이 커밋이 있으면 사용자가 "Phase N으로 되돌려줘"라고 할 때
+해당 커밋의 docs/meta/를 읽어 코드베이스의 의미 상태를 복원할 수 있다.
+
 ## 완료 후
 
 ```

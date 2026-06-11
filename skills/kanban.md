@@ -127,7 +127,10 @@ BLOCKED:
 ```
 BLOCKED 발생:
   1. kanban_block({id}, "{구체적 이유}")
-  2. 사람에게 보고:
+  2. .neo_state.json 갱신:
+     task_status → "blocked"
+     (python3 hooks/state_manager.py 또는 state_manager.write_state 직접 호출)
+  3. 사람에게 보고:
      "BLOCKED: {이유}
       필요한 것: {무엇이 결정되면 계속 진행 가능한가}"
 

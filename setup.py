@@ -240,6 +240,29 @@ def main():
         skill_count = len(list(skills_dst.glob("*.md")))
         p(f"  ✓ skills/ ({skill_count}개 스킬)", GREEN)
 
+    # .neo_state.json 초기화 (§6-6)
+    import json as json_module
+    from datetime import datetime as _dt
+
+    state_file = cwd / ".neo_state.json"
+    if not state_file.exists():
+        initial_state = {
+            "project_id": project_id,
+            "project_name": project_name,
+            "current_phase": "-1",
+            "current_domain": None,
+            "current_task_id": None,
+            "task_status": "none",
+            "phase_history": [],
+            "valid_transitions": {
+                "from_current": ["start_design"]
+            },
+            "last_updated": _dt.now().isoformat()
+        }
+        with open(state_file, "w") as f:
+            json_module.dump(initial_state, f, ensure_ascii=False, indent=2)
+        p(f"  ✓ .neo_state.json 초기화 (PROJECT_ID: {project_id})", GREEN)
+
     # --------------------------------------------------------
     # Step 5. 플레이스홀더 치환
     # --------------------------------------------------------
