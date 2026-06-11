@@ -196,6 +196,34 @@ Task Brief: docs/briefs/{DOMAIN}/{TASK_ID}.md
 ```
 
 ### 4-1. Phase·태스크 상태 관리
+#### 4-1-0. .neo_state.json 갱신 (mem0 저장보다 먼저)
+
+Phase 전환, 태스크 시작/완료/BLOCKED 시점마다
+`.neo_state.json`을 갱신한다.
+이것이 구조적 상태의 단일 진실 공급원(single source of truth)이다.
+mem0에는 기존 방식대로 텍스트 기록을 추가한다.
+`.neo_state.json`은 구조, mem0는 맥락과 학습이다.
+
+```bash
+# TEMPLATE — replace placeholders with actual values before executing
+
+# Phase 전환 시
+python3 hooks/state_manager.py transition --new-phase "PHASE_NUMBER" --domain "DOMAIN_NAME"
+
+# 태스크 시작 시
+# .neo_state.json의 current_task_id, task_status를 직접 수정
+# (state_manager.py의 write_state 사용)
+
+# 태스크 완료 시
+# task_status → "done"
+
+# BLOCKED 시
+# task_status → "blocked"
+```
+
+---
+
+
 
 #### 4-1-1. Phase 상태 관리 (tasks.md + mem0 조합)
 
