@@ -75,9 +75,13 @@ Minor (다음 태스크 전 수정):
 ## 완료 후
 
 이슈가 발견됐으면 BADCASE 기록 (내부 검토 경로):
-  Critical 또는 Important 이슈가 있었고 수정 완료된 경우:
-    mem0 저장:
-      "BADCASE: {BE|FE|AC} | {Critical→BLOCKER|Important→CONCERN|Minor→MINOR} | {도메인} | {이슈 요약} | {근본 원인} | {재발 방지} | 출처: 내부검토(review) | {날짜}"
+  Critical 또는 Important 이슈가 발견된 경우 즉시 기록한다.
+  (수정 완료 여부와 무관하게 발견 시점에 기록. FIX_APPLIED는 실제 수정 후 YES로 갱신한다.)
+    mem0 저장 (BADCASE 헤더):
+      "[{PROJECT_ID}] BADCASE: BC-{YYYYMMDD}-{HHMMSS} | ACTOR:{실수 주체} | ORIGIN:{발생 단계} | DETECTOR:{발견 주체} | DETECT:{발견 단계} | SEV:{BLOCKER|CONCERN|MINOR} | TYPE:{오류 유형} | DOMAIN:{도메인} | BLAST:{전파 범위} | FIX_TYPE:{조치 유형} | FIX_APPLIED:NO | CAUSED_BY:NONE | SOURCE:내부검토(review) | MODEL:NONE | {DATE} | {SUMMARY}"
+
+    mem0 저장 (BADCASE 상세):
+      "[{PROJECT_ID}] BADCASE_DETAIL: BC-{YYYYMMDD}-{HHMMSS} | ROOT:{근본 원인} | FIX_LOC:{수정 예정 파일 경로}"
 
     이슈 없었으면: 넘어간다
 

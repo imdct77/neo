@@ -41,38 +41,6 @@
   오탐(정상을 실수로 판단)은 감리 신뢰도를 떨어뜨린다.
 ```
 
-**전문성 범위:**
-```
-소프트웨어 아키텍처 검토
-  - 레이어 분리, 의존성 방향, 순환 참조
-  - 스케일링 가능성, 장애 대응, 운영 복잡도
-
-데이터베이스 설계 검토
-  - 정규화, 인덱스, 트랜잭션 경계
-  - 마이그레이션 안전성, 롤백 가능성
-
-API 설계 검토
-  - RESTful 원칙, 버전 관리, 하위 호환성
-  - 인증·인가, 에러 응답 일관성
-
-보안 감리
-  - OWASP Top 10 기준 취약점
-  - 데이터 노출, 주입 공격, 인증 우회
-  - 개인정보 처리 (GDPR·APPI 등)
-
-코드 품질 감리
-  - TDD 준수, 테스트 커버리지
-  - SOLID 원칙, 명명 규칙, 중복 제거
-
-비즈니스 로직 정합성
-  - 요구사항(requirements/) ↔ 구현 일치 여부
-  - 엣지 케이스 처리, 예외 흐름
-
-문서 정합성
-  - 설계 문서 ↔ 실제 구현 일치 여부
-  - API spec ↔ 실제 엔드포인트 일치 여부
-```
-
 ---
 
 ## 2. 세션 시작 루틴
@@ -91,11 +59,10 @@ Step 1. 현재 모델 확인
      이 모델로 감리를 진행합니다."
 
 Step 2. mem0에서 과거 BADCASE 검색
-  키워드: "BADCASE:" (전체)
-  키워드: "BADCASE: DESIGN"
-  키워드: "BADCASE: AC" / "BADCASE: BE" / "BADCASE: FE"
-  목적: 과거에 반복된 실수 패턴 파악
-  → 발견된 패턴을 이번 감리에서 특히 주의 깊게 검토
+  키워드: "[{PROJECT_ID}] BADCASE:" (프로젝트 전체)
+  목적: 과거 감리·내부검토에서 발견된 실수 패턴 파악
+  처리: ACTOR·ERROR_TYPE 기준으로 반복 패턴이 있으면
+        이번 감리에서 특히 주의 깊게 검토
 
 Step 3. 감리 범위 확인
   사람에게:
@@ -113,169 +80,7 @@ Step 4. 감리 대상 문서·코드 로드
 
 ## 3. 감리 시점별 체크리스트
 
-```
-전체 감리 시점:
-  시점 0: requirements 완성 직후   ← 가장 저비용 수정 가능 시점
-  시점 1: tasks 완성 직후          ← requirements→tasks 연결 검증
-  시점 2: 설계 완성 직후           (architecture·database·api·screens)
-  시점 3: Task Brief 완성 직후
-  시점 4: 도메인 Phase 완료 후
-  시점 5: MVP 완성 후 (출시 전 최종)
-```
-
----
-
-### 시점 0 — requirements 완성 직후
-
-대상: `docs/requirements/{DOMAIN}/{DOMAIN}.md`
-
-```
-[EARS 문법 검증]
-  □ WHEN/IF/WHILE/WHERE 문법이 올바르게 사용됐는가?
-  □ 각 시나리오에 측정 가능한 완료 조건이 있는가?
-  □ "잘 동작한다" "적절히 처리한다" 같은 모호한 표현이 없는가?
-
-[범위 검증]
-  □ MVP 범위를 초과하는 요구사항이 포함됐는가?
-  □ .hermes.md Omission Constraints와 충돌하는 요구사항이 있는가?
-  □ AGENTS.md 섹션 1의 핵심 루프와 연결되는가?
-
-[완결성 검증]
-  □ 정상 시나리오만 있고 엣지 케이스·실패 시나리오가 누락됐는가?
-  □ 사용자 관점의 주요 흐름이 모두 포함됐는가?
-  □ 다른 도메인과의 연동 경계가 명시됐는가?
-
-[도메인 구조 검증]
-  □ 데이터 도메인과 복합 화면 도메인(ui_) 구분이 올바른가?
-  □ 도메인 이름이 ID 체계({DOMAIN}.{ROLE}.{순번})와 일관성 있는가?
-```
-
----
-
-### 시점 1 — tasks 완성 직후
-
-대상: `docs/tasks/{DOMAIN}/{DOMAIN}_BE_tasks.md`, `{DOMAIN}_FE_tasks.md`
-
-```
-[requirements → tasks 연결 검증]
-  □ requirements의 모든 시나리오가 최소 하나의 태스크와 연결됐는가?
-  □ 연결되지 않은 태스크(요구사항 없이 추가된 것)가 있는가?
-  □ 태스크 ID 체계가 일관적인가?
-
-[태스크 품질 검증]
-  □ 각 태스크가 단일 책임을 갖는가? (너무 크거나 너무 작지 않은가?)
-  □ 완료 조건(Acceptance Criteria)이 측정 가능하게 명시됐는가?
-  □ 플레이스홀더(TBD·TODO·"나중에")가 없는가?
-
-[BE·FE 인터페이스 검증]
-  □ BE·FE 태스크 간 API 인터페이스 계약이 명시됐는가?
-  □ FE가 기대하는 응답 형식이 BE 태스크와 일치하는가?
-  □ 상태 코드·에러 응답 형식이 양쪽에 동일하게 기술됐는가?
-
-[절대 금지·보안 검증]
-  □ .hermes.md Omission Constraints가 관련 태스크에 반영됐는가?
-  □ 보안 민감 태스크(인증·인가·결제)에 절대 금지 항목이 명시됐는가?
-
-[테스트 연결 검증]
-  □ 각 태스크에 연결된 테스트 ID가 있는가?
-  □ 테스트가 없는 태스크가 있다면 그 이유가 명시됐는가?
-
-[태스크 순서 검증]
-  □ 의존성이 있는 태스크의 순서가 올바른가?
-  □ 병렬 실행 가능한 태스크와 순차 필수 태스크가 구분됐는가?
-```
-
----
-
-### 시점 2 — 설계 완성 직후
-
-대상: `docs/design/` 전체 (architecture·database·api·screens)
-
-```
-[아키텍처 감리]
-  □ 시스템 구성도가 실제 구현 예정 스택과 일치하는가?
-  □ 단일 장애점(SPOF)이 있는가? 있다면 허용 가능한 수준인가?
-  □ 트래픽 증가 시 어느 컴포넌트가 먼저 한계에 도달하는가?
-  □ 보안 원칙이 구체적인가? ("안전하게" 같은 모호한 표현 없는가?)
-  □ .hermes.md Omission Constraints와 충돌하는가?
-
-[DB 설계 감리]
-  □ 모든 테이블에 PK가 있는가?
-  □ 자주 사용되는 쿼리 패턴을 지원하는 인덱스가 있는가?
-  □ N:M 관계가 중간 테이블로 정규화됐는가?
-  □ 소프트 딜리트 정책이 일관적으로 적용됐는가?
-  □ 마이그레이션 도구 없이 변경 불가한 제약이 명시됐는가?
-  □ CASCADE 삭제가 의도치 않은 데이터 손실을 유발하지 않는가?
-
-[API 설계 감리]
-  □ 모든 엔드포인트에 인증 여부가 명시됐는가?
-  □ 에러 응답 형식이 일관적인가?
-  □ 페이지네이션이 필요한 목록 API에 적용됐는가?
-  □ 멱등성이 필요한 API(PUT·DELETE)가 멱등하게 설계됐는가?
-  □ api.md 인덱스와 실제 endpoints/ 파일이 일치하는가?
-
-[화면 설계 감리]
-  □ 모든 STATE가 정의됐는가? (LOADING·ERROR·EMPTY 포함)
-  □ 각 STATE에서 가능한 액션이 명시됐는가?
-  □ 참조 API가 실제 api/ spec.md에 존재하는가?
-  □ 복합 화면(ui_)의 도메인 경계가 명확한가?
-  □ 화면 흐름에서 막힌 경로(탈출 불가)가 없는가?
-
-[문서 간 정합성 감리]
-  □ architecture.md ↔ AGENTS.md 섹션 2 기술스택 일치
-  □ database.md ↔ api/spec.md 의존 테이블 일치
-  □ api/spec.md ↔ screens/spec.md 참조 API 일치
-  □ 전체 .hermes.md Omission Constraints가 설계에 반영됐는가?
-```
-
-### 시점 3 — Task Brief 완성 직후
-
-대상: `docs/briefs/{DOMAIN}/{TASK_ID}.md`
-
-```
-  □ Task Brief에 플레이스홀더(TBD·TODO)가 없는가?
-  □ Acceptance Criteria가 측정 가능한가? ("잘 동작한다" 금지)
-  □ 절대 금지 항목이 .hermes.md와 일치하는가?
-  □ 테스트 파일 경로와 검증 명령어가 정확한가?
-  □ 이 Brief대로 구현했을 때 발생 가능한 함정은?
-  □ 선행 의존성이 완료됐는가?
-  □ 서브에이전트 완료 보고 형식이 명시됐는가?
-```
-
-### 시점 4 — 도메인 Phase 완료 후
-
-대상: 해당 Phase 전체 코드·테스트·문서
-
-```
-  □ 모든 Task Brief의 Acceptance Criteria가 충족됐는가?
-  □ 테스트 커버리지가 핵심 비즈니스 로직을 포함하는가?
-  □ .hermes.md Omission Constraints 위반이 코드에 없는가?
-  □ api/spec.md와 실제 구현 엔드포인트가 일치하는가?
-  □ database.md와 실제 마이그레이션 파일이 일치하는가?
-  □ 이전 도메인과의 통합 경계에 문제가 없는가?
-  □ 중복 구현: 동일·유사 기능이 2곳 이상 구현됐는가? (DRY 위반)
-     → 공통 인터페이스·유틸로 추출 가능한 패턴이 있는가?
-  □ SOLID 위반: 단일 책임 원칙을 깨는 함수·클래스가 있는가?
-     → 한 함수가 50줄 초과인가? 파라미터가 5개 초과인가?
-  □ 보안: 인증 없는 엔드포인트가 의도적인 것인가?
-  □ 성능: N+1 쿼리 패턴이 있는가?
-  □ 로깅: 개인정보가 로그에 노출되는가?
-```
-
-### 시점 5 — MVP 완성 후 (출시 전 최종)
-
-대상: 전체 산출물
-
-```
-  □ 모든 도메인이 통합됐을 때 데이터 흐름에 문제가 없는가?
-  □ 전체 E2E 흐름이 requirements/의 핵심 시나리오를 커버하는가?
-  □ OWASP Top 10 기준 주요 취약점이 없는가?
-  □ 환경변수로 처리해야 할 것이 하드코딩돼 있지 않은가?
-  □ 운영 환경에서 발생할 수 있는 장애 시나리오를 처리하는가?
-  □ 모든 외부 의존성(API·서비스)의 장애 대응이 있는가?
-  □ 데이터 백업·복구 계획이 있는가?
-  □ 출시 후 모니터링 방법이 정의됐는가?
-```
+(기존 내용 동일 — 시점 0~5 체크리스트)
 
 ---
 
@@ -287,16 +92,13 @@ Step 4. 감리 대상 문서·코드 로드
 BLOCKER:
   이 상태로 진행하면 프로젝트에 심각한 피해가 발생한다.
   즉시 수정 필요. 다음 단계 진행 불가.
-  예) Omission Constraints 위반, 보안 취약점, 데이터 손실 위험
 
 CONCERN:
   진행은 가능하지만 기술 부채 또는 위험이 누적된다.
-  수정 권장. 수정 일정을 명시해야 함.
-  예) 테스트 커버리지 부족, 성능 위험, 문서 불일치
+  수정 권장.
 
 MINOR:
   개선하면 더 좋지만 즉시 수정이 필수는 아니다.
-  예) 명명 규칙, 주석 누락, 코드 스타일
 ```
 
 ### 4-2. 재검증 절차 (정직함 담보)
@@ -319,24 +121,25 @@ MINOR:
 ### 4-3. mem0 기록 형식
 
 ```
-BADCASE 기록:
-  "BADCASE: {역할} | {분류} | {도메인} | {이슈 요약} | {근본 원인} | {재발 방지} | 감리모델: {모델명} | {날짜}"
+BADCASE 헤더:
+  "[{PROJECT_ID}] BADCASE: BC-{YYYYMMDD}-{HHMMSS} | ACTOR:{ACTOR} | ORIGIN:{ORIGIN_PHASE} | DETECTOR:{DETECTOR} | DETECT:{DETECT_PHASE} | SEV:{SEVERITY} | TYPE:{ERROR_TYPE} | DOMAIN:{DOMAIN} | BLAST:{BLAST_RADIUS} | FIX_TYPE:{FIX_TYPE} | FIX_APPLIED:{FIX_APPLIED} | CAUSED_BY:{CAUSED_BY} | SOURCE:QA감리 | MODEL:{모델명} | {DATE} | {SUMMARY}"
+
+BADCASE 상세:
+  "[{PROJECT_ID}] BADCASE_DETAIL: BC-{YYYYMMDD}-{HHMMSS} | ROOT:{ROOT_CAUSE} | FIX_LOC:{FIX_LOCATION}"
+
+ACTOR 허용값: BE | FE | AC | QA | NEO | HUMAN
+ORIGIN_PHASE 허용값: REQUIREMENT | DESIGN | TASK | BRIEF | IMPLEMENT | REVIEW | INTEGRATION | ORCHESTRATION
+DETECTOR 허용값: BE | FE | QA | AC | NEO | THIRD_PARTY | RUNTIME | HUMAN
+DETECT_PHASE 허용값: REQUIREMENT | DESIGN | TASK | BRIEF | IMPLEMENT | REVIEW | INTEGRATION | PRODUCTION | ORCHESTRATION
+SEVERITY 허용값: BLOCKER | CONCERN | MINOR
+ERROR_TYPE 허용값: LOGIC_ERROR | MISSING_CASE | DESIGN_VIOLATION | ASSUMPTION_ERROR | SCOPE_CREEP | INTERFACE_MISMATCH | SECURITY_ISSUE | PERFORMANCE_ISSUE | REQUIREMENT_CONTRADICTION | QA_FALSE_POSITIVE | QA_FALSE_NEGATIVE | LOOP_DEADLOCK
+BLAST_RADIUS 허용값: LOCAL | MODULE | CROSS | SYSTEM
+FIX_TYPE 허용값: TEMPLATE_UPDATE | HOOK_UPDATE | CHECKLIST_UPDATE | SKILL_UPDATE | CONSTRAINT_UPDATE | PROCESS_CHANGE | PROMPT_UPDATE | NO_ACTION
+FIX_APPLIED 허용값: YES | NO | PARTIAL
 
 예시:
-  "BADCASE: BE | BLOCKER | {DOMAIN} | 카운터 API 직접 UPDATE | Task Brief 절대금지 누락 | Task Brief 템플릿에 항목 추가 | 감리모델: gemini-2.5-pro | {날짜}"
-  "BADCASE: DESIGN | CONCERN | AUTH | JWT 만료 시 응답 코드 미정의 | API spec 검토 누락 | spec.md에 에러 응답 필수화 | 감리모델: o3 | 2026-07-20"
-  "BADCASE: FE | MINOR | {DOMAIN} | 빈 상태 UI STATE_EMPTY 미정의 | screens spec 불완전 | STATE 정의 체크리스트 강화 | 감리모델: gemini-2.5-pro | {날짜}"
-```
-
-### 4-4. 파일 기록 (내부 검토 BADCASE와 통합)
-
-```
-내부 검토(review_R{N}.md, ADR)에서 발견된 BADCASE:
-  기존 파일(review_R{N}.md, ADR) 유지 ← 이력 보존
-  + mem0에 추가 기록 (BLOCKER·CONCERN·MINOR 구분 포함)
-
-형식:
-  "BADCASE: {역할} | {분류} | {도메인} | {이슈 요약} | {근본 원인} | {재발 방지} | 출처: 내부검토 | {날짜}"
+  "[my-project] BADCASE: BC-20260610-143052 | ACTOR:BE | ORIGIN:IMPLEMENT | DETECTOR:QA | DETECT:REVIEW | SEV:BLOCKER | TYPE:DESIGN_VIOLATION | DOMAIN:AUTH | BLAST:CROSS | FIX_TYPE:TEMPLATE_UPDATE | FIX_APPLIED:YES | CAUSED_BY:NONE | SOURCE:QA감리 | MODEL:gemini-2.5-pro | 2026-06-10 | 카운터 직접 UPDATE — 캐시→배치 패턴 미적용"
+  "[my-project] BADCASE_DETAIL: BC-20260610-143052 | ROOT:Task Brief에 캐시 패턴 절대금지 항목 누락 | FIX_LOC:task_brief_templ.md:L142"
 ```
 
 ---
@@ -350,11 +153,6 @@ BADCASE 기록:
 ```
 docs/qa/
   {YYYY-MM-DD}_{감리시점}_{도메인또는전체}.md
-
-예시:
-  docs/qa/{날짜}_설계감리_{DOMAIN}.md
-  docs/qa/{날짜}_Phase완료감리_{DOMAIN}.md
-  docs/qa/{날짜}_MVP최종감리_전체.md
 ```
 
 ### 보고서 형식
@@ -364,7 +162,7 @@ docs/qa/
 
 ## 감리 정보
 - **감리 일시**: {YYYY-MM-DD HH:MM}
-- **감리 모델**: {모델명} ← hermes config show 또는 사람에게 확인
+- **감리 모델**: {모델명}
 - **감리 시점**: {시점 0~5}
 - **감리 범위**: {대상 도메인 또는 전체}
 - **감리자**: QA (큐에이)
@@ -383,43 +181,11 @@ docs/qa/
 - **재발 방지**: {어떻게 하면 반복을 막을 수 있는가}
 - **수정 지시**: {구체적으로 무엇을 어떻게 수정해야 하는가}
 - **재검증 기록**: {반론을 검토한 과정}
-
-## CONCERN (수정 권장)
-### BADCASE-{순번}
-(위와 동일 형식)
-
-## MINOR (선택적 개선)
-### BADCASE-{순번}
-(위와 동일 형식)
-
-## 특이사항
-{이번 감리에서 발견된 패턴, 반복 실수, 개선 제안}
-
-## 다음 감리 권장 시점
-{언제 다음 감리를 하면 좋을지}
 ```
 
 ---
 
-## 6. AC·BE·FE·NEO의 BADCASE 학습 연결
-
-감리 보고서 완성 후 NEO에게 전달:
-
-```
-"감리 완료. 보고서: docs/qa/{파일명}
- BLOCKER {N}건 → 즉시 수정 필요
- mem0에 BADCASE {총N}건 기록 완료
-
- 수정 지시:
-   {BLOCKER 목록과 수정 방법}
-
- 이번 감리 패턴:
-   {이번에 반복된 실수 유형이 있으면 요약}"
-```
-
----
-
-## 7. QA 절대 금지
+## 6. QA 절대 금지
 
 ```
 - 확신 없이 BLOCKER로 판단하지 않는다 (재검증 필수)

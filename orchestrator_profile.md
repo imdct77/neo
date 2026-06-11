@@ -224,15 +224,25 @@ Task Brief: docs/briefs/{DOMAIN}/{TASK_ID}.md
   → mem0 저장: "SKILL_ISSUE: {스킬명} — {문제} — {개선 제안}"
 
   BADCASE 기록 (내부 검토 경로):
-  → mem0 저장:
-    "BADCASE: {역할} | {분류} | {도메인} | {이슈 요약} | {근본 원인} | {재발 방지} | 출처: 내부검토 | {날짜}"
+  → mem0 저장 (BADCASE 헤더):
+    "[{PROJECT_ID}] BADCASE: BC-{YYYYMMDD}-{HHMMSS} | ACTOR:{실수 주체} | ORIGIN:{발생 단계} | DETECTOR:{발견 주체} | DETECT:{발견 단계} | SEV:{SEVERITY} | TYPE:{ERROR_TYPE} | DOMAIN:{DOMAIN} | BLAST:{BLAST_RADIUS} | FIX_TYPE:{FIX_TYPE} | FIX_APPLIED:NO | CAUSED_BY:{CAUSED_BY} | SOURCE:내부검토(review) | MODEL:NONE | {DATE} | {SUMMARY}"
+  → mem0 저장 (BADCASE 상세):
+    "[{PROJECT_ID}] BADCASE_DETAIL: BC-{YYYYMMDD}-{HHMMSS} | ROOT:{ROOT_CAUSE} | FIX_LOC:{FIX_LOCATION}"
+
   BADCASE 기록 (QA 감리 경로):
-  → qa_profile.md에서 /model 자동 확인 후 기록
-    "BADCASE: {역할} | {분류} | {도메인} | {이슈 요약} | {근본 원인} | {재발 방지} | 감리모델: {모델명} | {날짜}"
+  → qa_profile.md에서 기록 (SOURCE:QA감리 자동 적용)
+    "[{PROJECT_ID}] BADCASE: BC-{YYYYMMDD}-{HHMMSS} | ACTOR:{ACTOR} | ORIGIN:{ORIGIN_PHASE} | DETECTOR:{DETECTOR} | DETECT:{DETECT_PHASE} | SEV:{SEVERITY} | TYPE:{ERROR_TYPE} | DOMAIN:{DOMAIN} | BLAST:{BLAST_RADIUS} | FIX_TYPE:{FIX_TYPE} | FIX_APPLIED:{FIX_APPLIED} | CAUSED_BY:{CAUSED_BY} | SOURCE:QA감리 | MODEL:{모델명} | {DATE} | {SUMMARY}"
 
   BADCASE 조회 (작업 시작 전):
-  → "BADCASE:" 전체 검색 → 현재 도메인·역할 관련 패턴 필터링
-  → NEO가 해당 역할(AC·BE·FE)에게 주의사항으로 전달
+  → "[{PROJECT_ID}] BADCASE_RULE:" 전체 검색 (SCOPE 기준으로 분류)
+    1차: BADCASE_RULE 존재 시 → 증류된 규칙을 역할(AC·BE·FE)에게 주의사항으로 전달
+    2차: BADCASE_RULE 없을 시 → "[{PROJECT_ID}] BADCASE:" 최근 5건 참조
+
+  도메인 완료 시 (finish.md MERGE/PR 선택 후):
+  → skills/badcase-review.md 스킬 자동 실행 (도메인 단위 BADCASE 집계 → 패턴 추출 → 규칙 적용)
+
+  프로젝트 완료 시 (최종 MVP 완성 후):
+  → skills/badcase-distill.md 스킬 자동 실행 (프로젝트 전체 BADCASE 증류 → 효과 검증 → 장기 반영)
 
   LEARN 검증 루프:
   → [예측] 내용을 다음 유사 태스크에서 확인
@@ -241,6 +251,7 @@ Task Brief: docs/briefs/{DOMAIN}/{TASK_ID}.md
 
   세션 시작 시 검색:
   → "LEARN: {현재 도메인}", "SKILL_ISSUE:" 키워드로 검색
+
 ```
 
 #### 4-1-2. 칸반 운영 원칙

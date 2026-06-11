@@ -96,6 +96,23 @@ def replace_in_file(file_path: Path, replacements: dict):
         content = content.replace(old, new)
     file_path.write_text(content, encoding="utf-8")
 
+def generate_project_id(project_name: str) -> str:
+    """PROJECT_NAME을 kebab-case 소문자 PROJECT_ID로 자동 변환.
+    
+    예) "My Recipe App" → "my-recipe-app"
+        "JGBG Platform" → "jgbg-platform"
+    """
+    import re
+    # 소문자로 변환
+    pid = project_name.lower()
+    # 영문·숫자·공백·하이픈 외 문자 제거
+    pid = re.sub(r"[^a-z0-9\s\-]", "", pid)
+    # 공백을 하이픈으로
+    pid = re.sub(r"\s+", "-", pid.strip())
+    # 연속 하이픈 정리
+    pid = re.sub(r"-+", "-", pid)
+    return pid
+
 # ============================================================
 # 메인 흐름
 # ============================================================
@@ -116,6 +133,20 @@ def main():
     if not project_name:
         p("서비스명은 필수입니다.", RED)
         sys.exit(1)
+
+    # PROJECT_ID 자동 생성 및 확인
+    project_id = generate_project_id(project_name)
+    p(f"\n자동 생성된 PROJECT_ID: {BOLD}{project_id}{RESET}", CYAN)
+    p("  (mem0 기록의 접두사로 사용됩니다. 프로젝트 생성 후 변경 불가)", YELLOW)
+    custom_id = ask(f"다른 ID를 사용하시겠습니까? (Enter = '{project_id}' 사용)")
+    if custom_id:
+        import re
+        # 입력값 검증: kebab-case만 허용
+        if re.match(r"^[a-z0-9][a-z0-9\-]*[a-z0-9]$", custom_id) or re.match(r"^[a-z0-9]$", custom_id):
+            project_id = custom_id
+            p(f"  PROJECT_ID: {project_id}", GREEN)
+        else:
+            p(f"  유효하지 않은 형식입니다 (소문자 영문·숫자·하이픈만 허용). '{project_id}'를 사용합니다.", YELLOW)
 
     project_desc = ask("한 줄 포지셔닝 (예: 요리 레시피 공유 플랫폼)")
     target_user  = ask("타겟 사용자 (예: 요리를 즐기는 20-40대)")
@@ -177,7 +208,7 @@ def main():
     docs_dst = cwd / "docs"
     docs_dst.mkdir(exist_ok=True)
 
-    # src/ 소스 디렉토리 생성 (orchestrator_profile.md §5-1 기준)
+    # src/ 소스 디렉토리 생성
     for subdir in ["src/be", "src/fe"]:
         (cwd / subdir).mkdir(parents=True, exist_ok=True)
     p("  ✓ src/be/, src/fe/ (하위 구조는 프로젝트 자유)", GREEN)
@@ -207,7 +238,7 @@ def main():
             shutil.rmtree(skills_dst)
         shutil.copytree(skills_src, skills_dst)
         skill_count = len(list(skills_dst.glob("*.md")))
-        p(f"  ✓ docs/skills/ ({skill_count}개 스킬)", GREEN)
+        p(f"  ✓ skills/ ({skill_count}개 스킬)", GREEN)
 
     # --------------------------------------------------------
     # Step 5. 플레이스홀더 치환
@@ -216,15 +247,16 @@ def main():
 
     replacements = {
         "{PROJECT_NAME}": project_name,
+        "{PROJECT_ID}": project_id,
     }
 
     # SOUL.md (전역)
     replace_in_file(soul_dst, replacements)
     p(f"  ✓ SOUL.md — PROJECT_NAME → {project_name}", GREEN)
 
-    # .hermes.md (프로젝트 루트)
+    # .hermes.md (프로젝트 루트) — PROJECT_ID + PROJECT_NAME 치환
     replace_in_file(cwd / ".hermes.md", replacements)
-    p(f"  ✓ .hermes.md — PROJECT_NAME → {project_name}", GREEN)
+    p(f"  ✓ .hermes.md — PROJECT_ID → {project_id}, PROJECT_NAME → {project_name}", GREEN)
 
     # AGENTS.md
     agents_path = cwd / "AGENTS.md"
@@ -237,7 +269,6 @@ def main():
             f"- **MVP 목표**: {mvp_goal}",
         "- **핵심 루프**: {사용자가 반복하는 핵심 행동 3~5단계}":
             f"- **타겟 사용자**: {target_user}",
-        # 기술 스택 테이블 첫 행 치환
         "| 백엔드 | {예: Python + FastAPI} | {버전} |":
             f"| 백엔드 | {backend} | - |",
         "| 프론트엔드 | {예: Next.js + TypeScript} | {버전} |":
@@ -256,21 +287,16 @@ def main():
          "- {PROJECT_NAME} 서비스 전체 목적과 MVP 범위":
              f"- {project_name} 서비스 전체 목적과 MVP 범위"},
     )
-    p(f"  ✓ orchestrator_profile.md — PROJECT_NAME 치환", GREEN)
+    p(f"  ✓ orchestrator_profile.md — PROJECT_NAME, PROJECT_ID 치환", GREEN)
 
     # --------------------------------------------------------
     # Step 6. Hooks 설치 (선택)
     # --------------------------------------------------------
     p("\n── Step 6. Hooks 설치 (선택) ──", BOLD)
     p("Hooks는 실행 강제력을 95% 수준으로 높입니다.")
-    p("  - 절대 금지선 위반 차단 (pre_tool_call)")
-    p("  - 파일 저장 후 테스트 자동 실행 (post_tool_call)")
-    p("  - 컨텍스트 압축 후 금지선 복원 (pre_llm_call)")
-    p("  - 세션 시작 자동화 (on_session_start)")
 
     install_hooks = ask("\nHermes Hooks를 설치할까요? (y/n)", "y")
     if install_hooks.lower() == "y":
-        # Hermes Shell-Script Hook 설치 (.py 파일을 ~/.hermes/neo-hooks/에 복사)
         neo_hooks_dst = HERMES_DIR / "neo-hooks"
         neo_hooks_dst.mkdir(parents=True, exist_ok=True)
 
@@ -279,6 +305,7 @@ def main():
             "auto-test.py",
             "context-inject.py",
             "session-start.py",
+            "meta_consistency_check.py",
         ]
         hooks_src = NEO_ROOT / "hooks"
         copied = 0
@@ -293,13 +320,10 @@ def main():
             p(f"  ✓ Hermes Hook 스크립트 {copied}개 → ~/.hermes/neo-hooks/", GREEN)
         else:
             p("  ⚠ hooks/*.py 파일을 찾을 수 없습니다.", YELLOW)
-            p("    포팅 수정 가이드의 Step 1-6을 직접 실행하세요.", YELLOW)
 
-        # config.yaml 덮어쓰기 금지
         p("\n⚠️  config.yaml을 덮어쓰지 않습니다.", YELLOW)
         p("   Hook 설정을 config.yaml에 직접 추가하세요:", YELLOW)
         p("   hermes config edit", BOLD)
-        p("   → 포팅 수정 가이드 Step 1-7의 hooks: 블록을 추가\n", YELLOW)
 
     install_git = ask("Git pre-commit Hook을 설치할까요? (y/n)", "y")
     if install_git.lower() == "y":
@@ -319,7 +343,8 @@ def main():
     p("\n" + "=" * 55, GREEN)
     p("  Neo V1 설치 완료!", GREEN + BOLD)
     p("=" * 55, GREEN)
-    p(f"\n  프로젝트: {project_name}", BOLD)
+    p(f"\n  프로젝트: {project_name}")
+    p(f"  PROJECT_ID: {project_id}")
     p(f"  백엔드:   {backend}")
     p(f"  프론트:   {frontend}")
     p(f"  DB:       {database}")

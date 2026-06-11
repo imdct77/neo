@@ -250,7 +250,7 @@ These rules prevent over-engineering. Every role must follow them.
 ## Default Behavior
 
 When a request arrives:
-1. Check if a Neo skill in docs/skills/ applies (Neo project only)
+1. Check if a Neo skill in skills/ applies (Neo project only)
 2. If yes — load and follow the skill
 3. If uncertain — ask, do not assume and proceed
 

@@ -45,6 +45,12 @@ Task Brief 전달 직전
 세션 시작 시
   → docs/skills/neo-start.md 실행 (상태 복원·게이트 확인)
 
+도메인 완료 후 (finish.md MERGE/PR 선택 완료 시)
+  → skills/badcase-review.md 실행
+
+프로젝트 최종 완료 후 (MVP 완성 후)
+  → skills/badcase-distill.md 실행
+
 컨텍스트 문서 관리 요청 수신 시 (자연어)
   → docs/skills/ctx.md 실행
 
