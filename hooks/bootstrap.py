@@ -5,7 +5,7 @@
 git rev-parse를 호출하던 중복 구조를 이 단일 진입점으로 통합한다.
 
 사용법:
-    from bootstrap import HARNESS_ROOT, HOOKS_DIR, log_error, log_info
+    from bootstrap import HARNESS_ROOT, PROJECT_ROOT, HOOKS_DIR, log_error, log_info
 
 ⚠️ 주의: bootstrap.py는 import 시점에 sys.path를 수정한다.
 여러 훅을 같은 프로세스에서 직접 import로 테스트하면 의도치 않은
@@ -34,6 +34,27 @@ def _find_root() -> Path:
 HARNESS_ROOT = _find_root()
 HOOKS_DIR = HARNESS_ROOT / "hooks"
 sys.path.insert(0, str(HOOKS_DIR))
+
+
+def _find_project_root(harness_root: Path) -> Path:
+    """harness_root 기준으로 project 루트 디렉토리를 찾는다.
+
+    1. 환경변수: NEO_PROJECT_ROOT
+    2. 형제 디렉토리: {harness_root}/../project/
+    3. Fallback: harness_root (단일 레포 호환)
+    """
+    env_root = os.environ.get("NEO_PROJECT_ROOT")
+    if env_root:
+        p = Path(env_root)
+        if p.is_dir():
+            return p
+    sibling = (harness_root / ".." / "project").resolve()
+    if sibling.is_dir():
+        return sibling
+    return harness_root
+
+
+PROJECT_ROOT = _find_project_root(HARNESS_ROOT)
 
 
 def log_error(hook_name: str, error: str) -> None:

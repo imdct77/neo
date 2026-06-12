@@ -11,33 +11,7 @@ import json
 import os
 import sys
 from pathlib import Path
-
-
-def find_git_root() -> str | None:
-    try:
-        import subprocess
-        return subprocess.check_output(
-            ["git", "rev-parse", "--show-toplevel"],
-            text=True, stderr=subprocess.DEVNULL
-        ).strip()
-    except Exception:
-        return None
-
-
-def find_project_root(harness_root: str) -> str | None:
-    """harness_root 기준으로 project 루트 디렉토리를 찾는다.
-
-    1. 형제 디렉토리: {harness_root}/../project/
-    2. 환경변수: NEO_PROJECT_ROOT
-    둘 다 없으면 None → 체크 건너뜀.
-    """
-    sibling = os.path.normpath(os.path.join(harness_root, "..", "project"))
-    if os.path.isdir(sibling):
-        return sibling
-    env_root = os.environ.get("NEO_PROJECT_ROOT")
-    if env_root and os.path.isdir(env_root):
-        return env_root
-    return None
+from bootstrap import HARNESS_ROOT, PROJECT_ROOT
 
 
 def parse_index_md(path: str) -> set[str]:
@@ -136,18 +110,9 @@ def check_consistency(harness_root: str, project_root: str, scope: str) -> list[
 
 
 def main():
-    harness_root = find_git_root()
-    if not harness_root:
-        return
-
-    project_root = find_project_root(harness_root)
-    if not project_root:
-        # 프로젝트 레포가 아직 없으면 체크 건너뜀 (설치 초기 상태)
-        return
-
     all_issues = []
     for scope in ("be", "fe"):
-        all_issues.extend(check_consistency(harness_root, project_root, scope))
+        all_issues.extend(check_consistency(str(HARNESS_ROOT), str(PROJECT_ROOT), scope))
 
     if all_issues:
         warning = (

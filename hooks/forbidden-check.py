@@ -16,6 +16,8 @@ import sys
 import json
 import re
 import os
+from pathlib import Path
+from bootstrap import PROJECT_ROOT
 
 
 def main():
@@ -217,9 +219,7 @@ def _is_src_file(file_path: str) -> bool:
     절대경로·상대경로·경로 트래버설 모두 안전하게 처리.
     """
     try:
-        project_root = Path(
-            os.environ.get("NEO_PROJECT_ROOT", os.getcwd())
-        ).resolve()
+        project_root = PROJECT_ROOT.resolve()
         src_root = (project_root / "src").resolve()
 
         # 절대경로면 그대로 resolve, 상대경로면 PROJECT_ROOT 기준으로 해석
@@ -238,9 +238,7 @@ def _is_req_file(file_path: str) -> bool:
     _is_src_file()과 동일한 PROJECT_ROOT 기준 정규화 방식 사용.
     """
     try:
-        project_root = Path(
-            os.environ.get("NEO_PROJECT_ROOT", os.getcwd())
-        ).resolve()
+        project_root = PROJECT_ROOT.resolve()
         req_root = (project_root / "docs" / "requirements").resolve()
 
         p = Path(file_path)
