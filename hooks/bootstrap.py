@@ -63,6 +63,20 @@ def _find_project_root(harness_root: Path) -> Path:
 PROJECT_ROOT = _find_project_root(HARNESS_ROOT)
 
 
+def _load_project() -> dict:
+    """HARNESS_ROOT/project.json → PROJECT dict. 실패 시 {}."""
+    pj = HARNESS_ROOT / "project.json"
+    if pj.is_file():
+        try:
+            return json.loads(pj.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {}
+
+
+PROJECT = _load_project()
+
+
 def log_error(hook_name: str, error: str) -> None:
     """모든 훅이 실패 시 호출하는 표준 로깅 (stderr)."""
     print(json.dumps({

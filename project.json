@@ -1,0 +1,8 @@
+{
+  "project_id": "jggbgg-v1",
+  "project_name": "지글보글-v1",
+  "git": {
+    "harness": "https://github.com/imdct77/neo",
+    "project": "https://github.com/imdct77/jggbgg-v1"
+  }
+}

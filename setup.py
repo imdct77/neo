@@ -305,6 +305,20 @@ def main():
             json_module.dump(initial_state, f, ensure_ascii=False, indent=2)
         p(f"  ✓ .neo_state.json 초기화 (PROJECT_ID: {project_id})", GREEN)
 
+    # project.json 초기화 (§13)
+    project_json_path = NEO_ROOT / "project.json"
+    project_data = {
+        "project_id": project_id,
+        "project_name": project_name,
+        "git": {
+            "harness": "https://github.com/imdct77/neo",
+            "project": f"https://github.com/imdct77/{project_id}"
+        }
+    }
+    with open(project_json_path, "w") as f:
+        json_module.dump(project_data, f, ensure_ascii=False, indent=2)
+    p(f"  ✓ project.json 초기화", GREEN)
+
     # --------------------------------------------------------
     # Step 6. 플레이스홀더 치환
     # --------------------------------------------------------
@@ -322,6 +336,10 @@ def main():
     # .hermes.md (프로젝트 루트) — PROJECT_ID + PROJECT_NAME 치환
     replace_in_file(cwd / ".hermes.md", replacements)
     p(f"  ✓ .hermes.md — PROJECT_ID → {project_id}, PROJECT_NAME → {project_name}", GREEN)
+
+    # project.json — placeholder 치환
+    replace_in_file(project_json_path, replacements)
+    p(f"  ✓ project.json — PROJECT_ID → {project_id}, PROJECT_NAME → {project_name}", GREEN)
 
     # AGENTS.md
     agents_path = cwd / "AGENTS.md"
