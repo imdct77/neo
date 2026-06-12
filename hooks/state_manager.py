@@ -9,7 +9,7 @@
   .neo_state.json  →  결정론적 차단 기준 (이 파일이 관리)
   mem0             →  맥락 기반 복원과 대응 판단 (orchestrator가 관리)
   git 히스토리     →  시간적 상태 검증
-  docs/            →  설계 근거
+  project/docs/    →  설계 근거
 
 ⚠️ bootstrap.py를 먼저 import해야 한다.
 """

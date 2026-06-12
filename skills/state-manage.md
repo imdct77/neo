@@ -36,7 +36,7 @@ git 히스토리     →  시간적 상태 검증
                     meta staleness 감지에 활용
                     의미 있는 전환 시점에 git tag 생성
 
-docs/            →  설계 근거
+project/docs/    →  설계 근거
                     "무엇을 만들기로 했는가"
 ```
 
