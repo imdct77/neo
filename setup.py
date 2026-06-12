@@ -230,15 +230,7 @@ def main():
             shutil.copy2(src, dst)
             p(f"  ✓ docs/{fname}", GREEN)
 
-    # skills/ 복사
-    skills_src = NEO_ROOT / "skills"
-    skills_dst = docs_dst / "skills"
-    if skills_src.exists():
-        if skills_dst.exists():
-            shutil.rmtree(skills_dst)
-        shutil.copytree(skills_src, skills_dst)
-        skill_count = len(list(skills_dst.glob("*.md")))
-        p(f"  ✓ skills/ ({skill_count}개 스킬)", GREEN)
+    # skills/ — 배포 시 복사하지 않고 루트에 유지 (2026-06-12 통일 결정)
 
     # .neo_state.json 초기화 (§6-6)
     import json as json_module
@@ -350,7 +342,7 @@ def main():
 
     install_git = ask("Git pre-commit Hook을 설치할까요? (y/n)", "y")
     if install_git.lower() == "y":
-        git_hook_src = NEO_ROOT / "git-hooks" / "pre-commit"
+        git_hook_src = NEO_ROOT / "hooks" / "git" / "pre-commit"
         git_dir = cwd / ".git" / "hooks"
         if not git_dir.exists():
             p("  ⚠ .git 디렉토리를 찾을 수 없습니다. 'git init'을 먼저 실행해주세요.", YELLOW)

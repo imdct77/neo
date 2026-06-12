@@ -38,7 +38,7 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 | 디렉토리 | 생성 시점 | 역할 |
 |----------|----------|------|
-| `docs/skills/` | 설치 시 | Neo V1 참조 문서 모음. 상세는 `docs/skills/README.md` 참조. |
+| `skills/` | 설치 시 | Neo V1 참조 문서 모음. 상세는 `skills/README.md` 참조. |
 | `docs/design/` | Phase -1 | 전체 설계 문서. architecture·database·api·screens. |
 | `docs/requirements/` | Phase 0 | 도메인별 요구사항 (EARS 문법). |
 | `docs/tasks/` | Phase 1 | 도메인별 구현 태스크. BE·FE 분리. |
@@ -70,7 +70,7 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 | 디렉토리 | 역할 |
 |----------|------|
 | `hooks/` | Hermes Hooks 4개. 실행 강제력 ~95%. 설치: `hooks/HOOKS_SETUP.md` 참조. |
-| `git-hooks/` | Git pre-commit Hook. 코드 품질·보안·브랜치 보호. |
+| `hooks/git/` | Git pre-commit Hook. 코드 품질·보안·브랜치 보호. |
 
 ---
 

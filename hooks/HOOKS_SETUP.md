@@ -78,7 +78,7 @@ hermes --version   # Hermes 버전 확인
 
 ```bash
 # 프로젝트 루트에서 실행
-cp git-hooks/pre-commit .git/hooks/pre-commit
+cp hooks/git/pre-commit .git/hooks/pre-commit
 chmod +x .git/hooks/pre-commit
 
 # 동작 확인
