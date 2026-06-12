@@ -109,20 +109,38 @@ def check_consistency(harness_root: str, project_root: str, scope: str) -> list[
     return issues
 
 
-def main():
+def collect_all_issues() -> list[str]:
     all_issues = []
     for scope in ("be", "fe"):
         all_issues.extend(check_consistency(str(HARNESS_ROOT), str(PROJECT_ROOT), scope))
+    return all_issues
+
+
+def format_context_output(all_issues: list[str]) -> str:
+    if not all_issues:
+        return ""
+    return json.dumps({"context": (
+        "⚠️ [meta-consistency-check] meta 인덱스 불일치 발견. "
+        "meta 인덱스는 grep 대신 사용하는 코드 탐색 체계입니다. "
+        "불일치 상태에서는 유사 기능 탐색이 부정확할 수 있습니다.\n\n"
+        + "\n\n".join(all_issues)
+        + "\n\nNEO에게 'meta 인덱스 갱신'을 요청하세요."
+    )})
+
+
+def main():
+    all_issues = collect_all_issues()
+
+    if "--exit-code" in sys.argv:
+        if all_issues:
+            print("\n".join(all_issues), file=sys.stderr)
+            sys.exit(1)
+        else:
+            # silent success for git hook
+            sys.exit(0)
 
     if all_issues:
-        warning = (
-            "⚠️ [meta-consistency-check] meta 인덱스 불일치 발견. "
-            "meta 인덱스는 grep 대신 사용하는 코드 탐색 체계입니다. "
-            "불일치 상태에서는 유사 기능 탐색이 부정확할 수 있습니다.\n\n"
-            + "\n\n".join(all_issues)
-            + "\n\nNEO에게 'meta 인덱스 갱신'을 요청하세요."
-        )
-        print(json.dumps({"context": warning}))
+        print(format_context_output(all_issues))
 
 
 if __name__ == "__main__":
