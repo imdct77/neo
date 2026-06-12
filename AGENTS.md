@@ -15,7 +15,7 @@
 
 ```
 새 프로젝트 첫 세션 (mem0 기록 없음)
-  → docs/skills/design-init.md 실행 (진입점)
+  → skills/design-init.md 실행 (진입점)
   → 조건 충족 시 순서대로 자동 연결:
      architecture.md 조건 충족 → design-arch.md
      database.md 조건 충족    → design-db.md
@@ -23,27 +23,27 @@
      screens/ 조건 충족       → design-screens.md
 
 새 기능·API·컴포넌트 요청 수신 (진행 중인 프로젝트)
-  → docs/skills/phase0.md 먼저 실행 (설계 없이 구현 금지)
+  → skills/phase0.md 먼저 실행 (설계 없이 구현 금지)
   → Never skip Phase 0 before implementing a feature
 
 Task Brief 전달 직전
-  → docs/skills/gate.md 실행 (Q1~Q7 더블 체크)
+  → skills/gate.md 실행 (Q1~Q7 더블 체크)
   → Never bypass the Q1~Q7 gate before delivering a Task Brief
 
 구현 시작 전
   → Never implement without a Task Brief
 
 구현 완료 후
-  → docs/skills/review.md 실행 (구현한 역할이 자신의 코드 리뷰 금지)
+  → skills/review.md 실행 (구현한 역할이 자신의 코드 리뷰 금지)
 
 버그·오류 발생 시
-  → docs/skills/debug.md 실행 (증상 즉시 수정 금지)
+  → skills/debug.md 실행 (증상 즉시 수정 금지)
 
 모든 태스크 완료 후
-  → docs/skills/finish.md 실행 (MERGE·PR·KEEP·DISCARD 선택)
+  → skills/finish.md 실행 (MERGE·PR·KEEP·DISCARD 선택)
 
 세션 시작 시
-  → docs/skills/neo-start.md 실행 (상태 복원·게이트 확인)
+  → skills/neo-start.md 실행 (상태 복원·게이트 확인)
 
 도메인 완료 후 (finish.md MERGE/PR 선택 완료 시)
   → skills/badcase-review.md 실행
@@ -52,10 +52,10 @@ Task Brief 전달 직전
   → skills/badcase-distill.md 실행
 
 컨텍스트 문서 관리 요청 수신 시 (자연어)
-  → docs/skills/ctx.md 실행
+  → skills/ctx.md 실행
 
 Phase 전환·태스크 시작·완료·BLOCKED 시점
-  → docs/skills/kanban.md 규칙 적용
+  → skills/kanban.md 규칙 적용
 ```
 
 이 규칙을 위반하면 사용자의 신뢰를 잃는다.
@@ -169,7 +169,7 @@ backend_profile.md                ← BE 관점 (미리 로드)
 frontend_profile.md               ← FE 관점 (미리 로드)
 
 [작업 시 선택적 로드]
-docs/skills/{skill}.md            ← 트리거 조건 시 자동 로드·실행 후 언로드
+skills/{skill}.md            ← 트리거 조건 시 자동 로드·실행 후 언로드
 requirements/{DOMAIN}/            ← 자연어 요청으로 로드
 tasks/{DOMAIN}/                   ← 자연어 요청으로 로드
 tests/{DOMAIN}/                   ← 자연어 요청으로 로드
@@ -179,13 +179,15 @@ briefs/{DOMAIN}/{TASK_ID}.md      ← Task Brief 전달 시
 .hermes.md는 AGENTS.md보다 우선하며 컨텍스트 압축에서 가장 오래 살아남는다.
 SOUL.md는 전역 정체성으로 모든 세션에 적용된다.
 
-**소스 코드 위치**: 모든 구현 코드는 `src/be/`(백엔드)와 `src/fe/`(프론트엔드) 아래에 둔다. 상세 디렉토리 구조는 `orchestrator_profile.md` §5-1을 참조한다.
+**소스 코드 위치**: 모든 구현 코드는 `src/be/`(백엔드)와 `src/fe/`(프론트엔드) 아래에 둔다.
+상세 디렉토리 구조·파일명 규칙·ID 체계는 `AGENTS.md §7`을 참조한다.
 
 ---
 
-## 4-1. 도메인별 문서 로딩 전략
+## 4-1. 도메인별 문서 로딩
 
 NEO는 현재 작업 중인 도메인의 문서만 컨텍스트에 로드한다.
+상세 로딩 절차는 `skills/ctx.md`를 따른다.
 
 ### 항상 로드하는 문서 (고정)
 
@@ -196,53 +198,19 @@ docs/design/ (있으면 로드)
   architecture.md·database.md·api/·screens/
 ```
 
-### 컨텍스트 문서 관리 명령어 세트
+### 컨텍스트 문서 관리 명령어
 
-상세 흐름은 docs/skills/ctx.md 스킬에 정의되어 있다.
+| 명령어 | 동작 |
+|--------|------|
+| "컨텍스트 문서 목록" / "현재 로딩 문서" | 현재 로딩된 문서 목록 + 마지막 작업 날짜 조회 |
+| "도메인 문서 로딩해줘" / "{DOMAIN} 문서 추가" | 도메인 선택 → 문서 그룹 선택 → 로드 |
+| "도메인 문서 제거해줘" / "{DOMAIN} 문서 빼줘" | 현재 목록 출력 → 번호 선택 → 제거 |
 
-| 명령어 | 동의어 | 동작 |
-|--------|--------|------|
-| "컨텍스트 문서 목록" 또는 "현재 로딩 문서" | 현재 로딩된 문서 목록 + 마지막 작업 날짜 조회 |
-| "도메인 문서 로딩해줘" 또는 "{DOMAIN} 문서 추가" | 도메인 선택 → 문서 그룹 선택 → 로드 |
-| "도메인 문서 제거해줘" 또는 "{DOMAIN} 문서 빼줘" | 현재 목록 출력 → 번호 선택 → 제거 |
-
-도메인 목록은 docs/requirements/ 하위 디렉토리를 실제로 읽어 동적으로 구성한다.
-
-### 도메인 작업 날짜 자동 갱신 규칙
-
-```
-매 턴 종료 시 실질적인 작업이 있었던 도메인마다:
-  mem0 저장: "NEO: {DOMAIN} 마지막 작업 {YYYY-MM-DD}"
-단순 대화(작업 없이 질문·답변만 있었던 턴)는 갱신하지 않는다.
-```
+도메인 목록은 `docs/requirements/` 하위 디렉토리를 읽어 동적으로 구성한다.
 
 ---
 
-## 4-2. 스킬 자동 트리거 규칙
-
-> 상단 ABSOLUTE RULES의 스킬 트리거를 참조한다.
-> 각 스킬의 상세 실행 흐름은 해당 스킬 파일에 정의되어 있다.
-
-```
-트리거 → 스킬 파일 매핑:
-  새 기능·API·컴포넌트 작업 전 → docs/skills/phase0.md
-  Task Brief 전달 직전          → docs/skills/gate.md
-  구현 완료 후                  → docs/skills/review.md
-  버그·오류 발생 시              → docs/skills/debug.md
-  모든 태스크 완료 후            → docs/skills/finish.md
-  세션 시작 시                  → docs/skills/neo-start.md
-  컨텍스트 문서 관리 (자연어)    → docs/skills/ctx.md
-```
-
-스킬 실행 순서:
-  1. 트리거 조건 감지
-  2. 해당 스킬 파일 읽기
-  3. 스킬 지시에 따라 실행
-  4. 완료 후 스킬 파일 언로드 (컨텍스트 절약)
-
----
-
-## 4-3. 병렬 처리 정책 (delegate_task)
+## 4-2. 병렬 처리 정책 (delegate_task)
 
 NEO는 독립 태스크가 2개 이상일 때 병렬 처리를 적극 활용한다.
 delegate_task는 Hermes의 실제 도구로 최대 3개를 동시 실행할 수 있다.
@@ -391,7 +359,81 @@ FAIL → 원인 분석 → 수정 → 재검증 → PASS 반복
 
 ---
 
-## 7. 브랜치 전략
+## 7. 디렉토리 구조·파일명·ID 체계
+
+### 7-1. 전체 디렉토리 구조
+
+```
+프로젝트 루트/
+  AGENTS.md                   ← 프로젝트 헌법 (Hermes 자동 주입)
+  .hermes.md                  ← 최우선 금지선 (Hermes 자동 주입)
+  .neo_state.json             ← 구조적 상태 SSoT (git 관리)
+  .neo_state_archive.jsonl    ← lifecycle_history 오버플로우 (gitignore)
+  workflow.md                 ← 업무 절차서
+
+/src
+  /be                         ← 백엔드 소스 (하위 구조는 BE가 결정)
+  /fe                         ← 프론트엔드 소스 (하위 구조는 FE가 결정)
+
+/docs
+  design/                     ← 아키텍처·DB·API·화면 설계
+    architecture.md·database.md·api/·screens/
+  skills/                     ← Neo 스킬 파일
+  meta/                       ← 코드 메타 인덱스 (grep 대체)
+    README.md
+    src/
+      INDEX.md
+      be/ INDEX.md / DETAIL.md / DETAIL.{file}.md
+      fe/ INDEX.md / DETAIL.md / DETAIL.{file}.md
+  specs/                      ← 기능별 상세 설계 (YYYY-MM-DD-{topic}-design.md)
+  plans/                      ← Phase 3 Plan 문서
+  requirements/{DOMAIN}/{DOMAIN}.md
+  tasks/{DOMAIN}/{DOMAIN}_{BE|FE}_tasks.md
+  tests/{DOMAIN}/{DOMAIN}_tests.md
+  briefs/{DOMAIN}/{TASK_ID}.md
+  qa/                         ← QA 감리 보고서
+  issues/                     ← 이슈별 대화 이력 (진행 중)
+  archive/issues/             ← 종료된 이슈 이력
+
+[프로젝트 루트]               ← 프로필 파일 위치
+  orchestrator_profile.md
+  architect_profile.md
+  frontend_profile.md
+  backend_profile.md
+  qa_profile.md
+```
+
+### 7-2. 파일명 규칙
+
+```
+requirements : {DOMAIN}/{DOMAIN}.md
+tasks        : {DOMAIN}_{ROLE}_tasks.md
+tests        : {DOMAIN}_tests.md
+briefs       : {도메인 영문}.{역할}.{순번:3자리}.md
+               예) AUTH.BE.001.md, USER.FE.003.md
+
+meta (L1)    : docs/meta/src/INDEX.md
+               docs/meta/src/{be|fe}/INDEX.md
+               docs/meta/src/{be|fe}/{subdir}/INDEX.md
+meta (L2)    : docs/meta/src/{be|fe}/DETAIL.md
+               docs/meta/src/{be|fe}/{subdir}/DETAIL.md
+meta (L3)    : docs/meta/src/{be|fe}/{subdir}/DETAIL.{filename}.md
+```
+
+### 7-3. ID 체계
+
+```
+태스크 ID      : {도메인 영문}.{역할}.{순번:3자리}
+                 예) AUTH.BE.001, USER.FE.003
+단위 테스트 ID : TEST.{DOMAIN}.{BE|FE}.{순번:3자리}
+통합 테스트 ID : TEST.INT.{DOMAIN}.{순번:3자리}
+변경 요청 ID   : CR-{순번:3자리}
+                 예) CR-001, CR-002
+```
+
+---
+
+## 8. 브랜치 전략
 
 ```
 main      ← 배포 가능 상태. NEO 승인 없이 직접 push 금지
@@ -402,7 +444,7 @@ hotfix/{이슈}      ← 긴급 수정 전용
 
 ---
 
-## 8. PR 병합 조건
+## 9. PR 병합 조건
 
 **Git Hook이 이미 보장한 것 (커밋 시점 자동 실행)**
 - 단위 테스트 전항목 통과
@@ -420,7 +462,7 @@ hotfix/{이슈}      ← 긴급 수정 전용
 
 ---
 
-## 9. 문서 품질 원칙
+## 10. 문서 품질 원칙
 
 모든 역할이 생성하는 문서는 다음 사실을 전제로 작성한다.
 
@@ -431,7 +473,7 @@ hotfix/{이슈}      ← 긴급 수정 전용
 
 ---
 
-## 10. 공통 실패 패턴
+## 11. 공통 실패 패턴
 
 역할과 무관하게 반복적으로 빠지는 함정이다.
 

@@ -1,15 +1,51 @@
 ---
 name: badcase-review
-description: 도메인 완료 시 BADCASE 집계 분석 및 규칙 적용. finish.md MERGE/PR 선택 후 자동 실행.
+description: 도메인 완료 시 BADCASE 집계 분석 및 규칙 적용. finish.md MERGE/PR 선택 후 자동 실행. 작업 중 BADCASE 즉시 기록 절차도 포함.
 triggers:
   - 도메인 완료 후
   - finish.md MERGE/PR 선택 후
   - DISCARD 선택 후 (버린 작업에서도 학습은 유효)
+  - 구현·리뷰 중 문제 발견 시 (Step 0 즉시 기록)
 ---
 
-# ⚠️ 이 파일은 Hermes 내장 스킬이 아닙니다. NEO가 조건에 따라 직접 읽어 따르는 Neo V1 참조 문서입니다.
+# ⚠️ 이 파일은 Hermes 내장 스킬이 아닙니다. NEO가 조건에 따라 직접 읽어 따르는 참조 문서입니다.
 
-# badcase-review — 도메인 단위 학습 루틴
+# badcase-review — BADCASE 기록 및 도메인 단위 학습 루틴
+
+---
+
+## Step 0. BADCASE 즉시 기록 (작업 중 문제 발견 시)
+
+> **트리거**: 구현 중, review.md 실행 중, 또는 debug.md 실행 중
+> 문제를 발견한 그 순간 기록한다. 도메인 완료를 기다리지 않는다.
+> 늦게 기록할수록 맥락이 희미해진다.
+
+### 기록 시점 판단 기준
+
+```
+아래 중 하나라도 해당하면 즉시 기록:
+  □ 구현 중 설계 오류를 발견한 경우
+  □ review.md에서 Critical 또는 Important 이슈가 발견된 경우
+  □ debug.md 실행 결과 근본 원인이 설계·요구사항 단계에 있는 경우
+  □ 동일한 실수가 이번 도메인에서 두 번 이상 반복된 경우
+  □ BLOCKED 3회 이상 발생한 경우
+```
+
+### BADCASE 기록 형식
+
+기록 형식(헤더·상세·필드 정의·예시)은 `skills/review.md §BADCASE 기록` 을 따른다.
+`SOURCE` 필드는 `내부검토(review)` 고정. `MODEL` 필드는 `NONE` 고정.
+
+### 기록 후 처리
+
+```
+FIX_APPLIED=NO로 기록 후:
+  → 즉시 수정 가능하면: 수정 → FIX_APPLIED=YES로 갱신
+  → 즉시 수정 불가능하면: 칸반에 BADCASE 처리 태스크 추가
+  → 도메인 완료 시 Step 1~7에서 자동 집계됨
+```
+
+---
 
 ## Step 1. 이번 도메인 BADCASE 전체 조회
 
