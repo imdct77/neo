@@ -13,7 +13,7 @@
 
 ⚠️ bootstrap.py를 먼저 import해야 한다.
 """
-from bootstrap import PROJECT_ROOT, log_error
+from bootstrap import HARNESS_ROOT, log_error
 
 import json
 import os
@@ -171,7 +171,7 @@ def validate_state(state: dict) -> list[str]:
 
 def read_state() -> dict:
     """현재 상태 읽기. 파일 없으면 기본값 반환."""
-    state_file = PROJECT_ROOT / ".neo_state.json"
+    state_file = HARNESS_ROOT / "state" / ".neo_state.json"
     if not state_file.exists():
         return _default_state()
 
@@ -188,7 +188,7 @@ def read_state() -> dict:
 
 def write_state(state: dict) -> None:
     """상태 저장. phase_history 오버플로우는 아카이브로 이동."""
-    state_file = PROJECT_ROOT / ".neo_state.json"
+    state_file = HARNESS_ROOT / "state" / ".neo_state.json"
 
     # 각 도메인의 lifecycle_history 초과분 아카이브
     for domain, ds in state.get("domains", {}).items():
@@ -205,7 +205,7 @@ def write_state(state: dict) -> None:
 
 def _append_archive(domain: str, entries: list) -> None:
     """초과 lifecycle_history를 .neo_state_archive.jsonl에 추가."""
-    archive_file = PROJECT_ROOT / ".neo_state_archive.jsonl"
+    archive_file = HARNESS_ROOT / "state" / ".neo_state_archive.jsonl"
     with open(archive_file, "a") as f:
         for entry in entries:
             f.write(json.dumps(
@@ -580,7 +580,7 @@ def _get_current_commit() -> str:
 
 
 def check_meta_in_commit(commit: str) -> dict:
-    """해당 커밋에 포함된 docs/meta/ 변경 파일 목록 반환."""
+    """해당 커밋에 포함된 state/meta/ 변경 파일 목록 반환."""
     if not commit:
         return {"included": False, "files": []}
     try:
@@ -590,7 +590,7 @@ def check_meta_in_commit(commit: str) -> dict:
         )
         meta_files = [
             line.strip() for line in result.splitlines()
-            if line.strip().startswith("docs/meta/")
+            if line.strip().startswith("state/meta/")
         ]
         return {"included": bool(meta_files), "files": meta_files}
     except Exception:

@@ -5,7 +5,7 @@
 git rev-parse를 호출하던 중복 구조를 이 단일 진입점으로 통합한다.
 
 사용법:
-    from bootstrap import PROJECT_ROOT, HOOKS_DIR, log_error, log_info
+    from bootstrap import HARNESS_ROOT, HOOKS_DIR, log_error, log_info
 
 ⚠️ 주의: bootstrap.py는 import 시점에 sys.path를 수정한다.
 여러 훅을 같은 프로세스에서 직접 import로 테스트하면 의도치 않은
@@ -26,13 +26,13 @@ def _find_root() -> Path:
     except Exception:
         cwd = Path.cwd()
         for p in [cwd] + list(cwd.parents):
-            if (p / ".neo_state.json").exists():
+            if (p / "state" / ".neo_state.json").exists():
                 return p
         return cwd
 
 
-PROJECT_ROOT = _find_root()
-HOOKS_DIR = PROJECT_ROOT / "hooks"
+HARNESS_ROOT = _find_root()
+HOOKS_DIR = HARNESS_ROOT / "hooks"
 sys.path.insert(0, str(HOOKS_DIR))
 
 

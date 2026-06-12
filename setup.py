@@ -236,7 +236,9 @@ def main():
     import json as json_module
     from datetime import datetime as _dt
 
-    state_file = cwd / ".neo_state.json"
+    state_dir = NEO_ROOT / "state"
+    state_dir.mkdir(exist_ok=True)
+    state_file = state_dir / ".neo_state.json"
     if not state_file.exists():
         initial_state = {
             "project_id": project_id,
