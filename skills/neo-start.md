@@ -55,8 +55,8 @@ git tag | grep "neo/"
 ```
 AGENTS.md 로드 확인 (이미 로드됐으면 생략)
 
-docs/design/ (선택):
-  프로젝트에 docs/design/ 문서가 있으면 관련 파일을 로드한다.
+project/docs/design/ (선택):
+  프로젝트에 project/docs/design/ 문서가 있으면 관련 파일을 로드한다.
   (architecture.md·database.md·api/·screens/)
   없으면 생략.
 ```
@@ -173,17 +173,17 @@ BLOCKED가 있으면 보고에 최우선으로 포함한다.
        --deps {의존_도메인1} {의존_도메인2}  # 없으면 생략
 
 □ 1. 디렉토리 생성
-     docs/requirements/{DOMAIN}/
-     docs/tasks/{DOMAIN}/
-     docs/tests/{DOMAIN}/
-     docs/briefs/{DOMAIN}/
+     project/docs/requirements/{DOMAIN}/
+     project/docs/tasks/{DOMAIN}/
+     project/docs/tests/{DOMAIN}/
+     project/docs/briefs/{DOMAIN}/
 
-□ 2. workflow.md Step 4-2 E2E 시나리오 업데이트
+□ 2. harness/works/workflow.md Step 4-2 E2E 시나리오 업데이트
 
 □ 3. design 문서 갱신
-     docs/design/database.md — 새 도메인 테이블 추가
-     docs/design/api/api.md  — 새 도메인 API 목록 추가
-     docs/design/screens/screens.md — 새 화면 목록 추가
+     project/docs/design/database.md — 새 도메인 테이블 추가
+     project/docs/design/api/api.md  — 새 도메인 API 목록 추가
+     project/docs/design/screens/screens.md — 새 화면 목록 추가
 
 □ 4. AGENTS.md 절대 금지선 검토 (새 도메인 고유 항목 있으면 추가)
 
@@ -208,9 +208,9 @@ BLOCKED가 있으면 보고에 최우선으로 포함한다.
   최대 3개씩 병렬 배치.
 
 Plan 저장 경로:
-  설계 문서:  docs/specs/YYYY-MM-DD-{topic}-design.md
-  Plan 문서:  docs/plans/YYYY-MM-DD-{feature}.md
-  Task Brief: docs/briefs/{DOMAIN}/{TASK_ID}.md
+  설계 문서:  project/docs/specs/YYYY-MM-DD-{topic}-design.md
+  Plan 문서:  project/docs/plans/YYYY-MM-DD-{feature}.md
+  Task Brief: project/docs/briefs/{DOMAIN}/{TASK_ID}.md
 ```
 
 ---

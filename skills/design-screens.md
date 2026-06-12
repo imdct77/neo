@@ -19,11 +19,11 @@ triggers:
 ## 도메인 구분 원칙
 
 ```
-데이터 도메인: docs/requirements/{DOMAIN}/
+데이터 도메인: project/docs/requirements/{DOMAIN}/
   → 단일 백엔드 도메인 중심 화면
   → 예) 레시피 상세, 유저 프로필
 
-복합 화면 도메인: docs/requirements/ui_{화면명}/
+복합 화면 도메인: project/docs/requirements/ui_{화면명}/
   → 여러 백엔드 도메인 데이터를 조합하는 화면
   → 예) ui_home, ui_search, ui_feed, ui_dashboard
 
@@ -38,7 +38,7 @@ triggers:
 ## 디렉토리 구조
 
 ```
-docs/design/screens/
+project/docs/design/screens/
   screens.md                          ← 전체 화면 카탈로그 (인덱스)
   {화면도메인명}/
     spec.md                           ← 최종 확정 화면 스펙 (항상 최신)
@@ -149,7 +149,7 @@ FE! → spec.md의 각 STATE에 대해:
 ### Step 3. NEO! → tests_templ.md 형식으로 저장
 
 ```
-FE 도출 결과를 docs/tests/{DOMAIN}/{DOMAIN}_tests.md에 저장:
+FE 도출 결과를 project/docs/tests/{DOMAIN}/{DOMAIN}_tests.md에 저장:
 
   테스트 ID: TEST.{DOMAIN}.FE.{순번:3자리}
   화면: {spec.md 경로}
@@ -165,7 +165,7 @@ FE 도출 결과를 docs/tests/{DOMAIN}/{DOMAIN}_tests.md에 저장:
 ```
 NEO!:
   "{화면명}의 STATE {N}개에서 테스트 케이스 {M}개를 도출했습니다.
-   docs/tests/{DOMAIN}/{DOMAIN}_tests.md에 저장했습니다.
+   project/docs/tests/{DOMAIN}/{DOMAIN}_tests.md에 저장했습니다.
    검토해주세요."
 ```
 

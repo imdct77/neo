@@ -23,7 +23,7 @@ FE가 "이 필드가 필요하다"면 BE가 "구조를 바꿔야 한다"고 반�
 ## 디렉토리 구조
 
 ```
-docs/design/api/
+project/docs/design/api/
   api.md                              ← 전체 API 카탈로그 (인덱스)
   endpoints/
     {METHOD}_{path_슬래시→언더스코어}/

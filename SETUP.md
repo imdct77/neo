@@ -65,20 +65,33 @@ setup.py가 아래를 자동으로 처리합니다:
 ### Step 1. 파일 배치
 
 ```
-프로젝트 루트/
-  .hermes.md          ← 이 파일 복사 (최우선 절대 금지선)
-  AGENTS.md           ← 이 파일 복사 (프로젝트 헌법)
-  docs/
-    orchestrator_profile.md
-    architect_profile.md
-    backend_profile.md
-    frontend_profile.md
-    workflow.md
-    task_brief_templ.md
-    tasks_templ.md
-    tests_templ.md
-    skills/
-      (스킬 파일들)
+neo/                          ← 부모 디렉토리
+├── harness/                  ← imdct77/neo (하네스)
+│   ├── .hermes.md
+│   ├── AGENTS.md
+│   ├── SOUL.md
+│   ├── project.json
+│   ├── profiles/
+│   │   ├── orchestrator_profile.md
+│   │   ├── architect_profile.md
+│   │   ├── backend_profile.md
+│   │   ├── frontend_profile.md
+│   │   └── qa_profile.md
+│   ├── skills/               ← Neo 스킬
+│   └── works/
+│       ├── workflow.md
+│       ├── task_brief_templ.md
+│       ├── tasks_templ.md
+│       └── tests_templ.md
+│
+└── project/                  ← imdct77/{project_id} (프로젝트)
+    ├── src/
+    │   ├── be/
+    │   └── fe/
+    └── docs/
+
+> harness는 Neo 도구·규칙·상태를, project는 프로젝트 산출물·소스코드를 담는다.
+> 양쪽은 별도 Git 레포로 관리된다.
 ```
 
 ### Step 2. SOUL.md 설치 (전역 — 최초 1회)
@@ -102,10 +115,10 @@ cp SOUL.md ~/.hermes/SOUL.md
   SOUL.md      — 이미 설치됐으면 프로젝트명만 업데이트
 ```
 
-### Step 4. docs/design/ 작성 (권장)
+### Step 4. project/docs/design/ 작성 (권장)
 
 ```
-docs/design/
+project/docs/design/
   architecture.md  ← 아키텍처·운영·보안 (design-arch 스킬)
   database.md      ← DB 스키마·갱신 정책 (design-db 스킬)
   api/             ← API 카탈로그·협업 루프 (design-api 스킬)
@@ -115,7 +128,7 @@ docs/design/
 이 파일은 **선택 사항**이지만 있으면 AC 검토 품질이 크게 향상됩니다.
 
 없어도 Neo는 동작합니다:
-  - docs/design/ 없음 → docs/specs/ 설계 문서로 대체
+  - project/docs/design/ 없음 → project/docs/specs/ 설계 문서로 대체
   - AC 검토 시 "기존 설계 문서가 없습니다. 이 기능이 첫 설계입니다." 로 처리
 
 있으면 Neo가 자동 로드합니다:
@@ -137,10 +150,11 @@ docs/design/
 ```bash
 # Hermes Hook 스크립트 복사
 mkdir -p ~/.hermes/neo-hooks/
-cp hooks/forbidden-check.py ~/.hermes/neo-hooks/
-cp hooks/auto-test.py       ~/.hermes/neo-hooks/
-cp hooks/context-inject.py  ~/.hermes/neo-hooks/
-cp hooks/session-start.py   ~/.hermes/neo-hooks/
+cp harness/hooks/forbidden-check.py ~/.hermes/neo-hooks/
+cp harness/hooks/auto-test.py       ~/.hermes/neo-hooks/
+cp harness/hooks/context-inject.py  ~/.hermes/neo-hooks/
+cp harness/hooks/session-start.py   ~/.hermes/neo-hooks/
+cp harness/hooks/meta_consistency_check.py ~/.hermes/neo-hooks/
 chmod +x ~/.hermes/neo-hooks/*.py
 
 # config.yaml에 Hook 블록 추가 (덮어쓰기 금지 — 기존 설정 보존)
@@ -169,8 +183,8 @@ hermes hooks test pre_llm_call
 hermes hooks test on_session_start
 
 # Git Hooks
-cp git-hooks/pre-commit .git/hooks/pre-commit
-chmod +x .git/hooks/pre-commit
+cp harness/hooks/git/pre-commit project/.git/hooks/pre-commit
+chmod +x project/.git/hooks/pre-commit
 ```
 
 설치 후 실행 강제력:
@@ -179,7 +193,7 @@ chmod +x .git/hooks/pre-commit
   컨텍스트 압축 후 금지선 복원 (매 턴)  → 100%
   커밋 시 pytest·린트·보안 스캔         → 100%
 
-상세 안내: hooks/HOOKS_SETUP.md 참조
+상세 안내: harness/hooks/HOOKS_SETUP.md 참조
 
 ### Step 4-2. 칸반 초기화
 
@@ -211,11 +225,11 @@ BLOCKED 발생 시 즉시 알림을 받습니다.
 → 아이디어 구체화 대화 시작
 → 산출물 순서대로 생성:
    AGENTS.md 완성
-   docs/design/architecture.md
-   docs/design/database.md
-   docs/design/api/
-   docs/design/screens/
-   docs/requirements/{첫 도메인}/
+   project/docs/design/architecture.md
+   project/docs/design/database.md
+   project/docs/design/api/
+   project/docs/design/screens/
+   project/docs/requirements/{첫 도메인}/
 
 [이어서 진행하는 세션인 경우]
 → 이전 상태 복원 + 작업 계속
@@ -268,7 +282,7 @@ BLOCKED 발생 시 즉시 알림을 받습니다.
 Neo가 작업을 진행하면서 아래 파일들이 자동으로 생성됩니다.
 
 ```
-docs/
+project/docs/
   specs/          ← Phase 0 AC 설계 문서
   requirements/   ← 도메인별 요구사항 (EARS 문법)
     {DOMAIN}/
@@ -283,8 +297,7 @@ docs/
   briefs/         ← Task Brief (태스크별 작업 지시서)
     {DOMAIN}/
       {TASK_ID}.md
-  superpowers/
-    plans/        ← Phase 3 Plan 문서
+  plans/          ← Phase 3 Plan 문서
   issues/          ← 이슈별 대화 이력 (진행 중)
   archive/issues/  ← 종료된 이슈 이력
   design/

@@ -30,7 +30,7 @@ Step 4. mem0 저장: "AC: architecture.md 확정, 날짜: {YYYY-MM-DD}"
 ## 파일 위치
 
 ```
-docs/design/architecture.md
+project/docs/design/architecture.md
 ```
 
 ---

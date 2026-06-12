@@ -13,7 +13,7 @@ triggers:
 
 # state-manage — 상태 관리 명령어 레퍼런스
 
-상태 전환 판단 기준과 에스컬레이션 규칙은 `orchestrator_profile.md §4-2, §4-3`에 있다.
+상태 전환 판단 기준과 에스컬레이션 규칙은 `harness/profiles/orchestrator_profile.md §4-2, §4-3`에 있다.
 이 파일은 판단이 끝난 후 **어떻게 실행하는가**를 담는다.
 
 ---
@@ -237,9 +237,9 @@ BLOCKED 규칙:
   같은 BLOCKER 3회 → Phase 0 재진입 권고
 
 issues/ 이슈 연동:
-  복잡한 설계 결정 → docs/issues/{날짜}-{이슈}.md 생성
+  복잡한 설계 결정 → project/docs/issues/{날짜}-{이슈}.md 생성
   칸반 태스크 --body에 파일 경로 연결
-  종료 → docs/archive/issues/ 이동 + docs/design/decisions.md 반영
+  종료 → project/docs/archive/issues/ 이동 + project/docs/design/decisions.md 반영
 ```
 
 ---

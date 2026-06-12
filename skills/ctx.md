@@ -25,11 +25,11 @@ triggers:
 | `/ctx add` | "도메인 문서 로딩해줘", "{DOMAIN} 문서 추가해줘" |
 | `/ctx drop` | "도메인 문서 제거해줘", "{DOMAIN} 문서 빼줘" |
 
-도메인 목록은 docs/requirements/ 하위 디렉토리를 실제로 읽어 동적으로 구성한다.
+도메인 목록은 project/docs/requirements/ 하위 디렉토리를 실제로 읽어 동적으로 구성한다.
 
 도메인 문서의 로딩·제거·조회를 담당하는 스킬이다.
 도메인 목록은 고정이 아니다.
-docs/requirements/ 하위 디렉토리를 실제로 읽어 동적으로 구성한다.
+project/docs/requirements/ 하위 디렉토리를 실제로 읽어 동적으로 구성한다.
 새 디렉토리가 생기면 자동으로 목록에 포함된다.
 
 ## /ctx — 현재 로딩 문서 조회
@@ -40,13 +40,13 @@ NEO:
 
    [항상 로드 — 제거 불가]
    - AGENTS.md
-   - docs/design/ 관련 파일 (있는 경우)
+   - project/docs/design/ 관련 파일 (있는 경우)
      architecture.md·database.md·api/·screens/
 
    [도메인 문서]
-   1. requirements/{DOMAIN}/   (마지막 작업: {날짜}, {N}일 전)
+   1. project/docs/requirements/{DOMAIN}/   (마지막 작업: {날짜}, {N}일 전)
       1-1. {DOMAIN}.md
-   2. tasks/{DOMAIN}/          (마지막 작업: {날짜}, {N}일 전)
+   2. project/docs/tasks/{DOMAIN}/          (마지막 작업: {날짜}, {N}일 전)
       2-1. {DOMAIN}_BE_tasks.md
       2-2. {DOMAIN}_FE_tasks.md
 
@@ -65,7 +65,7 @@ NEO:
 Step 1. 도메인 선택
   NEO:
     "어떤 도메인의 문서를 추가하시겠습니까?
-     [docs/requirements/ 하위 디렉토리 기반으로 자동 목록 생성]
+     [project/docs/requirements/ 하위 디렉토리 기반으로 자동 목록 생성]
      {번호}. {DOMAIN} ({도메인명})
      번호 또는 도메인명을 입력해주세요."
 

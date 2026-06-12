@@ -11,12 +11,12 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 | 파일 | 역할 |
 |------|------|
-| `SETUP.md` | 새 프로젝트 설치 가이드. 플레이스홀더 작성법·Hooks 설치 안내. |
-| `SOUL.md` | `~/.hermes/SOUL.md`에 설치. NEO의 전역 정체성. 모든 세션에 적용. |
-| `.hermes.md` | 프로젝트 루트에 배치. Omission Constraints 템플릿. Hermes 최우선 로드. |
-| `AGENTS.md` | 프로젝트 헌법. 역할·스택·절대 금지선·게이트·브랜치 전략. |
-| `setup.py` | 설치 자동화 스크립트. 플레이스홀더 자동 치환·Hooks 설치. |
-| `workflow.md` | NEO 업무 절차서. Phase -1~4 전체 흐름. 모든 프로젝트 공통. |
+| `SETUP.md` | `harness/` | 새 프로젝트 설치 가이드. 플레이스홀더 작성법·Hooks 설치 안내. |
+| `SOUL.md` | `harness/` → `~/.hermes/SOUL.md`에 설치. NEO의 전역 정체성. 모든 세션에 적용. |
+| `.hermes.md` | `harness/` | Omission Constraints 템플릿 + Project Identity에 배치. Omission Constraints 템플릿. Hermes 최우선 로드. |
+| `AGENTS.md` | `harness/` | 프로젝트 헌법. 역할·스택·절대 금지선·게이트·브랜치 전략. |
+| `setup.py` | `harness/` | 설치 자동화 스크립트. 플레이스홀더 자동 치환·Hooks 설치. |
+| `project.json` | `harness/` | 프로젝트 메타데이터 SSoT (project_id, git URLs). | Phase -1~4 전체 흐름. 모든 프로젝트 공통. |
 
 ---
 
@@ -24,32 +24,45 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 | 파일 | 역할 코드 | 역할 |
 |------|----------|------|
-| `orchestrator_profile.md` | NEO | Orchestrator. 사람과 소통·전체 조율. 기본 프로필. |
-| `architect_profile.md` | AC | 아키텍처 검토·게이트 담당. |
-| `backend_profile.md` | BE | 백엔드 구현 전담. |
-| `frontend_profile.md` | FE | 프론트엔드 구현 전담. |
-| `qa_profile.md` | QA | 감리 전담. **반드시 다른 LLM 모델로 동작.** |
+| `harness/profiles/orchestrator_profile.md` | NEO | Orchestrator. 사람과 소통·전체 조율. 기본 프로필. |
+| `harness/profiles/architect_profile.md` | AC | 아키텍처 검토·게이트 담당. |
+| `harness/profiles/backend_profile.md` | BE | 백엔드 구현 전담. |
+| `harness/profiles/frontend_profile.md` | FE | 프론트엔드 구현 전담. |
+| `harness/profiles/qa_profile.md` | QA | 감리 전담. **반드시 다른 LLM 모델로 동작.** |
 
 ---
 
-## docs/ 하위 디렉토리 구조
+## 디렉토리 구조
 
-프로젝트 진행 중 아래 디렉토리들이 생성됩니다.
+### harness/ (imdct77/neo) — 도구·규칙·상태
+
+| 디렉토리 | 역할 |
+|----------|------|
+| `harness/hooks/` | Hermes + Git 훅. 실행 강제력. |
+| `harness/profiles/` | 역할별 프로필 파일. |
+| `harness/skills/` | Neo 스킬 (트리거 조건 시 자동 로드). 상세: `harness/skills/README.md` |
+| `harness/works/` | 업무 파이프라인 템플릿. |
+| `harness/state/` | Neo 구조적 상태. `.neo_state.json`, 메타 인덱스. |
+| `harness/state/meta/` | 코드 메타 인덱스 (3계층). L1/L2/L3 자동 동기화. |
+
+### project/ (imdct77/{project_id}) — 산출물·소스코드
 
 | 디렉토리 | 생성 시점 | 역할 |
 |----------|----------|------|
-| `skills/` | 설치 시 | Neo V1 참조 문서 모음. 상세는 `skills/README.md` 참조. |
-| `docs/design/` | Phase -1 | 전체 설계 문서. architecture·database·api·screens. |
-| `docs/requirements/` | Phase 0 | 도메인별 요구사항 (EARS 문법). |
-| `docs/tasks/` | Phase 1 | 도메인별 구현 태스크. BE·FE 분리. |
-| `docs/tests/` | Phase 1 | 도메인별 테스트 정의. |
-| `docs/briefs/` | Phase 3 | Task Brief. 태스크별 작업 지시서. |
-| `docs/specs/` | Phase 0 | AC 기능별 설계 문서. |
-| `docs/qa/` | QA 감리 시 | QA 감리 보고서. |
-| `docs/issues/` | 이슈 발생 시 | 이슈별 대화 이력. AC·BE·FE 의견 누적. |
-| `docs/archive/issues/` | 이슈 종료 시 | 종료된 이슈 이력 보관. |
-| `docs/design/decisions.md` | 이슈 종료 시 | 핵심 결정 사항 누적. |
-| `docs/plans/` | Phase 3 | Plan 문서. |
+| `project/src/be/` | 설치 시 | 백엔드 소스코드 (하위 구조는 BE가 결정) |
+| `project/src/fe/` | 설치 시 | 프론트엔드 소스코드 (하위 구조는 FE가 결정) |
+| `project/docs/design/` | Phase -1 | 전체 설계 문서. architecture·database·api·screens. |
+| `project/docs/requirements/` | Phase 0 | 도메인별 요구사항 (EARS 문법). |
+| `project/docs/tasks/` | Phase 1 | 도메인별 구현 태스크. BE·FE 분리. |
+| `project/docs/tests/` | Phase 1 | 도메인별 테스트 정의. |
+| `project/docs/briefs/` | Phase 3 | Task Brief. 태스크별 작업 지시서. |
+| `project/docs/specs/` | Phase 0 | AC 기능별 설계 문서. |
+| `project/docs/qa/` | QA 감리 시 | QA 감리 보고서. |
+| `project/docs/issues/` | 이슈 발생 시 | 이슈별 대화 이력. |
+| `project/docs/plans/` | Phase 3 | Plan 문서. |
+
+> harness와 project는 별도 Git 레포. `project/.git/hooks/pre-commit` 프록시가
+> harness의 `meta_consistency_check.py --sync`를 호출하여 3계층 메타 인덱스 자동 동기화.
 
 ---
 
@@ -59,9 +72,9 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 | 파일 | 용도 |
 |------|------|
-| `task_brief_templ.md` | Task Brief 작성 기준. |
-| `tasks_templ.md` | BE·FE tasks 작성 기준. |
-| `tests_templ.md` | 테스트 정의 작성 기준. |
+| `harness/works/task_brief_templ.md` | Task Brief 작성 기준. |
+| `harness/works/tasks_templ.md` | BE·FE tasks 작성 기준. |
+| `harness/works/tests_templ.md` | 테스트 정의 작성 기준. |
 
 ---
 
@@ -69,8 +82,8 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 | 디렉토리 | 역할 |
 |----------|------|
-| `hooks/` | Hermes Hooks 4개. 실행 강제력 ~95%. 설치: `hooks/HOOKS_SETUP.md` 참조. |
-| `hooks/git/` | Git pre-commit Hook. 코드 품질·보안·브랜치 보호. |
+| `harness/hooks/` | Hermes Hooks. 실행 강제력 ~95%. 설치: `harness/hooks/HOOKS_SETUP.md`. 실행 강제력 ~95%. 설치: `hooks/HOOKS_SETUP.md` 참조. |
+| `harness/hooks/git/` | Git pre-commit. 코드 품질·보안.. 코드 품질·보안·브랜치 보호. |
 
 ---
 

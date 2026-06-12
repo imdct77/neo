@@ -1,8 +1,8 @@
 # {DOMAIN}_{ROLE}_tasks — {도메인명} {역할} 태스크 목록
 
 > 담당 역할: **{에이전트 코드명}** ({역할})
-> 참조: `AGENTS.md`, `{frontend|backend}_profile.md`, `requirements/{DOMAIN}/{DOMAIN}.md`
->        `docs/design/` (architecture.md·database.md·api/·screens/)
+> 참조: `AGENTS.md`, `{frontend|backend}_profile.md`, `project/docs/requirements/{DOMAIN}/{DOMAIN}.md`
+>        `project/docs/design/` (architecture.md·database.md·api/·screens/)
 > DB 책임 범위: {담당 테이블 목록} ({N}개 테이블)
 >
 > **작성 규칙**
@@ -74,7 +74,7 @@
 ### 테스트 연결
 
 > 이 태스크와 연결된 테스트 ID를 명시한다.
-> 테스트 상세 정의는 docs/tests/{DOMAIN}/{DOMAIN}_tests.md를 참조한다.
+> 테스트 상세 정의는 project/docs/tests/{DOMAIN}/{DOMAIN}_tests.md를 참조한다.
 
 **단위 테스트** (이 태스크 완료 즉시 실행):
 - TEST.{DOMAIN}.{BE|FE}.001 — {테스트 제목}

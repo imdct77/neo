@@ -123,7 +123,7 @@ Step 0의 탐색 결과를 컨텍스트로 갖고 AC 관점에서 검토한다.
 ```
 검토 항목:
   □ 이 기능이 AGENTS.md의 MVP 범위 안인가?
-  □ 기존 아키텍처(docs/design/architecture.md 또는 docs/specs/)와 충돌하는가?
+  □ 기존 아키텍처(project/docs/design/architecture.md 또는 project/docs/specs/)와 충돌하는가?
   □ Step 0에서 발견된 충돌 가능성 재확인
   □ Q1~Q7 게이트 중 해당하는 것이 있는가?
      Q1: 외부 시스템 추가?
@@ -184,7 +184,7 @@ AC가 BE·FE 의견 취합 → 종합 의견 제시
 ## Step 3. 설계 문서 저장 + Self-review
 
 ```
-저장: docs/specs/YYYY-MM-DD-{topic}-design.md
+저장: project/docs/specs/YYYY-MM-DD-{topic}-design.md
 (Step 0 탐색 결과 — 관련 과거 결정·충돌 여부 — 를 문서에 포함)
 
 Self-review 체크:
@@ -194,7 +194,7 @@ Self-review 체크:
   □ MVP 범위 초과 내용 → 별도 섹션으로 분리
   □ Step 0에서 발견된 충돌이 문서에 명시됐는가?
 
-통과 후: "docs/specs/{파일명} 저장했습니다. 검토해주세요."
+통과 후: "project/docs/specs/{파일명} 저장했습니다. 검토해주세요."
 ```
 
 ---

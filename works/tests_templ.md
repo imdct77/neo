@@ -78,7 +78,7 @@
 
 - **연결 태스크**: {TASK_ID}
 - **테스트 유형**: 절대 금지 역테스트
-- **검증 금지 항목**: {AGENTS.md 또는 backend_profile.md의 금지 항목}
+- **검증 금지 항목**: {AGENTS.md 또는 harness/profiles/backend_profile.md의 금지 항목}
 
 **시나리오**
 ```
@@ -164,7 +164,7 @@ MODAL_{이름} 취소 버튼 테스트:
 
 - **연결 태스크**: {TASK_ID}
 - **테스트 유형**: 절대 금지 역테스트
-- **검증 금지 항목**: {frontend_profile.md의 금지 항목}
+- **검증 금지 항목**: {harness/profiles/frontend_profile.md의 금지 항목}
 
 **시나리오**
 ```
@@ -225,7 +225,7 @@ TEST.{DOMAIN}.FE.{순번}: {테스트명}
   Given: {사전 조건}
   When:  {동작}
   Then:  {기대 결과}
-  연결:  docs/design/screens/{화면도메인}/spec.md → STATE_{이름}
+  연결:  project/docs/design/screens/{화면도메인}/spec.md → STATE_{이름}
   유형:  A(진입조건) | B(액션전환) | C(금지조건)
 ```
 

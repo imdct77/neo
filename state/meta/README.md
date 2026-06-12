@@ -1,4 +1,4 @@
-# docs/meta/ — Neo 구현 메타 인덱스
+# harness/state/meta/ — Neo 구현 메타 인덱스
 
 소스 코드 탐색을 grep 대신 의미 기반으로 수행하기 위한 메타 인덱스 체계.
 
@@ -13,7 +13,7 @@
 ## 디렉토리 구조
 
 ```
-docs/meta/
+harness/state/meta/
   README.md                       ← 이 파일
   src/
     INDEX.md                      ← BE/FE 통합 진입점
@@ -46,4 +46,4 @@ docs/meta/
 4. (필요 시) `DETAIL.md` → 파일별 설계 의도
 5. (수정 시) `DETAIL.{파일명}.md` → 함수 상세
 
-→ Neo 보고서 참조: `docs/issues/2026-06-09-구현-메타-인덱스-검토.md`
+→ Neo 보고서 참조: `project/docs/issues/2026-06-09-구현-메타-인덱스-검토.md`

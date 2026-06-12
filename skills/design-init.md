@@ -135,7 +135,7 @@ NEO:
    → skills/design-screens.md 스킬 실행
 ```
 
-### requirements/{DOMAIN}.md 작성 조건
+### project/docs/requirements/{DOMAIN}.md 작성 조건
 ```
 □ 도메인이 하나 이상 확정됐는가?
 □ 핵심 시나리오 2개 이상이 논의됐는가?
@@ -152,7 +152,7 @@ NEO:
 ```
 mem0 저장: "NEO: 초기 설계 완료, 날짜: {YYYY-MM-DD}"
 mem0 저장: "NEO: 프로젝트 Phase=0 완료, 첫 도메인={DOMAIN}"
-→ workflow.md Phase 0로 진입
+→ harness/works/workflow.md Phase 0로 진입
 ```
 
 스킬 파일 언로드.

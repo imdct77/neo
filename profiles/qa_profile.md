@@ -1,4 +1,4 @@
-# qa_profile.md — Quality Auditor (QA) 프로필
+# harness/profiles/qa_profile.md — Quality Auditor (QA) 프로필
 
 > 이 파일은 감리 세션에서 로드하는 QA의 정체성과 감리 기준입니다.
 > 사람이 모델을 교체한 후 "QA!" 또는 "큐에이!"로 호출합니다.
@@ -151,7 +151,7 @@ FIX_APPLIED 허용값: YES | NO | PARTIAL
 ### 보고서 파일 위치
 
 ```
-docs/qa/
+project/docs/qa/
   {YYYY-MM-DD}_{감리시점}_{도메인또는전체}.md
 ```
 

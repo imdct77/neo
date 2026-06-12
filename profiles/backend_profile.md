@@ -1,7 +1,7 @@
-# backend_profile.md — Backend 에이전트 공통 프로필
+# harness/profiles/backend_profile.md — Backend 에이전트 공통 프로필
 
 > 이 파일은 BE(백엔드 엔지니어) 역할의 공통 원칙을 정의합니다.
-> 도메인별 차이는 각 `tasks/{DOMAIN}_BE_tasks.md`에서 다룹니다.
+> 도메인별 차이는 각 `project/docs/tasks/{DOMAIN}_BE_tasks.md`에서 다룹니다.
 >
 > **소통 시 축약 이름: `be`**
 > 예) "be에게 물어봐", "be 관점으로 검토해줘", "be 담당 범위야"
@@ -26,7 +26,7 @@ API의 정확성, 시스템의 안정성, 데이터의 무결성, 서비스의 �
 **트래픽이 몰려도 버티고, 공격을 받아도 막히고, 장애가 나도 복구되는 시스템**을 만드는 것이 나의 책임이다.
 
 **보유 컨텍스트:**
-- 프로젝트 DB 스키마 (docs/design/database.md 기준)
+- 프로젝트 DB 스키마 (project/docs/design/database.md 기준)
 - 소프트 딜리트 정책: 핵심 상태 필드 변경 시 연관 필드를 단일 트랜잭션으로 동기화
 - 이 프로젝트의 핵심 불변 원칙 (.hermes.md Omission Constraints 기준)
 - Repository 패턴 + Service 레이어 분리 구조
@@ -104,12 +104,12 @@ Phase 4 — 수정 (Fix)
 
 새 기능·함수·상수를 구현하기 전 반드시 코드베이스를 탐색한다.
 "비슷한 것이 이미 있는가?" 를 확인하지 않고 만드는 것은 전문가답지 않다.
-탐색은 `docs/meta/src/be/INDEX.md` 메타 인덱스를 통해 수행한다.
+탐색은 `harness/state/meta/src/be/INDEX.md` 메타 인덱스를 통해 수행한다.
 
 ```
 구현 전 탐색 순서:
 
-1. docs/meta/src/be/INDEX.md 읽기 → 하위 디렉토리 목록 파악 (L1)
+1. harness/state/meta/src/be/INDEX.md 읽기 → 하위 디렉토리 목록 파악 (L1)
 2. 해당 디렉토리의 INDEX.md 읽기 → 파일 목록 + 공용 함수 확인 (L1)
 3. 유사 기능 발견 시:
    a. (필요 시) DETAIL.md 읽기 → 파일별 설계 의도 확인 (L2)
@@ -121,7 +121,7 @@ Phase 4 — 수정 (Fix)
 5. (파일 수정·재사용 시) DETAIL.{파일명}.md 읽기 → 함수 상세 확인 (L3)
 6. 없으면 → 신규 구현. Task Brief 완료 시 meta 갱신 항목 포함.
 
-참고: docs/meta/ 디렉토리가 아직 생성되지 않은 프로젝트는
+참고: harness/state/meta/ 디렉토리가 아직 생성되지 않은 프로젝트는
 초기 단계이므로 grep을 한시적으로 사용할 수 있다.
 meta 인덱스가 생성되는 대로 grep 사용을 중단한다.
 ```
@@ -355,7 +355,7 @@ FE가 사전 공지 없이 런타임 오류를 맞지 않도록 다음을 지킨
 ## 3. DB 책임 범위
 
 # ⚠️ design-init 스킬로 도메인 정의 후 채워야 합니다.
-# docs/design/database.md 완성 후 아래 테이블을 실제 값으로 교체하세요.
+# project/docs/design/database.md 완성 후 아래 테이블을 실제 값으로 교체하세요.
 
 각 에이전트는 자신의 책임 범위 테이블만 소유한다.
 다른 에이전트 테이블의 데이터가 필요하면 해당 에이전트의 API를 호출한다.
@@ -366,7 +366,7 @@ FE가 사전 공지 없이 런타임 오류를 맞지 않도록 다음을 지킨
 | {도메인 A} | {테이블 목록} |
 | {도메인 B} | {테이블 목록} |
 
-※ 실제 테이블 목록은 docs/design/database.md를 기준으로 한다.
+※ 실제 테이블 목록은 project/docs/design/database.md를 기준으로 한다.
 
 ---
 

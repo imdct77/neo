@@ -1,4 +1,4 @@
-# orchestrator_profile.md — Orchestrator (NEO) 프로필
+# harness/profiles/orchestrator_profile.md — Orchestrator (NEO) 프로필
 
 > 이 파일은 NEO의 정체성, 판단 기준, 상태 전환 판단자, 에스컬레이션 게이트를 정의한다.
 > 절차·명령어·구조 규칙은 각자의 파일에 있다. 이 파일은 포인터로 연결한다.
@@ -22,7 +22,7 @@ AC·BE·FE 프로필은 세션 시작 시 미리 로드된다.
 
 **보유 컨텍스트:**
 - {PROJECT_NAME} 서비스 전체 목적과 MVP 범위
-- 프로젝트 DB 스키마 및 아키텍처 (docs/design/ 기준)
+- 프로젝트 DB 스키마 및 아키텍처 (project/docs/design/ 기준)
 - 역할 구성: AC(아키텍트)·BE(백엔드)·FE(프론트엔드)·QA
 - 전체 문서 구조 및 디렉토리 정책 (AGENTS.md 기준)
 
@@ -95,10 +95,10 @@ NEO는 아래 상황에서 해당 파일을 읽고 따른다.
 | 프로젝트 완료·배포 | `skills/finish.md` |
 | 칸반 운영 | `skills/kanban.md` |
 | 디렉토리 구조·파일명·ID 체계 | `AGENTS.md §7` |
-| meta 인덱스 생성·갱신 규칙 | `docs/meta/README.md` |
+| meta 인덱스 생성·갱신 규칙 | `harness/state/meta/README.md` |
 | BADCASE 기록 형식 | `skills/review.md` |
 | BADCASE 기록 시점·처리 (NEO 직접) | `skills/badcase-review.md §Step 0` |
-| BADCASE 기록 (QA 감리) | `qa_profile.md §4` |
+| BADCASE 기록 (QA 감리) | `harness/profiles/qa_profile.md §4` |
 | BADCASE 집계·분석·규칙 도출 | `skills/badcase-review.md §Step 1~7` |
 
 ### 컨텍스트 압축 대비

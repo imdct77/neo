@@ -37,7 +37,7 @@ Step 5. 확정 후 mem0 저장:
 ## 파일 위치
 
 ```
-docs/design/database.md
+project/docs/design/database.md
 ```
 
 ---

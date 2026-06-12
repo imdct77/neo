@@ -1,4 +1,4 @@
-# workflow.md — NEO 업무 절차서
+# harness/works/workflow.md — NEO 업무 절차서
 
 > 모든 프로젝트에서 Orchestrator NEO가 반드시 따르는 고정 업무 절차입니다.
 > 이 워크플로우는 자동화 파이프라인이 아닙니다.
@@ -68,7 +68,7 @@ Phase 전환·태스크 시작·완료·BLOCKED 시점마다 칸반을 업데이
 **목적**: 사람의 시나리오를 설계 관점에서 먼저 검토한 뒤
 requirements·tasks·tests 초안을 함께 만들어갑니다.
 이 단계에서 AGENTS.md(MVP 범위·금지선)가 반드시 로드되어 있어야 합니다.
-docs/design/ 문서가 있으면 관련 파일을 로드합니다 (없으면 생략).
+project/docs/design/ 문서가 있으면 관련 파일을 로드합니다 (없으면 생략).
   - 아키텍처 관련: architecture.md
   - DB 관련: database.md
   - API 관련: api/endpoints/{관련 엔드포인트}/spec.md
@@ -77,7 +77,7 @@ docs/design/ 문서가 있으면 관련 파일을 로드합니다 (없으면 생
 ```
 Step 0-1. 사람이 기반 문서 작성 (최초 1회)
   AGENTS.md  ← 전역 원칙·스택·금지선
-  docs/design/  ← 아키텍처·DB·API·화면 설계 (있는 경우만)
+  project/docs/design/  ← 아키텍처·DB·API·화면 설계 (있는 경우만)
     architecture.md·database.md·api/·screens/
 
 Step 0-2. 사전 설계 검토 (AC 기본 담당, BE·FE 선택적 확장)
@@ -125,19 +125,19 @@ Step 0-2. 사전 설계 검토 (AC 기본 담당, BE·FE 선택적 확장)
 
 Step 0-3. 대화 기반 requirements 작성
   흐름: 사람 방향 선택 → [대화 반복 루프] → 사람 "확정" → ✅ 승인
-  출력: docs/requirements/{DOMAIN}/{DOMAIN}.md
+  출력: project/docs/requirements/{DOMAIN}/{DOMAIN}.md
         (EARS 문법: WHEN/IF/WHILE/WHERE)
 
 Step 0-4. 대화 기반 tasks 작성
   참조: tasks_templ.md
   흐름: requirements 기반 → [대화 반복 루프] → 사람 "확정" → ✅ 승인
-  출력: docs/tasks/{DOMAIN}/{DOMAIN}_BE_tasks.md
-        docs/tasks/{DOMAIN}/{DOMAIN}_FE_tasks.md
+  출력: project/docs/tasks/{DOMAIN}/{DOMAIN}_BE_tasks.md
+        project/docs/tasks/{DOMAIN}/{DOMAIN}_FE_tasks.md
 
 Step 0-5. tests 작성
   참조: tests_templ.md
   흐름: tasks 기반 → [대화 반복 루프] → 사람 "확정" → ✅ 승인
-  출력: docs/tests/{DOMAIN}/{DOMAIN}_tests.md
+  출력: project/docs/tests/{DOMAIN}/{DOMAIN}_tests.md
 ```
 
 ---
@@ -235,7 +235,7 @@ Step 3-A-1. Task Brief 생성 (병렬 가능 태스크 확인 포함)
     tasks/{DOMAIN}/{ROLE}_tasks.md > 해당 태스크
     tests/{DOMAIN}/{DOMAIN}_tests.md > 연결 테스트 ID
     ADR (Phase 0 또는 Phase 2에서 생성된 것)
-  출력: briefs/{DOMAIN}/{TASK_ID}.md
+  출력: project/docs/briefs/{DOMAIN}/{TASK_ID}.md
 
   ⚠️ Plan 품질 원칙:
     - 각 태스크는 2~5분 단위 bite-sized 스텝으로 분해
@@ -328,7 +328,7 @@ Step 3-B-1. Task Brief 생성 (방식 A Step 3-A-1과 동일)
 Step 3-B-2. 사람이 Task Brief 최종 확인
 
 Step 3-B-3. 역할 구현 (순차)
-  briefs/{DOMAIN}/{TASK_ID}.md 하나만 읽고 작업
+  project/docs/briefs/{DOMAIN}/{TASK_ID}.md 하나만 읽고 작업
   TDD 원칙 적용: RED → GREEN → REFACTOR
 
 Step 3-B-4. 코드 리뷰 (AC 단독)
@@ -380,7 +380,7 @@ Step 4-2. E2E 검증
   핵심 루프 테스트:
     현재 구현된 도메인의 핵심 흐름을 순서대로 검증한다.
     고정된 시나리오가 아니라 완료된 도메인 기준으로 구성한다.
-    → docs/requirements/ 하위에 존재하는 도메인 디렉토리가 기준이다.
+    → project/docs/requirements/ 하위에 존재하는 도메인 디렉토리가 기준이다.
 
   E2E 시나리오 구성 원칙:
     1. 사용자 인증 (항상 포함 — 인증 도메인 완료 시)

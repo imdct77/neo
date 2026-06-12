@@ -83,15 +83,15 @@ SCOPE 재평가 기준:
 
 ## Step 5. QA 오진 패턴 장기 반영
 
-프로젝트 전체에서 QA_FALSE_POSITIVE / QA_FALSE_NEGATIVE 패턴을 qa_profile.md에 반영한다.
+프로젝트 전체에서 QA_FALSE_POSITIVE / QA_FALSE_NEGATIVE 패턴을 harness/profiles/qa_profile.md에 반영한다.
 
 ```
 FP 패턴: "QA가 {도메인}에서 {설계 패턴}을 오류로 지적한 사례 {N}건"
-  → qa_profile.md §3 해당 시점 체크리스트에
+  → harness/profiles/qa_profile.md §3 해당 시점 체크리스트에
     "이 프로젝트의 {설계 패턴}은 의도된 설계입니다 — 오류로 판단하지 않습니다" 추가
 
 FN 패턴: "QA가 {ERROR_TYPE}을 놓친 사례 {N}건"
-  → qa_profile.md §3 해당 시점 체크리스트에 해당 항목 추가
+  → harness/profiles/qa_profile.md §3 해당 시점 체크리스트에 해당 항목 추가
 ```
 
 ## Step 6. 사람에게 최종 보고
@@ -123,8 +123,8 @@ SCOPE 승격 ({N}건):
   1. {규칙 요약} — 이유: {더 이상 해당 패턴 미발생 / 중복}
 
 QA 개선 사항:
-  FP 패턴 {N}건 → qa_profile.md 반영 완료
-  FN 패턴 {M}건 → qa_profile.md 반영 완료"
+  FP 패턴 {N}건 → harness/profiles/qa_profile.md 반영 완료
+  FN 패턴 {M}건 → harness/profiles/qa_profile.md 반영 완료"
 ```
 
 스킬 파일 언로드.

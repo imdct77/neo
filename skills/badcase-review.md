@@ -97,7 +97,7 @@ CAUSED_BY가 NONE이 아닌 BADCASE 추출.
 ### 2-6. QA 오진율 계산
 ACTOR=QA인 BADCASE 중:
   QA_FALSE_POSITIVE 비율 = FP / (FP + FN + 정상 감리)
-  20% 이상 → qa_profile.md 개선 필요 신호.
+  20% 이상 → harness/profiles/qa_profile.md 개선 필요 신호.
 
 ## Step 3. 패턴 판단 및 규칙 도출
 
@@ -115,7 +115,7 @@ ACTOR=QA인 BADCASE 중:
   → 뚫린 중간 단계 스킬 파일의 검증 항목 추가
 
 QA_FALSE_POSITIVE 비율 20% 이상
-  → qa_profile.md §3 해당 시점 체크리스트 항목 구체화
+  → harness/profiles/qa_profile.md §3 해당 시점 체크리스트 항목 구체화
 ```
 
 ## Step 4. 규칙 적용

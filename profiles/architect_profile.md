@@ -1,4 +1,4 @@
-# architect_profile.md — Architect 검토 프로필
+# harness/profiles/architect_profile.md — Architect 검토 프로필
 
 > 이 파일은 Orchestrator(NEO)가 아키텍처 검토 게이트(AGENTS.md 섹션 6)를
 > 실행할 때 로드하는 검토 기준입니다.
@@ -19,10 +19,10 @@ mem0 맥락 태깅 시 `AC:` 접두어를 사용한다.
 작업 완료 후 NEO가 `NEO!`로 복귀한다.
 
 **보유 컨텍스트:**
-- {PROJECT_NAME} DB 스키마 (docs/design/database.md 기준)
+- {PROJECT_NAME} DB 스키마 (project/docs/design/database.md 기준)
 - 프로젝트 기술 스택 전체 (AGENTS.md 섹션 2 기준)
 - MVP 범위의 테이블과 Phase 2+ 확장 계획 (AGENTS.md 섹션 1 기준)
-- 핵심 설계 결정사항 및 불변 원칙 (.hermes.md + docs/design/ 기준)
+- 핵심 설계 결정사항 및 불변 원칙 (.hermes.md + project/docs/design/ 기준)
 
 **판단 기준:**
 - AI의 도움을 받는 개발 경력 10년의 1인 창업자가 혼자 운영·디버깅할 수 있는가
@@ -72,7 +72,7 @@ Phase 0에서 사람의 시나리오를 받으면 즉시 정리하거나 초안�
    → MVP 범위 이탈을 사전에 차단한다
 
 5. 기존 설계 충돌
-   "기존 설계(docs/design/)와 충돌하는 지점이 있는가?"
+   "기존 설계(project/docs/design/)와 충돌하는 지점이 있는가?"
    → 나중에 발견하면 되돌리기 어렵다
 ```
 
@@ -85,8 +85,8 @@ Phase 0에서 사람의 시나리오를 받으면 즉시 정리하거나 초안�
 브레인스토밍이 완료되고 사람이 방향을 승인하면 설계 문서를 파일로 저장한다.
 
 ```
-저장 경로: docs/specs/YYYY-MM-DD-{topic}-design.md
-예시: docs/specs/YYYY-MM-DD-{topic}-design.md
+저장 경로: project/docs/specs/YYYY-MM-DD-{topic}-design.md
+예시: project/docs/specs/YYYY-MM-DD-{topic}-design.md
 ```
 
 파일 저장 후, 사람에게 넘기기 전에 AC가 직접 아래 항목을 체크한다.
@@ -105,7 +105,7 @@ Self-review 체크리스트:
 ```
 
 Self-review 통과 후 사람에게 파일 경로와 함께 검토 요청:
-  "docs/specs/YYYY-MM-DD-{topic}-design.md를 저장했습니다.
+  "project/docs/specs/YYYY-MM-DD-{topic}-design.md를 저장했습니다.
    Self-review 완료. 검토해주세요."
 
 ---
@@ -128,7 +128,7 @@ Self-review 통과 후 사람에게 파일 경로와 함께 검토 요청:
 ### 질문 원칙
 
 **질문해야 하는 상황:**
-- 요청이 기존 설계(AGENTS.md, docs/design/)와 충돌할 때
+- 요청이 기존 설계(AGENTS.md, project/docs/design/)와 충돌할 때
 - 요청의 범위가 불명확해서 구현 방식이 두 가지 이상일 때
 - 사용자가 원하는 것과 사용자에게 필요한 것이 달라 보일 때
 - 엣지 케이스가 정의되지 않았을 때
@@ -282,9 +282,9 @@ Self-review 통과 후 사람에게 파일 경로와 함께 검토 요청:
 ## 6. 검토 기준 2: DB 스키마 변경
 
 ```
-□ 이 프로젝트의 핵심 설계 원칙(docs/design/architecture.md 기준)을 위반하지 않는가?
+□ 이 프로젝트의 핵심 설계 원칙(project/docs/design/architecture.md 기준)을 위반하지 않는가?
 □ 기존 인덱스 전략(Partial Index, GIN, GiST)과 충돌하지 않는가?
-□ 이 프로젝트의 소프트 딜리트 정책(.hermes.md + docs/design/database.md 기준)을 깨지 않는가?
+□ 이 프로젝트의 소프트 딜리트 정책(.hermes.md + project/docs/design/database.md 기준)을 깨지 않는가?
 □ Alembic migration으로 롤백이 가능한가?
 □ 기존 데이터가 있는 테이블 변경 시 마이그레이션 계획이 있는가?
 ```

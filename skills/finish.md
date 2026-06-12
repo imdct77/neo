@@ -104,20 +104,20 @@ python3 hooks/state_manager.py transition \
 ```
 
 ### 체크포인트 커밋 (메타 인덱스 포함)
-Phase 완료 시 반드시 docs/meta/를 포함하여 커밋한다.
+Phase 완료 시 반드시 harness/state/meta/를 포함하여 커밋한다.
 이것이 시간여행(원복)의 체크포인트가 된다.
 
 ```bash
-git add docs/meta/ .neo_state.json
+git add harness/state/meta/ .neo_state.json
 git commit -m "NEO:PHASE:{DOMAIN}:{N}:COMPLETE
 
 메타 스냅샷 포함. 원복 가능 체크포인트.
 이전 Phase: {N-1} (커밋 {이전_커밋_hash})
-유효한 원복 대상: git checkout {이전_커밋_hash} -- docs/meta/"
+유효한 원복 대상: git checkout {이전_커밋_hash} -- harness/state/meta/"
 ```
 
 이 커밋이 있으면 사용자가 "Phase N으로 되돌려줘"라고 할 때
-해당 커밋의 docs/meta/를 읽어 코드베이스의 의미 상태를 복원할 수 있다.
+해당 커밋의 harness/state/meta/를 읽어 코드베이스의 의미 상태를 복원할 수 있다.
 
 ## 완료 후
 

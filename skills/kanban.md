@@ -112,7 +112,7 @@ BLOCKED:
 
 감리 완료:
   kanban_complete({id}, --result "BLOCKER:{N}건 CONCERN:{N}건 MINOR:{N}건")
-  보고서: docs/qa/{날짜}_{시점}_{DOMAIN}.md
+  보고서: project/docs/qa/{날짜}_{시점}_{DOMAIN}.md
   → DONE
 
 감리 중 BLOCKER 발견:
@@ -149,15 +149,15 @@ BLOCKED 3회 연속 같은 이슈:
 
 ```
 이슈 파일 생성:
-  docs/issues/{YYYY-MM-DD}-{이슈명}.md
+  project/docs/issues/{YYYY-MM-DD}-{이슈명}.md
 
 칸반 태스크에 연결:
   /kanban create "{이슈명}"
-    --body "docs/issues/{파일명} 참조"
+    --body "project/docs/issues/{파일명} 참조"
 
 이슈 종료 시:
-  파일 → docs/archive/issues/ 이동
-  결정 사항 → docs/design/decisions.md 반영
+  파일 → project/docs/archive/issues/ 이동
+  결정 사항 → project/docs/design/decisions.md 반영
   kanban_complete({id})
 ```
 

@@ -1,7 +1,7 @@
-# frontend_profile.md — Frontend 에이전트 공통 프로필
+# harness/profiles/frontend_profile.md — Frontend 에이전트 공통 프로필
 
 > 이 파일은 FE(프론트엔드 엔지니어) 역할의 공통 원칙을 정의합니다.
-> 도메인별 차이는 각 `tasks/{DOMAIN}_FE_tasks.md`에서 다룹니다.
+> 도메인별 차이는 각 `project/docs/tasks/{DOMAIN}_FE_tasks.md`에서 다룹니다.
 >
 > **소통 시 축약 이름: `fe`**
 > 예) "fe에게 물어봐", "fe 관점으로 검토해줘", "fe 담당 범위야"
@@ -45,12 +45,12 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
 ### 2-0. 구현 전 필수 확인 — "먼저 찾고, 그 다음 만든다"
 
 새 컴포넌트·훅·유틸을 만들기 전 반드시 코드베이스를 탐색한다.
-탐색은 `docs/meta/src/fe/INDEX.md` 메타 인덱스를 통해 수행한다.
+탐색은 `harness/state/meta/src/fe/INDEX.md` 메타 인덱스를 통해 수행한다.
 
 ```
 구현 전 탐색 순서:
 
-1. docs/meta/src/fe/INDEX.md 읽기 → 하위 디렉토리 목록 파악 (L1)
+1. harness/state/meta/src/fe/INDEX.md 읽기 → 하위 디렉토리 목록 파악 (L1)
 2. 해당 디렉토리의 INDEX.md 읽기 → 파일 목록 + 공용 컴포넌트 확인 (L1)
 3. 유사 컴포넌트·훅 발견 시:
    a. (필요 시) DETAIL.md 읽기 → 파일별 설계 의도 확인 (L2)
@@ -63,7 +63,7 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
    → Props·리렌더 전파·상태 흐름 확인 (L3)
 6. 없으면 → 신규 구현. Task Brief 완료 시 meta 갱신 항목 포함.
 
-참고: docs/meta/ 디렉토리가 아직 생성되지 않은 프로젝트는
+참고: harness/state/meta/ 디렉토리가 아직 생성되지 않은 프로젝트는
 초기 단계이므로 search_files를 한시적으로 사용할 수 있다.
 meta 인덱스가 생성되는 대로 search_files 사용을 중단한다.
 ```
