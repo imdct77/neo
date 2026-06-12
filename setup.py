@@ -162,11 +162,58 @@ def main():
     database = choose("데이터베이스", STACK_OPTIONS["database"])
 
     # --------------------------------------------------------
-    # Step 3. 설치 경로 확인
+    # Step 3. Git 레포 설정
     # --------------------------------------------------------
-    p("\n── Step 3. 설치 경로 ──", BOLD)
+    p("\n── Step 3. Git 레포지토리 ──", BOLD)
 
     cwd = Path.cwd()
+    is_git = (cwd / ".git").is_dir()
+
+    if not is_git:
+        p("현재 디렉토리가 Git 레포지토리가 아닙니다.", YELLOW)
+        auto = ask("GitHub에 새 레포를 만들어 clone할까요? (y/n/직접입력)", "y")
+        if auto.lower() == "y":
+            repo_name = ask(f"레포 이름 (Enter = {project_id})", project_id)
+            p(f"  Creating imdct77/{repo_name}...", CYAN)
+            import subprocess as _sp
+            result = _sp.run(
+                ["gh", "repo", "create", f"imdct77/{repo_name}", "--private",
+                 "--description", project_desc or project_name],
+                capture_output=True, text=True
+            )
+            if result.returncode == 0:
+                clone_url = f"https://github.com/imdct77/{repo_name}.git"
+                # Clone into parent's ./{repo_name}/
+                target = cwd.parent / repo_name
+                _sp.run(["git", "clone", clone_url, str(target)], check=True)
+                p(f"  ✓ https://github.com/imdct77/{repo_name}", GREEN)
+                p(f"  cd {target} 에서 다시 실행하거나, 지금 경로에 계속 설치합니다.", YELLOW)
+                # Continue with cwd — user might want to install here anyway
+            else:
+                p(f"  ❌ 레포 생성 실패: {result.stderr.strip()}", RED)
+                p("  git init 으로 로컬 레포를 대신 만듭니다.", YELLOW)
+                _sp.run(["git", "init"], cwd=str(cwd), check=True)
+        elif auto.lower() == "직접입력" or auto.lower() == "n":
+            clone_url = ask("Git clone URL (Enter = git init)")
+            if clone_url:
+                _sp.run(["git", "clone", clone_url, str(cwd)], check=True)
+                p(f"  ✓ cloned", GREEN)
+            else:
+                _sp.run(["git", "init"], cwd=str(cwd), check=True)
+                p("  ✓ git init", GREEN)
+    else:
+        p(f"✓ Git 레포 확인됨: {cwd}", GREEN)
+        # Configure identity if not set
+        import subprocess as _sp2
+        try:
+            _sp2.run(["git", "config", "user.name"], cwd=str(cwd), capture_output=True, check=True)
+        except Exception:
+            _sp2.run(["git", "config", "user.name", "imdct77"], cwd=str(cwd))
+            _sp2.run(["git", "config", "user.email", "imdct77@gmail.com"], cwd=str(cwd))
+
+    # --------------------------------------------------------
+    # Step 4. 설치 경로 확인
+    # --------------------------------------------------------
     p(f"프로젝트 루트: {cwd}")
     p(f"Hermes 전역:   {HERMES_DIR}")
 
@@ -176,9 +223,9 @@ def main():
         sys.exit(0)
 
     # --------------------------------------------------------
-    # Step 4. 파일 복사 (프로젝트 루트)
+    # Step 5. 파일 복사 (프로젝트 루트)
     # --------------------------------------------------------
-    p("\n── Step 4. 파일 설치 중... ──", BOLD)
+    p("\n── Step 5. 파일 설치 중... ──", BOLD)
 
     # SOUL.md → ~/.hermes/SOUL.md (전역)
     HERMES_DIR.mkdir(parents=True, exist_ok=True)
@@ -258,9 +305,9 @@ def main():
         p(f"  ✓ .neo_state.json 초기화 (PROJECT_ID: {project_id})", GREEN)
 
     # --------------------------------------------------------
-    # Step 5. 플레이스홀더 치환
+    # Step 6. 플레이스홀더 치환
     # --------------------------------------------------------
-    p("\n── Step 5. 플레이스홀더 치환 중... ──", BOLD)
+    p("\n── Step 6. 플레이스홀더 치환 중... ──", BOLD)
 
     replacements = {
         "{PROJECT_NAME}": project_name,
@@ -307,9 +354,9 @@ def main():
     p(f"  ✓ orchestrator_profile.md — PROJECT_NAME, PROJECT_ID 치환", GREEN)
 
     # --------------------------------------------------------
-    # Step 6. Hooks 설치 (선택)
+    # Step 7. Hooks 설치 (선택)
     # --------------------------------------------------------
-    p("\n── Step 6. Hooks 설치 (선택) ──", BOLD)
+    p("\n── Step 7. Hooks 설치 (선택) ──", BOLD)
     p("Hooks는 실행 강제력을 95% 수준으로 높입니다.")
 
     install_hooks = ask("\nHermes Hooks를 설치할까요? (y/n)", "y")
@@ -355,7 +402,7 @@ def main():
             p("  ✓ Git pre-commit Hook 설치 완료", GREEN)
 
     # --------------------------------------------------------
-    # Step 7. 완료 안내
+    # Step 8. 완료 안내
     # --------------------------------------------------------
     p("\n" + "=" * 55, GREEN)
     p("  Neo V1 설치 완료!", GREEN + BOLD)

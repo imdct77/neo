@@ -7,3 +7,6 @@
 
 - `src/be/models/__init__.py` — models 패키지 초기화
 - `src/be/models/user.py` — 사용자 모델 (name, email, to_dict)
+## services/
+
+- `src/be/services/auth.py` — 인증 서비스 (verify_token)
