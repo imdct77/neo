@@ -141,7 +141,7 @@ def main():
             return
 
     # IMPLEMENTATION 단계에서 requirements/ 직접 수정
-    if lifecycle == "IMPLEMENTATION" and "requirements/" in file_path:
+    if lifecycle == "IMPLEMENTATION" and _is_req_file(file_path):
         _block(
             f"[Neo 상태 검증] Phase {phase}(IMPLEMENTATION)에서 "
             f"requirements/ 직접 수정 불가. "
@@ -198,7 +198,7 @@ def main():
             return
 
         # Phase 3에서 requirements/ 수정 (위에서 이미 처리, 재확인)
-        if phase == "3" and "requirements/" in file_path:
+        if phase == "3" and _is_req_file(file_path):
             _block(
                 f"[Neo 상태 검증] Phase 3에서 requirements/ 직접 수정 불가."
             )
@@ -230,6 +230,26 @@ def _is_src_file(file_path: str) -> bool:
     except Exception:
         # 경로 해석 실패 시 Fail-Closed: src 파일로 간주해 검사 진행
         return "src/" in file_path
+
+
+def _is_req_file(file_path: str) -> bool:
+    """요구사항 문서 파일 여부 판단 (docs/requirements/ 아래).
+
+    _is_src_file()과 동일한 PROJECT_ROOT 기준 정규화 방식 사용.
+    """
+    try:
+        project_root = Path(
+            os.environ.get("NEO_PROJECT_ROOT", os.getcwd())
+        ).resolve()
+        req_root = (project_root / "docs" / "requirements").resolve()
+
+        p = Path(file_path)
+        resolved = p.resolve() if p.is_absolute() else (project_root / p).resolve()
+
+        return resolved.is_relative_to(req_root)
+    except Exception:
+        # 경로 해석 실패 시 Fail-Closed: req 파일로 간주해 검사 진행
+        return "requirements/" in file_path
 
 
 def _load_state() -> dict:
