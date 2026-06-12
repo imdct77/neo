@@ -2,8 +2,8 @@
 """Neo meta-consistency-check hook — meta 인덱스와 실제 코드 파일의 일관성 검증.
 
 pre_llm_call 이벤트에 등록. 매 LLM 호출 전에:
-1. docs/meta/src/{be,fe}/INDEX.md 를 읽어 인덱스에 등록된 파일 목록 수집
-2. src/{be,fe}/ 아래 실제 파일 목록 수집
+1. state/meta/src/{be,fe}/INDEX.md 를 읽어 인덱스에 등록된 파일 목록 수집
+2. project/src/{be,fe}/ 아래 실제 파일 목록 수집 (크로스 레포)
 3. 불일치 발견 시 경고 컨텍스트 주입
 """
 
@@ -22,6 +22,22 @@ def find_git_root() -> str | None:
         ).strip()
     except Exception:
         return None
+
+
+def find_project_root(harness_root: str) -> str | None:
+    """harness_root 기준으로 project 루트 디렉토리를 찾는다.
+
+    1. 형제 디렉토리: {harness_root}/../project/
+    2. 환경변수: NEO_PROJECT_ROOT
+    둘 다 없으면 None → 체크 건너뜀.
+    """
+    sibling = os.path.normpath(os.path.join(harness_root, "..", "project"))
+    if os.path.isdir(sibling):
+        return sibling
+    env_root = os.environ.get("NEO_PROJECT_ROOT")
+    if env_root and os.path.isdir(env_root):
+        return env_root
+    return None
 
 
 def parse_index_md(path: str) -> set[str]:
@@ -65,15 +81,19 @@ def collect_actual_files(src_dir: str, project_root: str) -> set[str]:
     return files
 
 
-def check_consistency(root: str, scope: str) -> list[str]:
-    """단일 scope(be|fe)의 meta 일관성 검사"""
+def check_consistency(harness_root: str, project_root: str, scope: str) -> list[str]:
+    """단일 scope(be|fe)의 meta 일관성 검사.
+
+    harness_root: meta 인덱스 위치 (state/meta/src/{scope}/)
+    project_root: 실제 소스코드 위치 (src/{scope}/)
+    """
     issues = []
 
     index_paths = [
-        os.path.join(root, "state", "meta", "src", scope, "INDEX.md"),
+        os.path.join(harness_root, "state", "meta", "src", scope, "INDEX.md"),
     ]
     # 하위 디렉토리 INDEX.md도 수집
-    meta_dir = os.path.join(root, "state", "meta", "src", scope)
+    meta_dir = os.path.join(harness_root, "state", "meta", "src", scope)
     if os.path.isdir(meta_dir):
         for entry in os.listdir(meta_dir):
             full = os.path.join(meta_dir, entry)
@@ -86,8 +106,8 @@ def check_consistency(root: str, scope: str) -> list[str]:
     for ip in index_paths:
         indexed_files |= parse_index_md(ip)
 
-    src_dir = os.path.join(root, "src", scope)
-    actual_files = collect_actual_files(src_dir, root)
+    src_dir = os.path.join(project_root, "src", scope)
+    actual_files = collect_actual_files(src_dir, project_root)
 
     # meta가 아예 없으면 체크 불가
     if not indexed_files:
@@ -116,13 +136,18 @@ def check_consistency(root: str, scope: str) -> list[str]:
 
 
 def main():
-    root = find_git_root()
-    if not root:
+    harness_root = find_git_root()
+    if not harness_root:
+        return
+
+    project_root = find_project_root(harness_root)
+    if not project_root:
+        # 프로젝트 레포가 아직 없으면 체크 건너뜀 (설치 초기 상태)
         return
 
     all_issues = []
     for scope in ("be", "fe"):
-        all_issues.extend(check_consistency(root, scope))
+        all_issues.extend(check_consistency(harness_root, project_root, scope))
 
     if all_issues:
         warning = (
