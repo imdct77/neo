@@ -214,21 +214,21 @@ def main():
     p("  ✓ src/be/, src/fe/ (하위 구조는 프로젝트 자유)", GREEN)
 
     doc_files = [
-        "orchestrator_profile.md",
-        "architect_profile.md",
-        "backend_profile.md",
-        "frontend_profile.md",
-        "workflow.md",
-        "task_brief_templ.md",
-        "tasks_templ.md",
-        "tests_templ.md",
+        ("profiles/orchestrator_profile.md", "orchestrator_profile.md"),
+        ("profiles/architect_profile.md", "architect_profile.md"),
+        ("profiles/backend_profile.md", "backend_profile.md"),
+        ("profiles/frontend_profile.md", "frontend_profile.md"),
+        ("works/workflow.md", "workflow.md"),
+        ("works/task_brief_templ.md", "task_brief_templ.md"),
+        ("works/tasks_templ.md", "tasks_templ.md"),
+        ("works/tests_templ.md", "tests_templ.md"),
     ]
-    for fname in doc_files:
-        src = NEO_ROOT / fname
-        dst = docs_dst / fname
+    for src_rel, dst_name in doc_files:
+        src = NEO_ROOT / src_rel
+        dst = docs_dst / dst_name
         if src.exists():
             shutil.copy2(src, dst)
-            p(f"  ✓ docs/{fname}", GREEN)
+            p(f"  ✓ docs/{dst_name}", GREEN)
 
     # skills/ — 배포 시 복사하지 않고 루트에 유지 (2026-06-12 통일 결정)
 

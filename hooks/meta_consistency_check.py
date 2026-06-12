@@ -70,10 +70,10 @@ def check_consistency(root: str, scope: str) -> list[str]:
     issues = []
 
     index_paths = [
-        os.path.join(root, "docs", "meta", "src", scope, "INDEX.md"),
+        os.path.join(root, "state", "meta", "src", scope, "INDEX.md"),
     ]
     # 하위 디렉토리 INDEX.md도 수집
-    meta_dir = os.path.join(root, "docs", "meta", "src", scope)
+    meta_dir = os.path.join(root, "state", "meta", "src", scope)
     if os.path.isdir(meta_dir):
         for entry in os.listdir(meta_dir):
             full = os.path.join(meta_dir, entry)
