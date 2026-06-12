@@ -341,20 +341,6 @@ def main():
     replace_in_file(project_json_path, replacements)
     p(f"  ✓ project.json — PROJECT_ID → {project_id}, PROJECT_NAME → {project_name}", GREEN)
 
-    # skills/ — 전역 치환 (badcase-review, badcase-distill, neo-start, review, kanban 등)
-    skill_count = 0
-    for md in sorted(NEO_ROOT.glob("skills/*.md")):
-        replace_in_file(md, replacements)
-        skill_count += 1
-    p(f"  ✓ skills/ ({skill_count}개 파일) — PROJECT_ID, PROJECT_NAME 치환", GREEN)
-
-    # profiles/ — 전역 치환 (qa, architect, backend, frontend, orchestrator)
-    profile_count = 0
-    for md in sorted(NEO_ROOT.glob("profiles/*.md")):
-        replace_in_file(md, replacements)
-        profile_count += 1
-    p(f"  ✓ profiles/ ({profile_count}개 파일) — PROJECT_ID, PROJECT_NAME 치환", GREEN)
-
     # AGENTS.md
     agents_path = cwd / "AGENTS.md"
     replace_in_file(agents_path, {
