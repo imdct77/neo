@@ -158,29 +158,28 @@ Hermes가 시스템 프롬프트를 조립하는 실제 순서:
 ```
 [Hermes 자동 주입 — 수동 로드 불필요]
 ~/.hermes/SOUL.md                 ← 슬롯 #1 에이전트 정체성 (전역)
-.hermes.md (프로젝트 루트)        ← 프로젝트 컨텍스트 최우선
-AGENTS.md (이 문서)               ← 프로젝트 헌법
+harness/.hermes.md                ← 프로젝트 컨텍스트 최우선
+harness/AGENTS.md                 ← 프로젝트 헌법 (이 문서)
 
 [세션 시작 시 로드]
-docs/design/ (선택)               ← 프로젝트 전체 설계 문서. design-init 스킬로 생성.
-  architecture.md, database.md, api/, screens/ 포함
-architect_profile.md              ← AC 관점 (미리 로드)
-backend_profile.md                ← BE 관점 (미리 로드)
-frontend_profile.md               ← FE 관점 (미리 로드)
+harness/hooks/context-inject.py   ← Project Identity + 제약조건 자동 주입
+harness/profiles/orchestrator_profile.md  ← NEO (기본)
+harness/profiles/architect_profile.md     ← AC
+harness/profiles/backend_profile.md       ← BE
+harness/profiles/frontend_profile.md      ← FE
+project/docs/design/ (선택)       ← 프로젝트 전체 설계
 
 [작업 시 선택적 로드]
-skills/{skill}.md            ← 트리거 조건 시 자동 로드·실행 후 언로드
-requirements/{DOMAIN}/            ← 자연어 요청으로 로드
-tasks/{DOMAIN}/                   ← 자연어 요청으로 로드
-tests/{DOMAIN}/                   ← 자연어 요청으로 로드
-briefs/{DOMAIN}/{TASK_ID}.md      ← Task Brief 전달 시
+harness/skills/{skill}.md         ← 트리거 조건 시 자동 로드·실행 후 언로드
+project/docs/requirements/{DOMAIN}/
+project/docs/tasks/{DOMAIN}/
+project/docs/tests/{DOMAIN}/
+project/docs/briefs/{DOMAIN}/{TASK_ID}.md
 ```
 
-.hermes.md는 AGENTS.md보다 우선하며 컨텍스트 압축에서 가장 오래 살아남는다.
-SOUL.md는 전역 정체성으로 모든 세션에 적용된다.
-
-**소스 코드 위치**: 모든 구현 코드는 `src/be/`(백엔드)와 `src/fe/`(프론트엔드) 아래에 둔다.
-상세 디렉토리 구조·파일명 규칙·ID 체계는 `AGENTS.md §7`을 참조한다.
+> **프로젝트 아이덴티티**: `harness/project.json`이 프로젝트 메타데이터 SSoT다.
+> `context-inject.py`가 매 LLM 호출 전 PROJECT_ID, PROJECT_NAME, 해석 규칙을 주입하므로
+> 문서 내 `{PROJECT_ID}`는 자동으로 실제 값으로 해석된다. 수동 치환 불필요.
 
 ---
 
@@ -192,9 +191,9 @@ NEO는 현재 작업 중인 도메인의 문서만 컨텍스트에 로드한다.
 ### 항상 로드하는 문서 (고정)
 
 ```
-AGENTS.md
-orchestrator_profile.md
-docs/design/ (있으면 로드)
+harness/AGENTS.md
+harness/profiles/orchestrator_profile.md
+project/docs/design/ (있으면 로드)
   architecture.md·database.md·api/·screens/
 ```
 
@@ -364,63 +363,108 @@ FAIL → 원인 분석 → 수정 → 재검증 → PASS 반복
 ### 7-1. 전체 디렉토리 구조
 
 ```
-프로젝트 루트/
-  AGENTS.md                   ← 프로젝트 헌법 (Hermes 자동 주입)
-  .hermes.md                  ← 최우선 금지선 (Hermes 자동 주입)
-  .neo_state.json             ← 구조적 상태 SSoT (git 관리)
-  .neo_state_archive.jsonl    ← lifecycle_history 오버플로우 (gitignore)
-  workflow.md                 ← 업무 절차서
-
-/src
-  /be                         ← 백엔드 소스 (하위 구조는 BE가 결정)
-  /fe                         ← 프론트엔드 소스 (하위 구조는 FE가 결정)
-
-/docs
-  design/                     ← 아키텍처·DB·API·화면 설계
-    architecture.md·database.md·api/·screens/
-  skills/                     ← Neo 스킬 파일
-  meta/                       ← 코드 메타 인덱스 (grep 대체)
-    README.md
-    src/
-      INDEX.md
-      be/ INDEX.md / DETAIL.md / DETAIL.{file}.md
-      fe/ INDEX.md / DETAIL.md / DETAIL.{file}.md
-  specs/                      ← 기능별 상세 설계 (YYYY-MM-DD-{topic}-design.md)
-  plans/                      ← Phase 3 Plan 문서
-  requirements/{DOMAIN}/{DOMAIN}.md
-  tasks/{DOMAIN}/{DOMAIN}_{BE|FE}_tasks.md
-  tests/{DOMAIN}/{DOMAIN}_tests.md
-  briefs/{DOMAIN}/{TASK_ID}.md
-  qa/                         ← QA 감리 보고서
-  issues/                     ← 이슈별 대화 이력 (진행 중)
-  archive/issues/             ← 종료된 이슈 이력
-
-[프로젝트 루트]               ← 프로필 파일 위치
-  orchestrator_profile.md
-  architect_profile.md
-  frontend_profile.md
-  backend_profile.md
-  qa_profile.md
+neo/                              ← 부모 디렉토리 (Git 관리 X)
+│
+├── harness/                      ← imdct77/neo (하네스 — 도구·규칙·상태)
+│   ├── AGENTS.md                 ← 프로젝트 헌법
+│   ├── .hermes.md                ← 최우선 금지선 + Project Identity
+│   ├── SOUL.md                   ← 전역 에이전트 정체성
+│   ├── SETUP.md                  ← 설치 가이드
+│   ├── setup.py                  ← 신규 프로젝트 설치 자동화
+│   ├── README.md
+│   ├── project.json              ← 프로젝트 메타데이터 SSoT
+│   │
+│   ├── hooks/                    ← Hermes + Git 훅
+│   │   ├── bootstrap.py          ← 단일 진입점 (HARNESS_ROOT, PROJECT_ROOT, PROJECT)
+│   │   ├── forbidden-check.py    ← 보안·Lifecycle·CR 위반 차단
+│   │   ├── meta_consistency_check.py ← meta 인덱스 3계층 검증·동기화
+│   │   ├── state_manager.py      ← .neo_state.json CRUD
+│   │   ├── context-inject.py     ← Omission Constraints + Project Identity 주입
+│   │   ├── session-start.py      ← 세션 시작 복원
+│   │   ├── auto-test.py          ← 자동 테스트
+│   │   └── git/
+│   │       └── pre-commit        ← harness 자체 pre-commit (ruff, pytest 등)
+│   │
+│   ├── profiles/                 ← 역할 프로필 (LLM 로드용)
+│   │   ├── orchestrator_profile.md
+│   │   ├── architect_profile.md
+│   │   ├── backend_profile.md
+│   │   ├── frontend_profile.md
+│   │   └── qa_profile.md
+│   │
+│   ├── skills/                   ← Neo 스킬 (트리거 조건 시 자동 로드)
+│   │   ├── design-init.md
+│   │   ├── phase0.md / gate.md / finish.md
+│   │   ├── review.md / badcase-review.md / badcase-distill.md
+│   │   └── ...
+│   │
+│   ├── works/                    ← 업무 파이프라인 템플릿
+│   │   ├── workflow.md
+│   │   ├── task_brief_templ.md
+│   │   ├── tasks_templ.md
+│   │   └── tests_templ.md
+│   │
+│   └── state/                    ← Neo 구조적 상태
+│       ├── .neo_state.json       ← Phase·도메인·태스크 상태 SSoT
+│       ├── .neo_state_archive.jsonl
+│       └── meta/                 ← 코드 메타 인덱스 (3계층)
+│           └── src/
+│               ├── INDEX.md              ← L3: BE/FE 통합 개요
+│               ├── be/
+│               │   ├── INDEX.md          ← L1: be 파일 목록
+│               │   └── {section}/
+│               │       └── DETAIL.md     ← L2: 파일별 상세
+│               └── fe/
+│                   ├── INDEX.md          ← L1: fe 파일 목록
+│                   └── {section}/
+│                       └── DETAIL.md     ← L2: 파일별 상세
+│
+└── project/                      ← imdct77/{project_id} (프로젝트 — 산출물·소스)
+    │
+    ├── .git/hooks/
+    │   └── pre-commit            ← 프록시 — harness의 meta_consistency_check 호출
+    │                               (프로젝트 레포에 harness 코드 無)
+    │
+    ├── src/                      ← 모든 구현 코드
+    │   ├── be/                   ← 백엔드 (하위 구조는 BE가 결정)
+    │   └── fe/                   ← 프론트엔드 (하위 구조는 FE가 결정)
+    │
+    └── docs/                     ← 프로젝트 산출물
+        ├── requirements/{DOMAIN}/{DOMAIN}.md
+        ├── tasks/{DOMAIN}/{DOMAIN}_{BE|FE}_tasks.md
+        ├── tests/{DOMAIN}/{DOMAIN}_tests.md
+        ├── briefs/{DOMAIN}/{TASK_ID}.md
+        ├── design/               ← 아키텍처·DB·API·화면 설계
+        ├── qa/                   ← QA 감리 보고서
+        └── issues/               ← 이슈별 대화 이력
 ```
+
+> **분리 원칙**: `harness/`와 `project/`는 파일·코드 수준에서 절대 섞이지 않는다.
+> harness는 도구·규칙·상태를, project는 산출물·소스코드를 담는다.
+> 양쪽은 별도 Git 레포로 관리된다.
 
 ### 7-2. 파일명 규칙
 
 ```
-requirements : {DOMAIN}/{DOMAIN}.md
-tasks        : {DOMAIN}_{ROLE}_tasks.md
-tests        : {DOMAIN}_tests.md
-briefs       : {도메인 영문}.{역할}.{순번:3자리}.md
+requirements : project/docs/requirements/{DOMAIN}/{DOMAIN}.md
+tasks        : project/docs/tasks/{DOMAIN}_{ROLE}_tasks.md
+tests        : project/docs/tests/{DOMAIN}_tests.md
+briefs       : project/docs/briefs/{도메인 영문}.{역할}.{순번:3자리}.md
                예) AUTH.BE.001.md, USER.FE.003.md
-
-meta (L1)    : docs/meta/src/INDEX.md
-               docs/meta/src/{be|fe}/INDEX.md
-               docs/meta/src/{be|fe}/{subdir}/INDEX.md
-meta (L2)    : docs/meta/src/{be|fe}/DETAIL.md
-               docs/meta/src/{be|fe}/{subdir}/DETAIL.md
-meta (L3)    : docs/meta/src/{be|fe}/{subdir}/DETAIL.{filename}.md
 ```
 
-### 7-3. ID 체계
+### 7-3. Meta 인덱스 3계층 체계
+
+| 계층 | 위치 | 내용 | 자동화 |
+|------|------|------|:--:|
+| L1 | `harness/state/meta/src/{be,fe}/INDEX.md` | scope별 파일 목록 | `--sync` |
+| L2 | `harness/state/meta/src/{be,fe}/{section}/DETAIL.md` | 파일별 상세 | `--sync` |
+| L3 | `harness/state/meta/src/INDEX.md` | BE/FE 통합 개요 | `--sync` |
+
+동기화: `project/.git/hooks/pre-commit` → `meta_consistency_check.py --exit-code --sync`
+→ 3계층 전체를 파일시스템 기준으로 자동 갱신. 생성·삭제 모두 자동 반영.
+
+### 7-4. ID 체계
 
 ```
 태스크 ID      : {도메인 영문}.{역할}.{순번:3자리}
@@ -435,23 +479,39 @@ meta (L3)    : docs/meta/src/{be|fe}/{subdir}/DETAIL.{filename}.md
 
 ## 8. 브랜치 전략
 
+### harness (imdct77/neo)
+
 ```
 main      ← 배포 가능 상태. NEO 승인 없이 직접 push 금지
 develop   ← 통합 브랜치. 작업 완료 시 PR 생성
+feature/{기능명}  ← 기능 단위 브랜치
+hotfix/{이슈}     ← 긴급 수정 전용
+```
+
+### project (imdct77/{project_id})
+
+```
+main      ← 배포 가능 상태. pre-commit 후크에 의해 meta 인덱스 자동 동기화
+develop   ← 통합 브랜치
 feature/{TASK_ID}  ← 태스크 단위 브랜치
 hotfix/{이슈}      ← 긴급 수정 전용
 ```
+
+> harness와 project는 별도 Git 레포다. harness 업데이트가 project에 영향을 주지 않으며,
+> project의 pre-commit 프록시가 harness의 meta_consistency_check을 호출한다.
 
 ---
 
 ## 9. PR 병합 조건
 
-**Git Hook이 이미 보장한 것 (커밋 시점 자동 실행)**
-- 단위 테스트 전항목 통과
-- 코드 포맷·린트 통과
-- 보안 스캔 통과
-- 민감 키 미포함 확인
-- main/develop 직접 push 없음
+**pre-commit Hook이 자동으로 보장하는 것 (커밋 시점)**
+
+| 보장 항목 | 담당 |
+|-----------|------|
+| meta 인덱스 자동 동기화 (L1+L2+L3) | `project/.git/hooks/pre-commit` → `meta_consistency_check.py --sync` |
+| 보안 패턴 금지 (JWT 우회, 하드코딩 시크릿 등) | `harness/hooks/forbidden-check.py` |
+| 민감 키 미포함 | `pre-commit` bash 스크립트 |
+| main/develop 직접 push 금지 | `pre-commit` bash 스크립트 |
 
 **PR 단계에서 사람이 추가로 확인하는 것**
 - [ ] Task Brief의 Acceptance Criteria 전항목 체크
