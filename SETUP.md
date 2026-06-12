@@ -77,7 +77,7 @@ setup.py가 아래를 자동으로 처리합니다:
     task_brief_templ.md
     tasks_templ.md
     tests_templ.md
-    docs/skills/
+    skills/
       (스킬 파일들)
 ```
 

@@ -105,7 +105,7 @@ NEO:
 □ 예상 트래픽·보안 요구사항이 한 번 이상 언급됐는가?
 □ 배포 환경 방향이 합의됐는가?
 → 모두 ✅: "전체 아키텍처 문서를 작성할까요?"
-   → docs/skills/design-arch.md 스킬 실행
+   → skills/design-arch.md 스킬 실행
 ```
 
 ### database.md 작성 조건
@@ -114,7 +114,7 @@ NEO:
 □ 엔티티 간 관계가 논의됐는가?
 □ 적어도 하나의 도메인이 확정됐는가?
 → 모두 ✅: "DB 설계 문서를 작성할까요?"
-   → docs/skills/design-db.md 스킬 실행
+   → skills/design-db.md 스킬 실행
 ```
 
 ### api/ 작성 조건
@@ -123,7 +123,7 @@ NEO:
 □ database.md 초안이 있는가?
 □ 첫 도메인의 핵심 API가 2개 이상 논의됐는가?
 → 모두 ✅: "API 설계 문서를 작성할까요?"
-   → docs/skills/design-api.md 스킬 실행
+   → skills/design-api.md 스킬 실행
 ```
 
 ### screens/ 작성 조건
@@ -132,7 +132,7 @@ NEO:
 □ 핵심 화면 흐름이 한 번 이상 논의됐는가?
 □ 복합 화면(ui_) 여부가 파악됐는가?
 → 모두 ✅: "화면 설계 문서를 작성할까요?"
-   → docs/skills/design-screens.md 스킬 실행
+   → skills/design-screens.md 스킬 실행
 ```
 
 ### requirements/{DOMAIN}.md 작성 조건

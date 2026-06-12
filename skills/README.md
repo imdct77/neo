@@ -1,4 +1,4 @@
-# docs/skills/ — Neo V1 참조 문서 모음
+# skills/ — Neo V1 참조 문서 모음
 
 > **이 디렉토리의 파일들은 Hermes 내장 스킬이 아닙니다.**
 > Hermes의 `~/.hermes/skills/`에 등록된 스킬과 무관합니다.
