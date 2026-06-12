@@ -5,13 +5,26 @@ pre_llm_call 이벤트에 등록. 매 LLM 호출 전에:
 1. state/meta/src/{be,fe}/INDEX.md 를 읽어 인덱스에 등록된 파일 목록 수집
 2. project/src/{be,fe}/ 아래 실제 파일 목록 수집 (크로스 레포)
 3. 불일치 발견 시 경고 컨텍스트 주입
+
+pre-commit hook에서 호출 시:
+  python3 meta_consistency_check.py --exit-code --sync
+  → 불일치 자동 해소 후 커밋 허용
 """
 
 import json
 import os
+import re
 import sys
+from datetime import datetime
 from pathlib import Path
 from bootstrap import HARNESS_ROOT, PROJECT_ROOT
+
+
+# ── INDEX.md 포맷 상수 ──────────────────────────────────────
+_INDEX_HEADER_RE = re.compile(r"^# .* — 구현 메타 인덱스")
+_UPDATE_LINE_RE = re.compile(r"^> 마지막 갱신:")
+_INDEX_ENTRY_RE = re.compile(r"^- `([^`]+)`")
+_SECTION_RE = re.compile(r"^## (.+)")
 
 
 def parse_index_md(path: str) -> set[str]:
@@ -27,7 +40,6 @@ def parse_index_md(path: str) -> set[str]:
                     file_ref = stripped.split("`")[1]
                     files.add(file_ref)
                 elif stripped.startswith("- ") and "/" in stripped:
-                    # 느슨한 매칭: 경로로 보이는 행
                     parts = stripped[2:].split()
                     if parts:
                         candidate = parts[0].rstrip(",").rstrip(";")
@@ -109,6 +121,137 @@ def check_consistency(harness_root: str, project_root: str, scope: str) -> list[
     return issues
 
 
+# ── INDEX.md 생성/갱신 ────────────────────────────────────
+
+def _file_to_section(file_path: str, scope: str) -> str:
+    """파일 경로에서 INDEX.md 섹션명 추출.
+    예: src/be/models/user.py → models/"""
+    prefix = f"src/{scope}/"
+    if file_path.startswith(prefix):
+        rest = file_path[len(prefix):]
+        parts = rest.split("/")
+        if len(parts) >= 2:
+            return f"{parts[0]}/"
+    return "기타/"
+
+
+def _description_from_filename(file_path: str) -> str:
+    """파일명으로 기본 설명 생성."""
+    fname = os.path.basename(file_path)
+    stem = os.path.splitext(fname)[0]
+    if stem == "__init__":
+        return f"{os.path.basename(os.path.dirname(file_path))} 패키지 초기화"
+    return f"{stem} — TODO: 설명 추가"
+
+
+def _parse_sections(content: str) -> dict:
+    """INDEX.md 내용을 {섹션명: [(파일경로, 설명), ...]} 형태로 파싱."""
+    sections = {}
+    current_section = None
+    for line in content.split("\n"):
+        m = _SECTION_RE.match(line.strip())
+        if m:
+            current_section = m.group(1).strip()
+            if current_section not in sections:
+                sections[current_section] = []
+            continue
+        m = _INDEX_ENTRY_RE.match(line.strip())
+        if m and current_section is not None:
+            entry = m.group(1)
+            desc = line.strip().split(" — ", 1)[1] if " — " in line else ""
+            sections[current_section].append((entry, desc))
+    return sections
+
+
+def _regenerate_index(
+    scope: str, sections: dict, required_files: set[str]
+) -> str:
+    """섹션 정보로 INDEX.md 내용 재생성.
+    required_files에 없는 항목은 제거하고, 없는 파일은 추가."""
+    lines = [
+        f"# {scope} — 구현 메타 인덱스",
+        "",
+        f"> 마지막 갱신: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}",
+        f"> 담당: {scope.upper()} 프로필",
+        "",
+    ]
+
+    # 현재 인덱스에 등록된 파일 집합
+    indexed = set()
+    for entries in sections.values():
+        for entry, _desc in entries:
+            indexed.add(entry)
+
+    # 새 파일: required_files에 있고 indexed에 없는 것
+    new_files = required_files - indexed
+    for f in sorted(new_files):
+        section = _file_to_section(f, scope)
+        if section not in sections:
+            sections[section] = []
+        sections[section].append((f, _description_from_filename(f)))
+
+    # stale 파일 제거 및 정렬
+    cleaned = {}
+    for section, entries in sections.items():
+        kept = [(e, d) for e, d in entries if e in required_files]
+        kept.sort(key=lambda x: x[0])
+        cleaned[section] = kept
+
+    # 새 항목도 정렬
+    for section in cleaned:
+        cleaned[section].sort(key=lambda x: x[0])
+
+    for section in sorted(cleaned.keys()):
+        entries = cleaned[section]
+        if not entries:
+            continue
+        lines.append(f"## {section}")
+        lines.append("")
+        for entry, desc in entries:
+            desc_suffix = f" — {desc}" if desc else ""
+            lines.append(f"- `{entry}`{desc_suffix}")
+        lines.append("")
+
+    return "\n".join(lines) + "\n"
+
+
+def sync_index(harness_root: str, project_root: str, scope: str) -> tuple[int, int]:
+    """meta 인덱스를 실제 파일과 동기화. (added, removed) 반환."""
+    index_path = os.path.join(harness_root, "state", "meta", "src", scope, "INDEX.md")
+    if not os.path.isfile(index_path):
+        return (0, 0)
+
+    src_dir = os.path.join(project_root, "src", scope)
+    actual_files = collect_actual_files(src_dir, project_root)
+
+    with open(index_path, "r") as f:
+        content = f.read()
+
+    sections = _parse_sections(content)
+    before = set()
+    for entries in sections.values():
+        for entry, _desc in entries:
+            before.add(entry)
+
+    new_content = _regenerate_index(scope, sections, actual_files)
+
+    after = set()
+    for entries in _parse_sections(new_content).values():
+        for entry, _desc in entries:
+            after.add(entry)
+
+    added = len(after - before)
+    removed = len(before - after)
+
+    if added > 0 or removed > 0:
+        with open(index_path, "w") as f:
+            f.write(new_content)
+
+    return (added, removed)
+
+
+# ── 메인 ──────────────────────────────────────────────────
+
 def collect_all_issues() -> list[str]:
     all_issues = []
     for scope in ("be", "fe"):
@@ -129,14 +272,32 @@ def format_context_output(all_issues: list[str]) -> str:
 
 
 def main():
+    do_sync = "--sync" in sys.argv
+    do_exit_code = "--exit-code" in sys.argv
+
+    if do_sync:
+        total_added, total_removed = 0, 0
+        for scope in ("be", "fe"):
+            added, removed = sync_index(str(HARNESS_ROOT), str(PROJECT_ROOT), scope)
+            total_added += added
+            total_removed += removed
+
+        if do_exit_code:
+            if total_added > 0 or total_removed > 0:
+                print(
+                    f"  meta-index synced: +{total_added}/-{total_removed}",
+                    file=sys.stderr,
+                )
+            sys.exit(0)
+        return
+
     all_issues = collect_all_issues()
 
-    if "--exit-code" in sys.argv:
+    if do_exit_code:
         if all_issues:
             print("\n".join(all_issues), file=sys.stderr)
             sys.exit(1)
         else:
-            # silent success for git hook
             sys.exit(0)
 
     if all_issues:

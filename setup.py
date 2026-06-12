@@ -396,7 +396,7 @@ def main():
         if not git_dir.exists():
             p("  ⚠ .git 디렉토리를 찾을 수 없습니다. 'git init'을 먼저 실행해주세요.", YELLOW)
         else:
-            # 프로젝트 repo용 경량 프록시: harness의 meta 체크를 호출
+            # 프로젝트 repo용 경량 프록시: harness의 meta 체크 호출
             proxy_script = textwrap.dedent("""\
                 #!/usr/bin/env bash
                 # Neo pre-commit 프록시 — harness meta 체크 호출
@@ -408,7 +408,7 @@ def main():
                 HARNESS_ABS="$(cd "$HARNESS_DIR" && pwd)"
                 NEO_HARNESS_ROOT="$HARNESS_ABS" \\
                   PYTHONPATH="$HARNESS_ABS/hooks" \\
-                  python3 "$CHECK_SCRIPT" --exit-code
+                  python3 "$CHECK_SCRIPT" --exit-code --sync
                 exit $?
             """)
             dst = git_dir / "pre-commit"

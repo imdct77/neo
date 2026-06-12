@@ -1,12 +1,14 @@
 # be — 구현 메타 인덱스
 
-> 마지막 갱신: 2026-06-12
+> 마지막 갱신: 2026-06-12 11:04:04
 > 담당: BE 프로필
 
 ## models/
 
 - `src/be/models/__init__.py` — models 패키지 초기화
 - `src/be/models/user.py` — 사용자 모델 (name, email, to_dict)
+
 ## services/
 
 - `src/be/services/auth.py` — 인증 서비스 (verify_token)
+
