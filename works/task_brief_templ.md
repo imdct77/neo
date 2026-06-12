@@ -234,12 +234,12 @@ BLOCKED
 
 ## 참조 문서
 
-- 전역 원칙: `docs/AGENTS.md`
+- 전역 원칙: `harness/AGENTS.md`
 - 아키텍처: `project/docs/design/architecture.md`
 - DB 스키마: `project/docs/design/database.md`
 - API 스펙: `project/docs/design/api/endpoints/{관련}/spec.md`
 - 화면 스펙: `project/docs/design/screens/{관련}/spec.md`
-- 역할 원칙: `docs/{frontend|backend}_profile.md`
+- 역할 원칙: `harness/profiles/{frontend|backend}_profile.md`
 - 전체 요구사항: `project/docs/requirements/{DOMAIN}/{DOMAIN}.md`
 - 태스크 목록: `project/docs/tasks/{DOMAIN}/{DOMAIN}_{ROLE}_tasks.md`
 - 테스트 정의: `project/docs/tests/{DOMAIN}/{DOMAIN}_tests.md`

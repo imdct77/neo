@@ -40,7 +40,7 @@
 | `review.md` | 구현 완료 후 | Critical·Important·Minor 분류 코드 리뷰. 구현자가 자신의 코드 리뷰 금지. |
 | `debug.md` | 버그·오류 발생 시 | 재현→가설→검증→수정 4단계. 증상 즉시 수정 금지. |
 | `finish.md` | 모든 태스크 완료 후 | MERGE·PR·KEEP·DISCARD 선택. 병합 조건 확인. |
-| `ctx.md` | /ctx·/ctx add·/ctx drop | 도메인 문서 로딩·제거·조회. docs/requirements/ 동적 탐색. |
+| `ctx.md` | /ctx·/ctx add·/ctx drop | 도메인 문서 로딩·제거·조회. project/docs/requirements/ 동적 탐색. |
 | `design-init.md` | 새 프로젝트 첫 세션 | 아이디어 구체화 대화 진입점. 조건 충족 시 design-* 스킬 순차 연결. |
 | `design-arch.md` | architecture.md 작성 조건 충족 시 | 전체 아키텍처 문서 작성 기준. 운영·보안·트래픽 포함. |
 | `design-db.md` | database.md 작성 조건 충족 시 | DB 설계 문서 작성 기준·갱신 정책. AC+BE 협업. |

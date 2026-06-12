@@ -130,14 +130,14 @@ git commit -m "NEO:PHASE:{DOMAIN}:{N}:COMPLETE
 
 BADCASE 학습 루틴 실행:
   MERGE 또는 PR 선택 시:
-    → skills/badcase-review.md 실행 (도메인 단위 BADCASE 학습 루틴)
+    → harness/skills/badcase-review.md 실행 (도메인 단위 BADCASE 학습 루틴)
 
   KEEP 선택 시:
     → 도메인 미완료이므로 badcase-review 실행하지 않는다
 
   DISCARD 선택 시:
     → 버린 작업에서도 BADCASE 학습은 유효하므로 실행한다
-    → skills/badcase-review.md 실행
+    → harness/skills/badcase-review.md 실행
 
 "다음 태스크는 무엇인가요?"
 스킬 파일 언로드.

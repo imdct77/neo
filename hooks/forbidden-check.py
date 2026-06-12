@@ -233,7 +233,7 @@ def _is_src_file(file_path: str) -> bool:
 
 
 def _is_req_file(file_path: str) -> bool:
-    """요구사항 문서 파일 여부 판단 (docs/requirements/ 아래).
+    """요구사항 문서 파일 여부 판단 (project/docs/requirements/ 아래).
 
     _is_src_file()과 동일한 PROJECT_ROOT 기준 정규화 방식 사용.
     """

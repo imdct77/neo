@@ -15,47 +15,47 @@
 
 ```
 새 프로젝트 첫 세션 (mem0 기록 없음)
-  → skills/design-init.md 실행 (진입점)
+  → harness/skills/design-init.md 실행 (진입점)
   → 조건 충족 시 순서대로 자동 연결:
-     architecture.md 조건 충족 → design-arch.md
-     database.md 조건 충족    → design-db.md
-     api/ 조건 충족           → design-api.md
-     screens/ 조건 충족       → design-screens.md
+     architecture.md 조건 충족 → harness/skills/design-arch.md
+     database.md 조건 충족    → harness/skills/design-db.md
+     api/ 조건 충족           → harness/skills/design-api.md
+     screens/ 조건 충족       → harness/skills/design-screens.md
 
 새 기능·API·컴포넌트 요청 수신 (진행 중인 프로젝트)
-  → skills/phase0.md 먼저 실행 (설계 없이 구현 금지)
+  → harness/skills/phase0.md 먼저 실행 (설계 없이 구현 금지)
   → Never skip Phase 0 before implementing a feature
 
 Task Brief 전달 직전
-  → skills/gate.md 실행 (Q1~Q7 더블 체크)
+  → harness/skills/gate.md 실행 (Q1~Q7 더블 체크)
   → Never bypass the Q1~Q7 gate before delivering a Task Brief
 
 구현 시작 전
   → Never implement without a Task Brief
 
 구현 완료 후
-  → skills/review.md 실행 (구현한 역할이 자신의 코드 리뷰 금지)
+  → harness/skills/review.md 실행 (구현한 역할이 자신의 코드 리뷰 금지)
 
 버그·오류 발생 시
-  → skills/debug.md 실행 (증상 즉시 수정 금지)
+  → harness/skills/debug.md 실행 (증상 즉시 수정 금지)
 
 모든 태스크 완료 후
-  → skills/finish.md 실행 (MERGE·PR·KEEP·DISCARD 선택)
+  → harness/skills/finish.md 실행 (MERGE·PR·KEEP·DISCARD 선택)
 
 세션 시작 시
-  → skills/neo-start.md 실행 (상태 복원·게이트 확인)
+  → harness/skills/neo-start.md 실행 (상태 복원·게이트 확인)
 
 도메인 완료 후 (finish.md MERGE/PR 선택 완료 시)
-  → skills/badcase-review.md 실행
+  → harness/skills/badcase-review.md 실행
 
 프로젝트 최종 완료 후 (MVP 완성 후)
-  → skills/badcase-distill.md 실행
+  → harness/skills/badcase-distill.md 실행
 
 컨텍스트 문서 관리 요청 수신 시 (자연어)
-  → skills/ctx.md 실행
+  → harness/skills/ctx.md 실행
 
 Phase 전환·태스크 시작·완료·BLOCKED 시점
-  → skills/kanban.md 규칙 적용
+  → harness/skills/kanban.md 규칙 적용
 ```
 
 이 규칙을 위반하면 사용자의 신뢰를 잃는다.
@@ -131,13 +131,13 @@ Hermes: hermes model 또는 /model 명령으로 모델 교체.
 감리 시점 6가지:
   시점 0: requirements 완성 직후 → 가장 저비용 수정 시점
   시점 1: tasks 완성 직후        → requirements→tasks 연결 검증
-  시점 2: 설계 완성 직후         → docs/design/ 완성 후
+  시점 2: 설계 완성 직후         → project/docs/design/ 완성 후
   시점 3: Task Brief 완성 직후   → 구현 전 예방 감리
   시점 4: 도메인 Phase 완료 후   → 구현 결과 감리
   시점 5: MVP 완성 후            → 출시 전 최종 감리
 
 감리 결과:
-  docs/qa/{YYYY-MM-DD}_{시점}_{도메인}.md 보고서 저장
+  project/docs/qa/{시점}_{도메인}_{YYYYMMDD_hhmmss}.md 보고서 저장
   mem0에 "BADCASE:" 기록
   → NEO·AC·BE·FE·QA가 다음 작업 시 자동 학습
 
@@ -186,7 +186,7 @@ project/docs/briefs/{DOMAIN}/{TASK_ID}.md
 ## 4-1. 도메인별 문서 로딩
 
 NEO는 현재 작업 중인 도메인의 문서만 컨텍스트에 로드한다.
-상세 로딩 절차는 `skills/ctx.md`를 따른다.
+상세 로딩 절차는 `harness/skills/ctx.md`를 따른다.
 
 ### 항상 로드하는 문서 (고정)
 
@@ -205,7 +205,7 @@ project/docs/design/ (있으면 로드)
 | "도메인 문서 로딩해줘" / "{DOMAIN} 문서 추가" | 도메인 선택 → 문서 그룹 선택 → 로드 |
 | "도메인 문서 제거해줘" / "{DOMAIN} 문서 빼줘" | 현재 목록 출력 → 번호 선택 → 제거 |
 
-도메인 목록은 `docs/requirements/` 하위 디렉토리를 읽어 동적으로 구성한다.
+도메인 목록은 `project/docs/requirements/` 하위 디렉토리를 읽어 동적으로 구성한다.
 
 ---
 
@@ -479,7 +479,7 @@ briefs       : project/docs/briefs/{도메인 영문}.{역할}.{순번:3자리}.
 
 ## 8. 브랜치 전략
 
-### harness (imdct77/neo)
+### harness
 
 ```
 main      ← 배포 가능 상태. NEO 승인 없이 직접 push 금지
@@ -488,7 +488,7 @@ feature/{기능명}  ← 기능 단위 브랜치
 hotfix/{이슈}     ← 긴급 수정 전용
 ```
 
-### project (imdct77/{project_id})
+### project
 
 ```
 main      ← 배포 가능 상태. pre-commit 후크에 의해 meta 인덱스 자동 동기화

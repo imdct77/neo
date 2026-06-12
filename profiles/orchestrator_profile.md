@@ -83,30 +83,30 @@ NEO는 아래 상황에서 해당 파일을 읽고 따른다.
 
 | 상황 | 읽을 파일 |
 |------|----------|
-| 세션 시작 | `skills/neo-start.md` |
-| 상태 전환·CR 관리·git 이력 조회 | `skills/state-manage.md` |
-| 새 기능·API·컴포넌트 설계 시작 | `skills/phase0.md` |
-| Task Brief 전달 직전 | `skills/gate.md` |
-| 구현 완료 후 리뷰 | `skills/review.md` |
-| 도메인 완료 후 | `skills/badcase-review.md` |
-| 프로젝트 완료 후 | `skills/badcase-distill.md` |
-| 디버깅 필요 시 | `skills/debug.md` |
-| 컨텍스트 로드/언로드 | `skills/ctx.md` |
-| 프로젝트 완료·배포 | `skills/finish.md` |
-| 칸반 운영 | `skills/kanban.md` |
+| 세션 시작 | `harness/skills/neo-start.md` |
+| 상태 전환·CR 관리·git 이력 조회 | `harness/skills/state-manage.md` |
+| 새 기능·API·컴포넌트 설계 시작 | `harness/skills/phase0.md` |
+| Task Brief 전달 직전 | `harness/skills/gate.md` |
+| 구현 완료 후 리뷰 | `harness/skills/review.md` |
+| 도메인 완료 후 | `harness/skills/badcase-review.md` |
+| 프로젝트 완료 후 | `harness/skills/badcase-distill.md` |
+| 디버깅 필요 시 | `harness/skills/debug.md` |
+| 컨텍스트 로드/언로드 | `harness/skills/ctx.md` |
+| 프로젝트 완료·배포 | `harness/skills/finish.md` |
+| 칸반 운영 | `harness/skills/kanban.md` |
 | 디렉토리 구조·파일명·ID 체계 | `AGENTS.md §7` |
 | meta 인덱스 생성·갱신 규칙 | `harness/state/meta/README.md` |
-| BADCASE 기록 형식 | `skills/review.md` |
-| BADCASE 기록 시점·처리 (NEO 직접) | `skills/badcase-review.md §Step 0` |
+| BADCASE 기록 형식 | `harness/skills/review.md` |
+| BADCASE 기록 시점·처리 (NEO 직접) | `harness/skills/badcase-review.md §Step 0` |
 | BADCASE 기록 (QA 감리) | `harness/profiles/qa_profile.md §4` |
-| BADCASE 집계·분석·규칙 도출 | `skills/badcase-review.md §Step 1~7` |
+| BADCASE 집계·분석·규칙 도출 | `harness/skills/badcase-review.md §Step 1~7` |
 
 ### 컨텍스트 압축 대비
 
 컨텍스트가 압축되어 규칙이 희미해지면:
 1. SOUL.md Hard Boundaries 최우선
 2. .hermes.md Omission Constraints 두 번째
-3. `python3 hooks/state_manager.py summary` 실행 → 구조적 상태 복원
+3. `python3 harness/hooks/state_manager.py summary` 실행 → 구조적 상태 복원
 4. "컨텍스트가 압축됐습니다. 현재 상태를 복원했습니다." 보고
 
 ---
@@ -117,7 +117,7 @@ NEO는 아래 상황에서 해당 파일을 읽고 따른다.
 AC·BE·FE는 각자의 전문 영역에서 의견을 내지만,
 상태를 전환하는 결정과 실행은 NEO만 한다.
 
-실행 명령어는 `skills/state-manage.md`를 읽어 따른다.
+실행 명령어는 `harness/skills/state-manage.md`를 읽어 따른다.
 
 ### 자율 판단 허용 범위 (사람 확인 없이 실행)
 
@@ -174,7 +174,7 @@ Phase 전환 (IMPLEMENTATION 내부):
 2. 에스컬레이션 대상 여부 판단
    → 대상이면: §6 에스컬레이션 게이트 실행 후 대기
 
-3. skills/state-manage.md를 읽고 해당 명령어 실행
+3. harness/skills/state-manage.md를 읽고 해당 명령어 실행
 
 4. git tag 생성 (의미 있는 전환 시)
    git tag neo/{DOMAIN}/{LIFECYCLE}/{YYYY-MM-DD}

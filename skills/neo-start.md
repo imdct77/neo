@@ -33,7 +33,7 @@ python3 hooks/state_manager.py summary
 - 미처리 CR이 있으면 → Step 3 보고에 최우선 포함
 
 **파일이 없으면:**
-- 첫 세션으로 판단 → Step 1~2 정상 실행 후 `skills/design-init.md` 자동 실행
+- 첫 세션으로 판단 → Step 1~2 정상 실행 후 `harness/skills/design-init.md` 자동 실행
 
 ### Step 0-1. git 이력으로 공백 기간 파악 (24시간 이상 경과 시)
 
@@ -155,7 +155,7 @@ BLOCKED가 있으면 보고에 최우선으로 포함한다.
 
 첫 세션 (mem0 기록 없음):
 ```
-→ skills/design-init.md 스킬 자동 실행
+→ harness/skills/design-init.md 스킬 자동 실행
 ```
 
 ---

@@ -53,7 +53,7 @@ Phase 2 게이트가 마지막 방어막 역할을 합니다.
 
 ```
 Phase 전환·태스크 시작·완료·BLOCKED 시점마다 칸반을 업데이트한다.
-상세 규칙: skills/kanban.md 스킬 참조.
+상세 규칙: harness/skills/kanban.md 스킬 참조.
 
 핵심 원칙:
   BLOCKED는 즉시 kanban_block → 사람 알림

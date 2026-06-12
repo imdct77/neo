@@ -33,7 +33,7 @@ triggers:
 
 ### BADCASE 기록 형식
 
-기록 형식(헤더·상세·필드 정의·예시)은 `skills/review.md §BADCASE 기록` 을 따른다.
+기록 형식(헤더·상세·필드 정의·예시)은 `harness/skills/review.md §BADCASE 기록` 을 따른다.
 `SOURCE` 필드는 `내부검토(review)` 고정. `MODEL` 필드는 `NONE` 고정.
 
 ### 기록 후 처리

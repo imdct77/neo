@@ -6,7 +6,7 @@
   - §10 교정 3 반영: root 변수 스코프 문제 해소 — main() 내부에 직접 통합
   - §11-2 Fail-Open 정책: 상태 읽기 실패 시 경고 로그 후 진행 (차단하지 않음)
   - §13: PROJECT_ID / PROJECT_NAME 런타임 해석 지시문 주입
-    → skills/profiles의 {PROJECT_ID} 리터럴을 LLM이 올바르게 해석하도록 함
+    → harness/skills/, harness/profiles/의 {PROJECT_ID} 리터럴을 LLM이 올바르게 해석하도록 함
 """
 import sys, json, os, subprocess, re
 
