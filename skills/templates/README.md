@@ -34,7 +34,7 @@
 | **데이터 페칭** | [`data-fetching_design.md`](fe/data-fetching_design.md) | [`data-fetching_impl.md`](fe/data-fetching_impl.md) | API 통신·캐싱·에러/로딩 상태·낙관적 업데이트 |
 | **폼 처리** | [`form-handling_design.md`](fe/form-handling_design.md) | [`form-handling_impl.md`](fe/form-handling_impl.md) | react-hook-form·유효성 검사·서버 에러 |
 | **에러 바운더리** | [`error-boundary_design.md`](fe/error-boundary_design.md) | [`error-boundary_impl.md`](fe/error-boundary_impl.md) | 컴포넌트 트리 에러 격리·Fallback UI |
-| **스타일링** | — | [`styling.md`](fe/styling.md) | Tailwind·shadcn/ui·반응형·다크 모드·디자인 토큰 |
+| **스타일링** | [`styling_design.md`](fe/styling_design.md) | [`styling_impl.md`](fe/styling_impl.md) | Tailwind·shadcn/ui·반응형·다크 모드·디자인 토큰 |
 
 ### Shared (공통 — BE·FE 양쪽)
 
