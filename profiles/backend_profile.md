@@ -159,6 +159,9 @@ Phase 4 — 수정 (Fix)
    `[AUTO] TODO` 마커가 L2·L3에 남아있으면 구현 완료로 간주하지 않는다.
 7. 수정 완료 후 harness/state/meta/src/be/{section}/DETAIL.{파일명}.md 갱신 항목을 Task Brief에 포함.
    `--exit-code` 훅이 `[AUTO] TODO` 마커를 감지하면 커밋이 차단된다.
+8. 작업 내용이 인증·로깅 등 BE/FE 공통 관심사일 경우,
+   `harness/skills/templates/shared/` 디렉토리의 템플릿도 함께 확인.
+   설계 시 `_design.md`, 구현 시 `_impl.md` 를 로드.
 
 ### 파일 생성·삭제 시 메타 인덱스 cascade
 

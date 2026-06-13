@@ -30,8 +30,10 @@ Task Brief 전달 직전
   → harness/skills/gate.md 실행 (Q1~Q7 더블 체크)
   → Never bypass the Q1~Q7 gate before delivering a Task Brief
 
-구현 시작 전
+구현 시작 전 (Phase 0 설계 또는 Phase 3 구현)
   → Never implement without a Task Brief
+  → harness/skills/templates/README.md 확인 — 적용 가능한 패턴이 있으면
+    설계 단계면 _design.md, 구현 단계면 _impl.md 를 먼저 로드
 
 구현 완료 후
   → harness/skills/review.md 실행 (구현한 역할이 자신의 코드 리뷰 금지)
