@@ -219,6 +219,9 @@ Step 4. 감리 대상 문서·코드 로드
 
 #### 3-2-2. Backend 코드 품질 감리
 
+> 감리 기준: `personas/backend.md` §8 Pre-Delivery Checklist (41항목). QA는 이 체크리스트를 기준으로 감리한다.
+> backend.md §8이 갱신될 때마다 이 섹션도 동기화한다.
+
 ```
 □ API 설계
   - 모든 엔드포인트에 OpenAPI description 작성?
@@ -236,8 +239,12 @@ Step 4. 감리 대상 문서·코드 로드
   - 외부 입력 Pydantic 검증 필수? (raw SQL에 사용자 입력 직접 삽입 금지)
   - JWT secret 환경변수 분리? (코드에 하드코딩 금지)
   - 비밀번호 bcrypt hash 사용? (MD5·SHA1 금지)
-  - 속도 제한(Rate Limiting) 적용? (인증·공개 API 모두)
+  - JWT 알고리즘이 none·HS256+RS256 동시 허용이 아닌가? (RS256·PS256·HS256 단일)
   - STRIDE 위협 모델링 수행 기록 존재?
+  - 속도 제한(Rate Limiting)이 인증·공개 API에 적용되었는가?
+  - CORS 설정이 와일드카드(*) 없이 명시적 origin으로 구성되었는가?
+  - CSP 헤더가 설정되었는가? (default-src 'self' 최소)
+  - detect-secrets가 pre-commit hook에 등록되었는가? (시크릿 커밋 차단)
 
 □ 에러·로깅
   - except Exception: pass 없음?
@@ -249,6 +256,43 @@ Step 4. 감리 대상 문서·코드 로드
   - DEBUG=True가 프로덕션 코드에 없음? (환경 분리)
   - health check 엔드포인트(/health) 존재?
   - 멱등성이 필요한 작업(결제·상태 변경)에 중복 방지 적용?
+
+□ 의존성
+  - 신규 의존성이 AGENTS.md §2 승인된 스택 내에 있는가?
+  - AI가 환각한 패키지명이 아닌지 확인했는가? (PyPI/npm 실제 존재)
+  - pip-audit·npm audit 실행 결과 Critical·High 0건인가?
+  - sbom.json이 갱신되었는가? (의존성 추가·삭제 시)
+
+□ API 인벤토리
+  - 모든 엔드포인트가 OpenAPI 스펙에 등록되었는가?
+  - 등록된 라우터 외 응답하는 엔드포인트가 없는가? (Shadow API 검사)
+  - /api/v1/ 버전 프리픽스가 일관되게 적용되었는가?
+  - API 키 발급·회전 대장이 갱신되었는가?
+```
+
+#### 3-2-3. Backend 성능 감리 (BE Performance Audit)
+
+> 시점 4(도메인 Phase 완료 후, BE 도메인)에 시행. BE 성능 병목을 정적 분석으로 사전 감지.
+
+```
+□ 슬로우 쿼리
+  - EXPLAIN ANALYZE로 500ms 이상 쿼리 식별?
+  - Sequential Scan이 발생하는 대용량 테이블이 있는가? (Index Scan으로 변환 가능)
+  - N+1 쿼리 패턴이 존재하는가? (ORM lazy load → selectinload/jointedload)
+
+□ 캐시
+  - 고트래픽 카운터가 캐시→배치 패턴을 사용하는가? (직접 UPDATE 금지)
+  - Redis 캐시 TTL이 적절한가? (너무 짧으면 캐시 미스 폭증, 너무 길면 stale 데이터)
+  - 캐시 히트율이 모니터링되고 있는가? (Redis INFO stats)
+
+□ 커넥션·리소스
+  - DB 커넥션 풀 크기가 예상 동시 요청 대비 충분한가?
+  - 외부 API 호출·이메일 발송이 비동기 처리되는가? (Celery 등)
+  - async 함수 내 동기 블로킹 호출이 없는가?
+
+□ 번들·의존성
+  - 사용하지 않는 의존성이 requirements.txt/Pipfile에 남아있는가?
+  - Docker 이미지 크기가 500MB 이하인가? (멀티 스테이지 빌드)
 ```
 
 ---
@@ -363,6 +407,28 @@ project/docs/qa/
 - 체크리스트 항목을 "확인했다"고 선언하면서 실제로 확인하지 않는다
 - 발견한 이슈를 "사람이 싫어할 것 같아서" 누락하거나 축소하지 않는다
 - 감리 보고서 없이 감리를 완료 처리하지 않는다
+```
+
+### 6-1. QA 필수 확인 항목 (감리 세션 시작 시 반드시 로드)
+
+> BE·FE 프로필의 절대 금지 항목을 감리 시 QA도 확인해야 한다.
+> QA는 구현자의 절대 금지 위반을 발견하는 2차 방어선이다.
+
+```
+□ BE 절대 금지 (backend.md §7 + §8 Pre-Delivery)
+  - JWT 검증 skip 코드가 main/develop에 없는가?
+  - 비밀번호가 평문·MD5·SHA1로 저장되지 않았는가?
+  - SECRET 키가 코드에 하드코딩되지 않았는가?
+  - CORS가 와일드카드(*)로 설정되지 않았는가?
+  - CSP 헤더가 누락되지 않았는가?
+  - pip-audit·npm audit 결과 Critical·High가 없는가?
+  - Shadow API(미문서화 엔드포인트)가 존재하지 않는가?
+
+□ FE 절대 금지 (frontend.md §7 + §9 Pre-Delivery)
+  - access_token이 localStorage·sessionStorage에 저장되지 않았는가?
+  - dangerouslySetInnerHTML이 DOMPurify 없이 사용되지 않았는가?
+  - console.log에 토큰·세션 ID·개인정보가 노출되지 않았는가?
+  - CSP를 위반하는 inline script·eval이 없는가?
 ```
 
 스킬 파일 언로드.

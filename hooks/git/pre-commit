@@ -10,7 +10,9 @@
 #   4. ESLint — TypeScript 린트
 #   5. prettier — TypeScript 포맷
 #   6. detect-secrets — 민감 키 하드코딩 방지
-#   7. 브랜치 보호 — main/develop 직접 커밋 차단
+#   7. pip-audit — Python 의존성 취약점 스캔
+#   8. npm audit — Node.js 의존성 취약점 스캔
+#   9. 브랜치 보호 — main/develop 직접 커밋 차단
 
 set -e
 
@@ -100,6 +102,16 @@ if [[ -n "$PY_FILES" ]]; then
     else
         warn "bandit 미설치 (건너뜀)"
     fi
+
+    # pip-audit 의존성 취약점 스캔
+    if command -v pip-audit &>/dev/null; then
+        if ! pip-audit --ignore-vuln PYSEC-0000-CPE 2>/dev/null; then
+            fail "pip-audit: Critical·High 의존성 취약점 발견. 수정 후 커밋하세요."
+        fi
+        pass "pip-audit 의존성 스캔"
+    else
+        warn "pip-audit 미설치 (건너뜀). pip install pip-audit"
+    fi
 fi
 
 # --------------------------------------------------------
@@ -126,6 +138,16 @@ if [[ -n "$TS_FILES" ]]; then
         pass "prettier 포맷"
     else
         warn "prettier 설정 없음 (건너뜀)"
+    fi
+
+    # npm audit 의존성 취약점 스캔
+    if command -v npm &>/dev/null && [[ -f "package.json" ]]; then
+        if ! npm audit --audit-level=high 2>/dev/null; then
+            fail "npm audit: Critical·High 의존성 취약점 발견. 수정 후 커밋하세요."
+        fi
+        pass "npm audit 의존성 스캔"
+    else
+        warn "npm/package.json 없음 (건너뜀)"
     fi
 fi
 

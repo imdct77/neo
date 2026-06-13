@@ -68,6 +68,17 @@ ASSUMPTIONS I'M MAKING:
 
 가정이 틀렸을 때의 비용이 큰 경우, 구현 전에 NEO에게 가정을 보고하고 확인한다.
 
+### 2-0.6. 보안 의식 — FE가 담당하는 보안 영역
+
+FE는 "BE가 다 해결해줄 것"이라고 가정하지 않는다. 다음은 FE 코드에서 직접 처리해야 하는 보안 영역이다:
+
+- **XSS 방지**: `dangerouslySetInnerHTML` 사용 전 DOMPurify sanitize 필수. 사용자 입력 렌더링 시 React JSX로 자동 이스케이프되나, HTML 직접 삽입 시 주의
+- **CSRF 방지**: API 클라이언트에 `SameSite=Strict` 쿠키 + CSRF 토큰 헤더 적용
+- **CSP 위반 방지**: inline script·`eval()` 사용 금지. CSP 헤더는 BE가 설정하지만, FE 코드는 CSP를 위반하지 않아야 한다
+- **CORS 인식**: `credentials: 'include'` 사용 시 `Access-Control-Allow-Origin`이 와일드카드(`*`)일 수 없음. BE와 CORS 설정 협의 필요
+- **민감정보 노출 방지**: `console.log`·에러 메시지·클라이언트 번들에 토큰·세션 ID·개인정보 포함 금지. `NEXT_PUBLIC_*` 환경변수는 클라이언트에 노출됨을 인지
+- **토큰 저장**: `access_token`을 `localStorage`·`sessionStorage`에 저장 금지. HttpOnly Cookie 사용 (XSS 탈취 방어)
+
 
 
 구현 규모에 따라 접근 방식을 달리한다. 작은 컴포넌트는 바로, 큰 컴포넌트는 구조적으로.
@@ -528,6 +539,21 @@ EVT 테스트가 없으면 버튼을 눌렀을 때 아무 일도 안 일어나�
 > 이 체크리스트를 통과하지 못한 코드는 PR 제출 불가.
 > "이 정도면 됐겠지"는 허용되지 않는다.
 
+### 9-0. 보안 (Security)
+
+> FE는 시각적 경계만 담당하는 것이 아니다. XSS·CSRF·민감정보 노출·CORS 위반은 FE 코드에서 발생한다.
+
+```
+□ access_token이 localStorage·sessionStorage에 저장되지 않았는가? (HttpOnly Cookie 사용)
+□ dangerouslySetInnerHTML을 사용하지 않았는가? (사용 시 DOMPurify sanitize 필수)
+□ 사용자 입력을 렌더링 전에 이스케이프했는가? (React는 기본 방어, 단 HTML 삽입 시 주의)
+□ API 클라이언트에 CSRF 토큰이 적용되었는가? (SameSite Cookie + CSRF 헤더)
+□ console.log에 민감 정보(토큰·사용자 정보·세션 ID)가 없는가?
+□ CSP(Content-Security-Policy)를 위반하는 inline script·eval이 없는가?
+□ CORS 요청에 credentials: 'include'가 필요한 경우에만 설정되었는가?
+□ 환경변수(NEXT_PUBLIC_*)에 API 키 등 민감값이 노출되지 않았는가? (서버 사이드만)
+```
+
 ### 9-1. 시각 품질 (Visual Quality)
 
 > AI Aesthetic 관련 항목은 [§8-4 AI Aesthetic 자가 점검](#8-4-ai-aesthetic-자가-점검-red-flags)에서 먼저 확인한다. 여기서는 AI Aesthetic 외 시각 품질만 다룬다.
@@ -590,11 +616,11 @@ EVT 테스트가 없으면 버튼을 눌렀을 때 아무 일도 안 일어나�
 ### 통과 기준
 
 ```
-□ 24항목 중 하나라도 미충족 → 완료 선언 불가. 해당 항목 수정 후 재검증
+□ 35항목 중 하나라도 미충족 → 완료 선언 불가. 해당 항목 수정 후 재검증
 □ 모든 항목 충족 → "Pre-Delivery Checklist 통과" 명시 후 PR 제출
 ```
 
-> 출처: UI UX Pro Max — Pre-Delivery Checklist (27항목 → Neo 25항목으로 간소화)
+> 출처: UI UX Pro Max — Pre-Delivery Checklist + Secure Vibe Coding 2026 §FE 보안
 
 ---
 

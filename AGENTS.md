@@ -143,8 +143,8 @@ Hermes: hermes model 또는 /model 명령으로 모델 교체.
   시점 1: tasks 완성 직후        → requirements→tasks 연결 검증
   시점 2: 설계 완성 직후         → project/docs/design/ 완성 후
   시점 3: Task Brief 완성 직후   → 구현 전 예방 감리
-  시점 4: 도메인 Phase 완료 후   → 구현 결과 감리 + FE 도메인 시 웹 성능 감리(Core Web Vitals)
-  시점 5: MVP 완성 후            → 출시 전 최종 감리 + 웹 성능 최종 측정
+  시점 4: 도메인 Phase 완료 후   → 구현 결과 감리 + FE 도메인 시 웹 성능 감리(Core Web Vitals) + BE 도메인 시 backend.md §8 Pre-Delivery Checklist 기반 감리 + BE 성능 감리
+  시점 5: MVP 완성 후            → 출시 전 최종 감리 + 웹 성능 최종 측정 + finish.md §3-1 배포 전 체크리스트 확인
 
 감리 결과:
   project/docs/qa/{시점}_{도메인}_{YYYYMMDD_hhmmss}.md 보고서 저장
@@ -349,6 +349,14 @@ AC(architect.md)로 전환하고 아키텍처 검토를 실행한다.
 ### 검증 주체
 
 - NEO 자신의 검증이나 서브에이전트의 자체 검증으로 대체할 수 없다
+- **review.md (구현 직후 자가검증)**:
+  - 구현한 역할과 다른 관점(AC·반대 역할)으로 review.md 실행
+  - 목적: 코드 작성 직후 보안 6축(Injection·Auth·Secrets·Validation·Defaults·Hallucinated)·DRY·TDD 위반을 즉시 발견
+  - 시점: 구현 완료 → review.md → 수정 → 완료 선언
+- **QA 감리 (도메인 완료 후 독립 감리)**:
+  - 구현 모델과 다른 LLM 모델로 qa.md §3 체크리스트 전체 감리
+  - 목적: 전체 도메인이 설계대로 구현되었는지 독립적 시각으로 검증. BE·FE Pre-Delivery Checklist 기반
+  - 시점: 도메인 Phase 완료 후 (AGENTS.md §3-3 시점 4)
 - QA 감리(시점 4)가 예정되어 있으면 그 결과를 기다린다
   (QA 감리는 qa.md를 로드한 후 실행된다 — §3-3 QA 감리 운영 원칙 참조)
 - QA 감리가 예정되지 않은 경량 변경은 NEO가 직접 검증하고

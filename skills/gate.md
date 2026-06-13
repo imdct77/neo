@@ -56,6 +56,11 @@ Q7. AI 생성 코드 보안 취약점 스캔 + STRIDE 위협 점검
       - SQL Injection 취약 패턴 (raw query에 사용자 입력 직접 삽입)
       - 인증 우회 가능성 (get_current_user() Depends 누락)
       - 개인정보 로그 노출 (이메일·IP·토큰 평문 로깅)
+      - CORS 설정 — Access-Control-Allow-Origin 와일드카드(*) 사용 여부
+      - CSP 헤더 — Content-Security-Policy 설정 누락 또는 unsafe-inline·unsafe-eval 남용 여부
+      - 의존성 취약점 — pip-audit·npm audit 결과 Critical·High 존재 여부
+      - Shadow API — OpenAPI 스펙에 등록되지 않은 엔드포인트 존재 여부
+      - AI 환각 패키지 — npm/PyPI에 존재하지 않는 패키지명 사용 여부
 
     ### 7-3. STRIDE 위협 모델링 — 신규 기능·API 기준
     Q1~Q6 중 하나라도 해당하는 경우(스택 변경·DB 변경·API 변경), STRIDE 6축 점검:
