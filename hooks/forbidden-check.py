@@ -15,11 +15,12 @@ import json
 import os
 from pathlib import Path
 
-from bootstrap import PROJECT_ROOT  # Hermes 환경에서만 사용
+from bootstrap import PROJECT_ROOT, HARNESS_ROOT  # Hermes 환경에서만 사용
 
 # neo_checks를 hooks/ 옆에서 import
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import neo_checks  # noqa: E402
+import neo_security  # noqa: E402
 
 
 def _block(reason: str) -> None:
@@ -50,6 +51,16 @@ def main():
     sec = neo_checks.scan_security(scan_text)
     if sec:
         _block(sec)
+        return
+
+    # ── #1b. lethal trifecta (terminal curl 유출 포함) ──
+    try:
+        allowed = neo_security.load_allowed_hosts(str(HARNESS_ROOT))
+    except Exception:
+        allowed = frozenset()
+    exfil = neo_security.scan_exfiltration(scan_text, allowed)
+    if exfil:
+        _block(exfil)
         return
 
     # ── 파일 수정 액션이 아니면 상태 검사 불필요 ──

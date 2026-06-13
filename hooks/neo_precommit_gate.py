@@ -24,6 +24,7 @@ from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import neo_checks  # noqa: E402
+import neo_security  # noqa: E402
 
 
 def _harness_root() -> Path:
@@ -122,6 +123,11 @@ def main() -> int:
               file=sys.stderr)
         return 1
 
+    try:
+        allowed = neo_security.load_allowed_hosts(harness_root)
+    except Exception:
+        allowed = frozenset()
+
     violations: list[str] = []
     for path in files:
         content = _staged_content(path)
@@ -129,6 +135,11 @@ def main() -> int:
         sec = neo_checks.scan_security(content)
         if sec:
             violations.append(f"  {path}: {sec}")
+            continue
+        # #1b lethal trifecta (데이터 유출 방지)
+        exfil = neo_security.scan_exfiltration(content, allowed)
+        if exfil:
+            violations.append(f"  {path}: {exfil}")
             continue
         # #2~#6 상태 게이트 (state 비어있으면 통과)
         if state:

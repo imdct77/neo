@@ -230,12 +230,31 @@ def check_write(
     content: str,
     state: dict,
     project_root: Path,
+    allowed_hosts: "frozenset[str] | None" = None,
 ) -> str | None:
     """파일 쓰기 1건에 대한 전체 검사. 위반 사유 또는 None.
 
-    원본 우선순위 보존: 보안 패턴(#1)을 상태 게이트(#2~#6)보다 먼저 본다.
+    검사 우선순위:
+      #1  보안 패턴 (scan_security)
+      #1b lethal trifecta 트립와이어 (neo_security.scan_exfiltration)
+      #2~#6 상태 게이트 (check_state_gate)
+
+    allowed_hosts가 None이면 trifecta 검사는 빈 허용목록으로 동작한다
+    (외부 호스트를 모두 미허용으로 간주). 어댑터가 프로젝트 설정에서 로드해 주입한다.
     """
     sec = scan_security(content)
     if sec:
         return sec
+
+    # neo_security는 선택적 의존 — 없으면 trifecta 검사만 건너뛴다(코어는 계속 동작).
+    try:
+        import neo_security  # noqa: PLC0415
+        exfil = neo_security.scan_exfiltration(
+            content, allowed_hosts if allowed_hosts is not None else frozenset()
+        )
+        if exfil:
+            return exfil
+    except ImportError:
+        pass
+
     return check_state_gate(file_path, state, project_root)
