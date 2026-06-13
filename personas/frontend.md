@@ -322,11 +322,104 @@ EVT 테스트가 없으면 버튼을 눌렀을 때 아무 일도 안 일어나�
 
 ---
 
-## 5. 접근성 기준
+## 5. 접근성 기준 (Accessibility Standards)
 
-- 모든 인터랙티브 요소에 `aria-label` 설정
-- 폼 필드와 `<label>` 연결 필수 (`htmlFor`)
-- 키보드 내비게이션 동작 확인
+> WCAG 2.1 AA + 플랫폼 가이드라인 준수.
+> 접근성은 nice-to-have가 아니다. 법적 요구사항이자 엔지니어링 품질 기준이다.
+
+### 5-1. 필수 (CRITICAL — 모든 컴포넌트)
+
+```
+□ 색상 대비 (Color Contrast)
+   본문 텍스트 최소 4.5:1, 큰 텍스트(18px+) 3:1 (WCAG AA)
+   라이트·다크 모드 모두 테스트. "괜찮아 보인다"가 아니라 측정 도구로 확인
+
+□ 포커스 표시 (Focus States)
+   모든 인터랙티브 요소에 visible focus ring (2–4px outline)
+   Tab 키로 모든 요소 접근 가능. outline: none 금지
+
+□ 키보드 내비게이션 (Keyboard Navigation)
+   Tab 순서 = 시각적 순서. 모달 내 포커스 트랩 (Tab 순환)
+   Esc로 모달·드롭다운 닫기. Enter/Space로 버튼 활성화
+
+□ 스크린 리더 (Screen Reader)
+   모든 인터랙티브 요소에 aria-label (아이콘 전용 버튼 필수)
+   폼 필드와 <label> 연결 필수 (htmlFor). 이미지에 alt 텍스트
+   aria-live="polite"로 동적 콘텐츠 변경 알림
+
+□ 제목 계층 (Heading Hierarchy)
+   h1 → h2 → h3 → h4 순차 사용. 레벨 건너뛰기 금지
+   페이지당 h1은 하나
+```
+
+### 5-2. 터치·인터랙션 (HIGH — 모든 인터랙티브 요소)
+
+```
+□ 터치 타겟 크기 (Touch Target Size)
+   최소 44×44pt (iOS HIG) / 48×48dp (Material Design)
+   시각적 크기가 작으면 hit area 확장 (padding 또는 ::before)
+
+□ 터치 간격 (Touch Spacing)
+   터치 타겟 간 최소 8px 간격. 오탭 방지
+
+□ Press Feedback
+   모든 탭 가능 요소에 시각적 피드백 (ripple·opacity·elevation 변화)
+   hover만으로 인터랙션 표현 금지 (모바일에서 hover 없음)
+
+□ cursor-pointer
+   모든 클릭 가능 요소에 cursor-pointer 적용 (Web)
+
+□ disabled 상태
+   비활성 요소: opacity 0.38–0.5 + cursor: not-allowed + aria-disabled
+   disabled와 readonly 시각적 구분
+```
+
+### 5-3. 폼·에러 (MEDIUM)
+
+```
+□ 입력 레이블
+   모든 input에 visible label. placeholder-only 금지
+   required 필드 표시 (asterisk 또는 (필수))
+
+□ 에러 표시
+   에러 메시지는 해당 필드 아래에 표시. 원인 + 해결 방법 포함
+   inline validation: blur 시점에 검증 (keystroke마다 검증 금지)
+   다중 에러 시 summary + 각 필드 anchor link
+
+□ 제출 피드백
+   로딩 → 성공/실패 상태 전환. 버튼 disabled + spinner
+   성공 시 토스트(3-5초 auto-dismiss), 실패 시 필드 레벨 에러
+
+□ 접근성
+   에러 메시지에 role="alert" 또는 aria-live region
+   auto-focus 첫 번째 에러 필드
+```
+
+### 5-4. 동작·애니메이션
+
+```
+□ reduced-motion
+   prefers-reduced-motion 미디어 쿼리 존중
+   모션 비활성화 시 모든 애니메이션·트랜지션 제거 또는 축소
+
+□ Dynamic Type / 텍스트 스케일링
+   시스템 텍스트 크기 설정 지원. 확대 시 레이아웃 깨짐 방지
+   텍스트 잘림(truncation)보다 wrapping 우선
+```
+
+### 5-5. 색상·의미
+
+```
+□ 색상에만 의존 금지 (Don't rely on color alone)
+   상태 표시에 색상 + 아이콘/텍스트/패턴 병행
+   에러(빨강) + 아이콘, 성공(초록) + 체크마크
+
+□ 색맹 대응
+   red/green 조합만으로 정보 전달 금지
+   차트: 색상 + 패턴·질감 병행
+```
+
+> 출처: UI UX Pro Max §1 Accessibility + §2 Touch & Interaction + §8 Forms & Feedback
 
 ---
 
@@ -421,6 +514,81 @@ EVT 테스트가 없으면 버튼을 눌렀을 때 아무 일도 안 일어나�
 - [ ] 모든 콘텐츠가 동일 크기의 카드로만 구성되어 있는가?
 
 하나라도 해당하면 `skills/templates/fe/styling_impl.md`로 돌아가서 수정한다.
+
+---
+
+## 9. 구현 완료 전 체크리스트 (Pre-Delivery Checklist)
+
+> UI 코드를 "완료"로 선언하기 전 반드시 확인한다.
+> 이 체크리스트를 통과하지 못한 코드는 PR 제출 불가.
+> "이 정도면 됐겠지"는 허용되지 않는다.
+
+### 9-1. 시각 품질 (Visual Quality)
+
+```
+□ 이모지를 아이콘으로 사용하지 않았는가? (SVG: Heroicons·Lucide 사용)
+□ 모든 아이콘이 일관된 아이콘 패밀리 + 스타일(획 굵기·코너 반경)인가?
+□ 시맨틱 컬러 토큰만 사용했는가? (원색 직접 사용 금지)
+□ Press 상태에서 레이아웃 경계가 변경되지 않는가? (jitter·layout shift 없음)
+□ 공식 브랜드 자산이 올바른 비율과 여백으로 사용되었는가?
+```
+
+### 9-2. 인터랙션 (Interaction)
+
+```
+□ 모든 탭 가능 요소가 press 피드백을 제공하는가? (ripple·opacity·elevation)
+□ 터치 타겟이 최소 크기를 충족하는가? (44×44pt iOS / 48×48dp Android)
+□ 마이크로 인터랙션 타이밍이 150–300ms 범위인가? (자연스러운 easing)
+□ disabled 상태가 시각적으로 명확하고 실제로 비활성화되어 있는가?
+□ cursor-pointer가 모든 클릭 가능 요소에 적용되었는가? (Web)
+```
+
+### 9-3. 라이트·다크 모드 (Light/Dark Mode)
+
+```
+□ 본문 텍스트 대비가 라이트·다크 모두 4.5:1 이상인가?
+□ 보조 텍스트 대비가 라이트·다크 모두 3:1 이상인가?
+□ 구분선·테두리·인터랙션 상태가 두 모드에서 모두 구분 가능한가?
+□ 모달·드로어 오버레이가 콘텐츠를 충분히 가리는가? (40–60% 검정)
+□ 두 모드 모두 실제 테스트했는가? (한 모드에서 추론 금지)
+```
+
+### 9-4. 레이아웃 (Layout)
+
+```
+□ Safe Area가 헤더·탭바·하단 CTA에 올바르게 적용되었는가?
+□ 스크롤 콘텐츠가 고정 요소 뒤에 숨지 않는가?
+□ 작은 화면·큰 화면·태블릿(가로+세로)에서 검증했는가?
+□ 4/8dp 스페이싱 리듬이 컴포넌트·섹션·페이지 레벨에서 유지되는가?
+□ 긴 텍스트가 큰 화면에서도 읽기 좋은 길이(60–75자)를 유지하는가?
+```
+
+### 9-5. 접근성 (Accessibility)
+
+```
+□ 모든 의미 있는 이미지·아이콘에 접근성 레이블이 있는가?
+□ 모든 폼 필드에 label·hint·에러 메시지가 있는가?
+□ 색상만으로 상태를 구분하지 않는가? (아이콘·텍스트 병행)
+□ prefers-reduced-motion에 대응하는가?
+□ Dynamic Type·텍스트 스케일링에 레이아웃이 깨지지 않는가?
+```
+
+### 9-6. 반응형 (Responsive)
+
+```
+□ 375px·768px·1024px·1440px 브레이크포인트에서 확인했는가?
+□ 모바일에서 가로 스크롤이 발생하지 않는가?
+□ viewport 메타 태그가 올바른가? (width=device-width, initial-scale=1, zoom 금지 안 함)
+```
+
+### 통과 기준
+
+```
+□ 25항목 중 하나라도 미충족 → 완료 선언 불가. 해당 항목 수정 후 재검증
+□ 모든 항목 충족 → "Pre-Delivery Checklist 통과" 명시 후 PR 제출
+```
+
+> 출처: UI UX Pro Max — Pre-Delivery Checklist (27항목 → Neo 25항목으로 간소화)
 
 ---
 
