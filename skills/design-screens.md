@@ -14,6 +14,8 @@ triggers:
 
 담당: AC 주도 → FE 검토 (BE는 API 계약 확인 목적으로 참조)
 
+> **시작 전**: `skills/templates/README.md` 확인 → 적용 가능한 패턴이 있으면 `_design.md` 로드
+
 ---
 
 ## 도메인 구분 원칙

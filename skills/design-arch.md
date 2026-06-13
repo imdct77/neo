@@ -19,6 +19,7 @@ triggers:
 ## 작성 절차
 
 ```
+Step 0. `skills/templates/README.md` 확인 → 적용 가능한 패턴이 있으면 `_design.md` 로드
 Step 1. AC! → architecture.md 초안 작성
 Step 2. NEO! → 사람에게 검토 요청
 Step 3. 사람 피드백 반영 → 확정

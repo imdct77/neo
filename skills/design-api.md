@@ -94,6 +94,8 @@ project/docs/design/api/
 
 ```
 실행 순서 (싱글 에이전트):
+
+Step 0. `skills/templates/README.md` 확인 → 적용 가능한 패턴이 있으면 `_design.md` 로드
   AC! → spec.md 초안 작성 + review_R1.md 생성
   BE! → review_R1.md에 BE 의견 추가
   FE! → review_R1.md에 FE 의견 추가

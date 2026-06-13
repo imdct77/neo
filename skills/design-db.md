@@ -19,6 +19,7 @@ triggers:
 ## 작성 절차
 
 ```
+Step 0. `skills/templates/README.md` 확인 → 적용 가능한 패턴이 있으면 `_design.md` 로드
 Step 1. AC! → database.md 초안 작성
 Step 2. BE! → 검토 의견 작성
   검토 관점:
