@@ -6,11 +6,12 @@ Neo Bootstrap — HARNESS_ROOT 자동 감지
 HARNESS_ROOT와 NEO_ROOT를 결정한다.
 
 실행:
-    python bootstrap.py
-    source <(python bootstrap.py --export)  # env 주입용
+    python harness-env.py
+    source <(python harness-env.py --export)  # env 주입용
 
 사용법:
-    from bootstrap import HARNESS_ROOT, NEO_ROOT  # import 방식
+    python harness-env.py          # 직접 실행
+    source <(python harness-env.py --export)  # shell env 주입
 """
 
 import os
@@ -30,7 +31,7 @@ def setup_env():
 
 
 def export_shell():
-    """source <(python bootstrap.py --export) 용"""
+    """source <(python harness-env.py --export) 용"""
     print(f"export HARNESS_ROOT={HARNESS_ROOT}")
     print(f"export NEO_ROOT={NEO_ROOT}")
 

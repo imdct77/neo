@@ -18,7 +18,7 @@ from datetime import datetime
 
 
 def _find_root() -> Path:
-    # 환경변수 우선 (pre-commit 프록시의 NEO_HARNESS_ROOT, root bootstrap.py의 HARNESS_ROOT)
+    # 환경변수 우선 (pre-commit 프록시의 NEO_HARNESS_ROOT, harness-env.py의 HARNESS_ROOT)
     for var in ("NEO_HARNESS_ROOT", "HARNESS_ROOT"):
         env_root = os.environ.get(var)
         if env_root:

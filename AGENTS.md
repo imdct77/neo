@@ -15,7 +15,7 @@
 
 **세션 시작 — 경로 기준 설정 (반드시 최우선):**
 ```
-python3 harness/bootstrap.py
+python3 harness/harness-env.py
 ```
 → `HARNESS_ROOT`, `NEO_ROOT` 환경변수 자동 설정.
 이 문서와 페르소나 파일들의 모든 `harness/` 경로는 `HARNESS_ROOT` 기준이다.
@@ -384,7 +384,7 @@ neo/                              ← 부모 디렉토리 (Git 관리 X)
 │   ├── project.json              ← 프로젝트 메타데이터 SSoT
 │   │
 │   ├── hooks/                    ← Hermes + Git 훅
-│   │   ├── bootstrap.py          ← 단일 진입점 (HARNESS_ROOT, PROJECT_ROOT, PROJECT)
+│   │   ├── harness-env.py        ← 단일 진입점 (HARNESS_ROOT, NEO_ROOT)
 │   │   ├── forbidden-check.py    ← 보안·Lifecycle·CR 위반 차단
 │   │   ├── meta_consistency_check.py ← meta 인덱스 3계층 검증·동기화
 │   │   ├── state_manager.py      ← .neo_state.json CRUD
