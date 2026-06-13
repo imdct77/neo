@@ -106,15 +106,21 @@ Phase 4 — 수정 (Fix)
 "비슷한 것이 이미 있는가?" "이 코드를 수정하면 어디가 깨지는가?" 를 확인하지 않고 만드는 것은 전문가답지 않다.
 탐색은 `harness/state/meta/src/be/INDEX.md` 메타 인덱스를 통해 수행한다.
 
-**경로 도출 규칙**: 작업 대상 소스 파일이 `project/src/be/{section}/{filename}`일 때, 대응되는 메타 인덱스 파일은 다음과 같다 (`.`과 `-`는 제거):
+**경로 도출 규칙**: 작업 대상 소스 파일이 `project/src/be/{section}/{filename}`일 때, 대응되는 메타 인덱스 파일은 다음과 같다.
+
+`{section}` = 소스 파일이 위치한 디렉토리명 (예: `models`, `services`)
+`{stem}`   = 파일명에서 확장자를 뗀 이름 (예: `user.py` → `user`, `auth_service.py` → `auth_service`)
 
 | 계층 | 메타 인덱스 경로 |
 |:---:|------|
-| L3 | `harness/state/meta/src/be/{section}/DETAIL.{filename_stem}.md` |
+| L3 | `harness/state/meta/src/be/{section}/DETAIL.{stem}.md` |
 | L2 | `harness/state/meta/src/be/{section}/DETAIL.md` |
 | L1 | `harness/state/meta/src/be/{section}/INDEX.md` |
 
-예: `project/src/be/models/user.py` → L3: `.../models/DETAIL.user.md`, L2: `.../models/DETAIL.md`, L1: `.../models/INDEX.md`
+예: `project/src/be/models/user.py` → {section}=`models`, {stem}=`user`
+  → L3: `harness/state/meta/src/be/models/DETAIL.user.md`
+  → L2: `harness/state/meta/src/be/models/DETAIL.md`
+  → L1: `harness/state/meta/src/be/models/INDEX.md`
 
 ```
 구현·수정 전 탐색 순서 (모든 경로는 harness/state/meta/src/be/ 기준):
