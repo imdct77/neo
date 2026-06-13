@@ -1,8 +1,3 @@
-# models/ 디렉토리 상세
-
-## user.py
-- **목적**: 사용자 모델
-
 # src/be/models/__init__.py — 상세
 
 ## Init

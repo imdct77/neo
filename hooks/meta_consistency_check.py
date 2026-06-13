@@ -59,24 +59,24 @@ _L3_TEMPLATE = """# {file_path} — 상세
 
 
 def _file_to_section(file_path: str, scope: str) -> str:
-    """파일 경로에서 디렉토리 섹션 추출.
-    예: src/be/models/user.py → models/"""
+    """파일 경로에서 src/{scope}/ 이후의 디렉토리 경로 추출.
+    예: src/be/recipes/model/recipe.py → recipes/model/"""
     prefix = f"src/{scope}/"
     if file_path.startswith(prefix):
         rest = file_path[len(prefix):]
-        parts = rest.split("/")
-        if len(parts) >= 2:
-            return f"{parts[0]}/"
+        dir_part = os.path.dirname(rest)
+        if dir_part:
+            return f"{dir_part}/"
     return "기타/"
 
 
 def _file_to_dir(file_path: str, scope: str) -> str:
     """"src/{scope}/" 제거한 디렉토리 경로.
-    예: src/be/models/user.py → models"""
+    예: src/be/recipes/model/recipe.py → recipes/model"""
     prefix = f"src/{scope}/"
     if file_path.startswith(prefix):
         rest = file_path[len(prefix):]
-        return rest.split("/")[0]
+        return os.path.dirname(rest)
     return "기타"
 
 
@@ -275,7 +275,10 @@ def _auto_detail_block(file_path: str) -> str:
 
 
 def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int, int, int]:
-    """scope 내 모든 section의 DETAIL.md + L3 + section-level INDEX.md 동기화.
+    """scope 내 전체 소스 트리를 os.walk로 순회, 각 디렉토리 레벨마다
+    L1(INDEX.md)·L2(DETAIL.md)·L3(DETAIL.{stem}.md) 생성.
+    리프(가장 깊은 디렉토리)부터 처리하여 상위로 전파.
+
     Returns (l2_added, l2_removed, l3_count, section_l1_count)."""
     l2_added, l2_removed, l3_count, section_l1 = 0, 0, 0, 0
     meta_src = os.path.join(harness_root, "state", "meta", "src", scope)
@@ -284,55 +287,68 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
     if not os.path.isdir(project_src):
         return (0, 0, 0, 0)
 
-    # 프로젝트에 존재하는 디렉토리 집합
-    project_dirs = {
-        d for d in os.listdir(project_src)
-        if os.path.isdir(os.path.join(project_src, d)) and not d.startswith(".")
-    }
-
-    # 1. 존재하는 디렉토리 → DETAIL.md 동기화 + L3 생성
-    for section in project_dirs:
-        section_full = os.path.join(project_src, section)
-        detail_path = os.path.join(meta_src, section, "DETAIL.md")
-        actual_in_section = {
-            os.path.relpath(os.path.join(root, f), project_root)
-            for root, dirs, files in os.walk(section_full)
-            for f in files if not f.startswith(".")
-            if not any(d.startswith(".") for d in Path(root).relative_to(section_full).parts)
+    # ── 1. 트리 수집: 각 디렉토리의 파일 + 하위 디렉토리 목록 ──
+    # dir_data[rel_path] = {'files': set of filenames, 'dirs': set of dirnames}
+    # rel_path는 project_src 기준 상대경로 ('' = scope 루트)
+    dir_data = {}
+    for root, dirs, files in os.walk(project_src):
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
+        files = [f for f in files if not f.startswith(".")]
+        rel = os.path.relpath(root, project_src)
+        if rel == ".":
+            rel = ""
+        dir_data[rel] = {
+            "files": set(files),
+            "dirs": set(dirs),
         }
 
-        # ── L3: 각 파일별 DETAIL.{stem}.md 생성 + 고아 정리 ──
-        section_meta_dir = os.path.join(meta_src, section)
-        os.makedirs(section_meta_dir, exist_ok=True)
+    # ── 2. 리프부터 처리 (depth 내림차순) ──
+    sorted_dirs = sorted(dir_data, key=lambda d: d.count(os.sep), reverse=True)
 
-        # 유효한 L3 stem 집합
-        valid_stems = {os.path.splitext(os.path.basename(f))[0] for f in actual_in_section}
+    for dir_rel in sorted_dirs:
+        data = dir_data[dir_rel]
+        src_dir = os.path.join(project_src, dir_rel) if dir_rel else project_src
+        meta_dir = os.path.join(meta_src, dir_rel) if dir_rel else meta_src
 
-        # 생성
-        for fpath in sorted(actual_in_section):
-            stem = os.path.splitext(os.path.basename(fpath))[0]
-            l3_path = os.path.join(section_meta_dir, f"DETAIL.{stem}.md")
-            if not os.path.isfile(l3_path):
-                _write_l3_skeleton(l3_path, fpath, section)
-                l3_count += 1
+        # source file 경로들 (project_root 기준)
+        actual_in_dir = {
+            os.path.relpath(os.path.join(src_dir, f), project_root)
+            for f in data["files"]
+        }
 
-        # 고아 L3 정리 (소스 없는 DETAIL.{stem}.md)
-        for fname in os.listdir(section_meta_dir):
-            if fname.startswith("DETAIL.") and fname.endswith(".md") and fname != "DETAIL.md":
-                stem = fname[len("DETAIL."):-len(".md")]
-                if stem not in valid_stems:
-                    os.remove(os.path.join(section_meta_dir, fname))
+        # ── L3: 파일별 DETAIL.{stem}.md ──
+        if actual_in_dir:
+            os.makedirs(meta_dir, exist_ok=True)
+            valid_stems = {os.path.splitext(f)[0] for f in data["files"]}
+
+            for fname in sorted(data["files"]):
+                stem = os.path.splitext(fname)[0]
+                l3_path = os.path.join(meta_dir, f"DETAIL.{stem}.md")
+                if not os.path.isfile(l3_path):
+                    fpath = os.path.relpath(os.path.join(src_dir, fname), project_root)
+                    _write_l3_skeleton(l3_path, fpath, os.path.basename(dir_rel) if dir_rel else "")
                     l3_count += 1
 
-        # ── Section-level INDEX.md 동기화 ──
-        section_index_path = os.path.join(section_meta_dir, "INDEX.md")
-        new_index_content = _generate_section_index(section, actual_in_section, scope)
-        if not os.path.isfile(section_index_path):
-            with open(section_index_path, "w") as f:
-                f.write(new_index_content)
-            section_l1 += 1
+            # 고아 L3 정리
+            for fname in os.listdir(meta_dir):
+                if fname.startswith("DETAIL.") and fname.endswith(".md") and fname != "DETAIL.md":
+                    stem = fname[len("DETAIL."):-len(".md")]
+                    if stem not in valid_stems:
+                        os.remove(os.path.join(meta_dir, fname))
+                        l3_count += 1
+
+        # ── Section-level INDEX.md (L1) ──
+        if dir_rel:  # scope 루트는 sync_l1에서 별도 처리
+            section_index_path = os.path.join(meta_dir, "INDEX.md")
+            if not os.path.isfile(section_index_path):
+                section_name = os.path.basename(dir_rel)
+                new_idx = _generate_section_index(section_name, actual_in_dir, scope)
+                with open(section_index_path, "w") as f:
+                    f.write(new_idx)
+                section_l1 += 1
 
         # ── L2: DETAIL.md 동기화 ──
+        detail_path = os.path.join(meta_dir, "DETAIL.md")
         existing_blocks = {}
         if os.path.isfile(detail_path):
             with open(detail_path) as f:
@@ -344,7 +360,7 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
             if k == "_header":
                 old_keys.add(k)
                 continue
-            for fpath in actual_in_section:
+            for fpath in actual_in_dir:
                 if fpath.endswith(k.split(" — ")[0]):
                     key_map[k] = fpath
                     old_keys.add(fpath)
@@ -352,14 +368,13 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
             else:
                 old_keys.add(k)
 
-        stale = old_keys - actual_in_section - {"_header"}
-        missing = actual_in_section - old_keys
+        stale = old_keys - actual_in_dir - {"_header"}
+        missing = actual_in_dir - old_keys
 
         if not stale and not missing:
             continue
 
         blocks = {"_header": existing_blocks.get("_header", ""), **existing_blocks}
-        # 매칭된 stale 항목 제거 (key_map 경유)
         for s in list(blocks.keys()):
             if s == "_header":
                 continue
@@ -368,7 +383,6 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
                     del blocks[s]
                     l2_removed += 1
                     break
-        # 미매칭 stale 항목 직접 제거 (파일이 삭제되어 key_map에 없는 경우)
         for s in list(blocks.keys()):
             if s == "_header":
                 continue
@@ -390,34 +404,47 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
                 lines.append("")
             lines.append(blocks[k].rstrip())
 
+        os.makedirs(os.path.dirname(detail_path), exist_ok=True)
         with open(detail_path, "w") as f:
             f.write("\n".join(lines) + "\n")
 
-    # 2. 프로젝트에 없는 meta 디렉토리 → DETAIL.md + L3 + INDEX.md 정리
+    # ── 3. orphan meta 디렉토리 정리 (전체 트리 기준) ──
+    project_dir_set = set(dir_data.keys())
     if os.path.isdir(meta_src):
-        for meta_entry in os.listdir(meta_src):
-            meta_entry_path = os.path.join(meta_src, meta_entry)
-            if not os.path.isdir(meta_entry_path) or meta_entry.startswith("."):
-                continue
-            if meta_entry not in project_dirs:
-                # 모든 메타 파일 삭제 (DETAIL.md, DETAIL.*.md, INDEX.md)
-                for fname in os.listdir(meta_entry_path):
-                    fpath = os.path.join(meta_entry_path, fname)
-                    if os.path.isfile(fpath) and fname.endswith(".md"):
-                        os.remove(fpath)
-                        if fname == "DETAIL.md":
-                            l2_removed += 1
-                        elif fname.startswith("DETAIL."):
-                            l3_count += 1
-                # 빈 디렉토리 정리
-                try:
-                    remaining = [f for f in os.listdir(meta_entry_path) if not f.startswith(".")]
-                    if not remaining:
-                        os.rmdir(meta_entry_path)
-                except OSError:
-                    pass
+        for meta_rel in _collect_meta_dirs(meta_src):
+            if meta_rel not in project_dir_set and meta_rel != "":
+                _purge_meta_dir(os.path.join(meta_src, meta_rel))
+                l2_removed += 1  # 대략적 카운트
 
     return (l2_added, l2_removed, l3_count, section_l1)
+
+
+def _collect_meta_dirs(meta_src: str) -> set[str]:
+    """meta_src 아래 모든 디렉토리의 상대경로 수집."""
+    dirs = set()
+    if not os.path.isdir(meta_src):
+        return dirs
+    for root, dnames, _ in os.walk(meta_src):
+        dnames[:] = [d for d in dnames if not d.startswith(".")]
+        rel = os.path.relpath(root, meta_src)
+        if rel == ".":
+            rel = ""
+        dirs.add(rel)
+    return dirs
+
+
+def _purge_meta_dir(meta_dir: str) -> None:
+    """디렉토리 내 모든 .md 파일 삭제 후 빈 디렉토리 제거."""
+    if not os.path.isdir(meta_dir):
+        return
+    for fname in os.listdir(meta_dir):
+        fpath = os.path.join(meta_dir, fname)
+        if os.path.isfile(fpath) and fname.endswith(".md"):
+            os.remove(fpath)
+    try:
+        os.rmdir(meta_dir)
+    except OSError:
+        pass
 
 
 def _write_l3_skeleton(l3_path: str, file_path: str, section: str) -> None:
@@ -604,41 +631,40 @@ def _check_l3_integrity(harness_root: str, project_root: str, scope: str) -> lis
 
     # 1. 소스 파일별 L3 존재 여부 수집
     src_to_l3 = {}  # source_rel_path → l3_exists (bool)
-    l3_files = set()  # 모든 L3 파일의 (section, stem)
+    l3_files = set()  # 고아 L3 상대경로 목록
 
-    for section in os.listdir(project_src):
-        section_full = os.path.join(project_src, section)
-        if not os.path.isdir(section_full) or section.startswith("."):
-            continue
-        for root, dirs, files in os.walk(section_full):
-            dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
-            for fname in files:
-                if fname.startswith("."):
-                    continue
-                stem = os.path.splitext(fname)[0]
-                rel = os.path.relpath(os.path.join(root, fname), project_root)
-                l3_path = os.path.join(meta_src, section, f"DETAIL.{stem}.md")
-                src_to_l3[rel] = os.path.isfile(l3_path)
+    for root, dirs, files in os.walk(project_src):
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
+        for fname in files:
+            if fname.startswith("."):
+                continue
+            stem = os.path.splitext(fname)[0]
+            rel = os.path.relpath(os.path.join(root, fname), project_root)
+            # meta 경로: project_src 기준 상대 디렉토리
+            meta_rel_dir = os.path.relpath(root, project_src)
+            if meta_rel_dir == ".":
+                meta_rel_dir = ""
+            l3_path = os.path.join(meta_src, meta_rel_dir, f"DETAIL.{stem}.md")
+            src_to_l3[rel] = os.path.isfile(l3_path)
 
     # 2. meta에서 고아 L3 수집 (소스 없는 L3)
-    for section in os.listdir(meta_src):
-        section_path = os.path.join(meta_src, section)
-        if not os.path.isdir(section_path) or section.startswith("."):
-            continue
-        for fname in os.listdir(section_path):
+    for root, dirs, files in os.walk(meta_src):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for fname in files:
             if fname.startswith("DETAIL.") and fname.endswith(".md") and fname != "DETAIL.md":
                 stem = fname[len("DETAIL."):-len(".md")]
-                # 대응 소스 파일 찾기
+                # 대응 소스 파일 찾기 — 파일명만 비교 (중첩 경로 대응)
                 found = False
                 for src_rel in src_to_l3:
-                    if src_rel.endswith(f"/{section}/{stem}.py") or \
-                       src_rel.endswith(f"/{section}/{stem}.ts") or \
-                       src_rel.endswith(f"/{section}/{stem}.tsx") or \
-                       src_rel.endswith(f"/{section}/{stem}.js"):
+                    if os.path.basename(src_rel) == f"{stem}.py" or \
+                       os.path.basename(src_rel) == f"{stem}.ts" or \
+                       os.path.basename(src_rel) == f"{stem}.tsx" or \
+                       os.path.basename(src_rel) == f"{stem}.js":
                         found = True
                         break
                 if not found:
-                    l3_files.add((section, fname))
+                    rel = os.path.relpath(os.path.join(root, fname), meta_src)
+                    l3_files.add(rel)
 
     # 3. 누락 경고 (소스 O + L3 X)
     missing_l3 = [rel for rel, exists in src_to_l3.items() if not exists]
@@ -653,7 +679,7 @@ def _check_l3_integrity(harness_root: str, project_root: str, scope: str) -> lis
 
     # 4. 고아 경고 (소스 X + L3 O) — #5
     if l3_files:
-        sample = sorted(f"{s}/{f}" for s, f in l3_files)[:10]
+        sample = sorted(l3_files)[:10]
         more = f" 외 {len(l3_files) - 10}건" if len(l3_files) > 10 else ""
         issues.append(
             f"[{scope}/L3] 고아 DETAIL.{{file}}.md — 소스 파일 없이 L3만 존재{more}:\n" +
@@ -672,12 +698,11 @@ def _check_l1(harness_root: str, project_root: str, scope: str) -> list[str]:
     ]
     meta_dir = os.path.join(harness_root, "state", "meta", "src", scope)
     if os.path.isdir(meta_dir):
-        for entry in os.listdir(meta_dir):
-            full = os.path.join(meta_dir, entry)
-            if os.path.isdir(full):
-                sub_idx = os.path.join(full, "INDEX.md")
-                if os.path.isfile(sub_idx):
-                    index_paths.append(sub_idx)
+        for root, dirs, _ in os.walk(meta_dir):
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
+            sub_idx = os.path.join(root, "INDEX.md")
+            if os.path.isfile(sub_idx) and sub_idx not in index_paths:
+                index_paths.append(sub_idx)
 
     indexed_files = set()
     for ip in index_paths:
@@ -710,7 +735,7 @@ def _check_l1(harness_root: str, project_root: str, scope: str) -> list[str]:
 
 
 def _check_l2(harness_root: str, project_root: str, scope: str) -> list[str]:
-    """L2 검증 — DETAIL.md 항목 vs 실제 파일 + 고아 디렉토리."""
+    """L2 검증 — 전체 트리 순회, 각 디렉토리별 DETAIL.md vs 실제 파일 + 고아 디렉토리."""
     issues = []
     meta_src = os.path.join(harness_root, "state", "meta", "src", scope)
     project_src = os.path.join(project_root, "src", scope)
@@ -718,29 +743,34 @@ def _check_l2(harness_root: str, project_root: str, scope: str) -> list[str]:
     if not os.path.isdir(meta_src) or not os.path.isdir(project_src):
         return issues
 
-    project_dirs = {
-        d for d in os.listdir(project_src)
-        if os.path.isdir(os.path.join(project_src, d)) and not d.startswith(".")
-    }
+    # 1. 프로젝트 전체 트리 수집
+    project_dir_set = set()
+    for root, dirs, files in os.walk(project_src):
+        dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
+        rel = os.path.relpath(root, project_src)
+        if rel == ".":
+            rel = ""
+        project_dir_set.add(rel)
 
-    # 1. 프로젝트 디렉토리별 DETAIL.md 검증
-    for section in sorted(project_dirs):
-        section_full = os.path.join(project_src, section)
-        detail_path = os.path.join(meta_src, section, "DETAIL.md")
+    # 2. 각 디렉토리별 DETAIL.md 검증 (scope 루트 제외)
+    for dir_rel in sorted(project_dir_set):
+        if not dir_rel:  # scope 루트는 _check_l1에서 처리
+            continue
+        src_dir = os.path.join(project_src, dir_rel)
+        detail_path = os.path.join(meta_src, dir_rel, "DETAIL.md")
 
-        actual_in_section = {
-            os.path.relpath(os.path.join(root, f), project_root)
-            for root, dirs, files in os.walk(section_full)
-            for f in files if not f.startswith(".")
-            if not any(d.startswith(".") for d in Path(root).relative_to(section_full).parts)
+        actual_in_dir = {
+            os.path.relpath(os.path.join(src_dir, f), project_root)
+            for f in os.listdir(src_dir)
+            if os.path.isfile(os.path.join(src_dir, f)) and not f.startswith(".")
         }
 
         if not os.path.isfile(detail_path):
-            if actual_in_section:
-                sample = sorted(actual_in_section)[:5]
-                more = f" 외 {len(actual_in_section) - 5}건" if len(actual_in_section) > 5 else ""
+            if actual_in_dir:
+                sample = sorted(actual_in_dir)[:5]
+                more = f" 외 {len(actual_in_dir) - 5}건" if len(actual_in_dir) > 5 else ""
                 issues.append(
-                    f"[{scope}/L2] DETAIL.md 누락 — {section}/ (파일 {len(actual_in_section)}건){more}:\n"
+                    f"[{scope}/L2] DETAIL.md 누락 — {dir_rel}/ (파일 {len(actual_in_dir)}건){more}:\n"
                     + "\n".join(f"  - {f}" for f in sample)
                 )
             continue
@@ -754,20 +784,20 @@ def _check_l2(harness_root: str, project_root: str, scope: str) -> list[str]:
         for k in indexed_keys:
             file_part = k.split(" — ")[0]
             found = False
-            for af in actual_in_section:
-                if af == file_part or af.endswith("/" + file_part.split("/")[-1]):
+            for af in actual_in_dir:
+                if af == file_part or af.endswith("/" + os.path.basename(file_part)):
                     matched.add(af)
                     found = True
                     break
             if not found:
                 unmatched_keys.add(k)
 
-        missing_from_detail = actual_in_section - matched
+        missing_from_detail = actual_in_dir - matched
         if missing_from_detail:
             sample = sorted(missing_from_detail)[:5]
             more = f" 외 {len(missing_from_detail) - 5}건" if len(missing_from_detail) > 5 else ""
             issues.append(
-                f"[{scope}/L2] DETAIL.md 누락 항목 — {section}/ {more}:\n"
+                f"[{scope}/L2] DETAIL.md 누락 항목 — {dir_rel}/ {more}:\n"
                 + "\n".join(f"  - {f}" for f in sample)
             )
 
@@ -775,20 +805,22 @@ def _check_l2(harness_root: str, project_root: str, scope: str) -> list[str]:
             sample = sorted(unmatched_keys)[:5]
             more = f" 외 {len(unmatched_keys) - 5}건" if len(unmatched_keys) > 5 else ""
             issues.append(
-                f"[{scope}/L2] DETAIL.md 고아 항목 — {section}/ {more}:\n"
+                f"[{scope}/L2] DETAIL.md 고아 항목 — {dir_rel}/ {more}:\n"
                 + "\n".join(f"  - {k}" for k in sample)
             )
 
-    # 2. 고아 디렉토리 (meta에 있지만 프로젝트에 없는)
+    # 3. 고아 디렉토리 (meta에 있지만 프로젝트에 없는)
     if os.path.isdir(meta_src):
-        for meta_entry in os.listdir(meta_src):
-            if meta_entry.startswith(".") or not os.path.isdir(os.path.join(meta_src, meta_entry)):
-                continue
-            if meta_entry not in project_dirs:
-                detail_file = os.path.join(meta_src, meta_entry, "DETAIL.md")
+        for root, dirs, _ in os.walk(meta_src):
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
+            rel = os.path.relpath(root, meta_src)
+            if rel == ".":
+                rel = ""
+            if rel and rel not in project_dir_set:
+                detail_file = os.path.join(root, "DETAIL.md")
                 if os.path.isfile(detail_file):
                     issues.append(
-                        f"[{scope}/L2] 고아 디렉토리 — meta/src/{scope}/{meta_entry}/ 프로젝트에 없음"
+                        f"[{scope}/L2] 고아 디렉토리 — meta/src/{scope}/{rel}/ 프로젝트에 없음"
                     )
 
     return issues
