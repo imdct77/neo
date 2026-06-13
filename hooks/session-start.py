@@ -28,7 +28,7 @@ def main():
         with open(am) as f:
             m = re.search(r'\*\*서비스명\*\*:\s*(.+)', f.read())
             if m: pn = m.group(1).strip()
-    ctx = f"""[{pn or ''}] Neo V1 활성화. neo-start.md를 read_file로 읽고 mem0에서 Phase·도메인·LEARN·BADCASE 검색 후 상태 보고하세요.
+    ctx = f"""[{pn or ''}] Neo 활성화. neo-start.md를 read_file로 읽고 mem0에서 Phase·도메인·LEARN·BADCASE 검색 후 상태 보고하세요.
 첫 세션이면 design-init을 제안하세요. neo-start.md: {ns}"""
 
     # === 상태 복원 컨텍스트 주입 (§6-5) — Fail-Open + 진단 ===

@@ -7,7 +7,7 @@ triggers:
   - 설계 변경이 비가역적이거나 blast radius가 넓을 때
 ---
 
-# ⚠️ 이 파일은 Hermes 내장 스킬이 아닙니다. NEO가 조건에 따라 직접 읽어 따르는 Neo V1 참조 문서입니다.
+# ⚠️ 이 파일은 Hermes 내장 스킬이 아닙니다. NEO가 조건에 따라 직접 읽어 따르는 Neo 참조 문서입니다.
 
 # doubt-driven — 신선한 컨텍스트 반증 검증
 

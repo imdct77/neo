@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Neo V1 — 설치 자동화 스크립트
+Neo — 설치 자동화 스크립트
 실행: python3 setup.py
 
-새 프로젝트에 Neo V1을 설치하고 {플레이스홀더}를 자동으로 채운다.
+새 프로젝트에 Neo를 설치하고 {플레이스홀더}를 자동으로 채운다.
 실행 후 "NEO, 시작해줘"로 바로 시작할 수 있다.
 """
 
@@ -202,9 +202,9 @@ def generate_project_id(project_name: str) -> str:
 
 def main():
     p("\n" + "=" * 55, BOLD)
-    p("  Neo V1 — 새 프로젝트 설치 스크립트", BOLD)
+    p("  Neo — 새 프로젝트 설치 스크립트", BOLD)
     p("=" * 55, BOLD)
-    p("\nNeo V1을 이 프로젝트에 설치합니다.")
+    p("\nNeo를 이 프로젝트에 설치합니다.")
     p("완료 후 'NEO, 시작해줘'로 바로 시작할 수 있습니다.\n")
 
     # ── git 사전 체크 (필수) ──
@@ -550,7 +550,7 @@ def main():
     # Step 8. 완료 안내
     # --------------------------------------------------------
     p("\n" + "=" * 55, GREEN)
-    p("  Neo V1 설치 완료!", GREEN + BOLD)
+    p("  Neo 설치 완료!", GREEN + BOLD)
     p("=" * 55, GREEN)
     p(f"\n  프로젝트: {project_name}")
     p(f"  PROJECT_ID: {project_id}")
