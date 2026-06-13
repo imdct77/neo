@@ -47,6 +47,16 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
 새 컴포넌트·훅·유틸을 만들기 전, 그리고 기존 컴포넌트·훅을 수정하기 전 반드시 코드베이스를 탐색한다.
 탐색은 `harness/state/meta/src/fe/INDEX.md` 메타 인덱스를 통해 수행한다.
 
+**경로 도출 규칙**: 작업 대상 소스 파일이 `project/src/fe/{section}/{filename}`일 때, 대응되는 메타 인덱스 파일은 다음과 같다 (`.`과 `-`는 제거):
+
+| 계층 | 메타 인덱스 경로 |
+|:---:|------|
+| L3 | `harness/state/meta/src/fe/{section}/DETAIL.{filename_stem}.md` |
+| L2 | `harness/state/meta/src/fe/{section}/DETAIL.md` |
+| L1 | `harness/state/meta/src/fe/{section}/INDEX.md` |
+
+예: `project/src/fe/components/Button.tsx` → L3: `.../components/DETAIL.Button.md`, L2: `.../components/DETAIL.md`, L1: `.../components/INDEX.md`
+
 ```
 구현·수정 전 탐색 순서 (모든 경로는 harness/state/meta/src/fe/ 기준):
 
