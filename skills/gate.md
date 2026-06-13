@@ -62,7 +62,10 @@ Q1~Q7 모두 해당 없음 (Q7 Git Hook 자동 처리 포함):
   "게이트 통과. Task Brief를 전달합니다."
 
 Q1~Q6 하나 이상 해당 또는 Q7 수동 스캔 필요:
-  AC! 로 전환 → ADR 형식으로 검토 결과 작성
+  → **doubt-driven 판단**: Q1~Q6 해당 건 중 "이 결정이 틀리면 되돌리기 어려운가?" 또는
+    "NEO가 확신하지 못하는 영역인가?"에 해당하면 `harness/skills/doubt-driven.md` 실행.
+    CLAIM→EXTRACT→DOUBT→RECONCILE 사이클로 반증 검증.
+  → AC! 로 전환 → ADR 형식으로 검토 결과 작성
   사람에게 보고 + 승인 요청
   승인 후 Task Brief에 ADR 포함하여 전달
   반려 시 대안 검토 후 재보고

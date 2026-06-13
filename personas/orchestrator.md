@@ -92,6 +92,7 @@ NEO는 아래 상황에서 해당 파일을 읽고 따른다.
 | 상태 전환·CR 관리·git 이력 조회 | `harness/skills/state-manage.md` |
 | 새 기능·API·컴포넌트 설계 시작 | `harness/skills/phase0.md` |
 | Task Brief 전달 직전 | `harness/skills/gate.md` |
+| 비자명한 결정 반증 검증 | `harness/skills/doubt-driven.md` |
 | 구현 완료 후 리뷰 | `harness/skills/review.md` |
 | 도메인 완료 후 | `harness/skills/badcase-review.md` |
 | 프로젝트 완료 후 | `harness/skills/badcase-distill.md` |
