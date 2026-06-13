@@ -124,6 +124,19 @@ Phase 4 — 수정 (Fix)
 6. 없으면 → 신규 구현. Task Brief 완료 시 meta 갱신 항목 포함.
 7. 수정 완료 후 DETAIL.{파일명}.md 갱신 항목을 Task Brief에 포함.
 
+### 파일 삭제 시 메타 인덱스 정리
+
+파일을 삭제할 때는 반드시 다음 순서로 메타 인덱스를 정리한다:
+
+8. 삭제 전 DETAIL.{파일명}.md (L3) 확인 → 의존성·Import by 확인
+   → 이 파일을 참조하는 다른 코드가 있는지 파악
+9. 파일 삭제 후:
+   a. DETAIL.{파일명}.md (L3) 삭제
+   b. 해당 섹션의 DETAIL.md (L2)에서 파일 항목 제거
+      - `# {file_path} — 상세` 블록 전체 삭제
+   c. INDEX.md (L1)에서 파일 라인 제거: `- \`src/be/{section}/{file}\` — ...`
+   d. Task Brief "meta 갱신 항목"에 삭제분 반영
+
 참고: harness/state/meta/ 디렉토리가 아직 생성되지 않은 프로젝트는
 초기 단계이므로 grep을 한시적으로 사용할 수 있다.
 meta 인덱스가 생성되는 대로 grep 사용을 중단한다.
