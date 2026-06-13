@@ -115,8 +115,33 @@ def _auto_desc(file_path: str) -> str:
 
 
 # ═══════════════════════════════════════════════════════════
-# L1 — scope-level INDEX.md  (파일 목록)
+# L1 — scope-level + section-level INDEX.md  (파일 목록)
 # ═══════════════════════════════════════════════════════════
+
+# section-level INDEX.md 템플릿
+_SECTION_INDEX_TEMPLATE = """# {section}/ — 디렉토리 인덱스
+
+> 마지막 갱신: {timestamp}
+> 상위: [../INDEX.md](../INDEX.md)
+
+## 파일 목록
+
+{file_list}
+"""
+
+
+def _generate_section_index(section: str, files: set[str], scope: str) -> str:
+    """section-level INDEX.md 생성."""
+    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    prefix = f"src/{scope}/{section}/"
+    file_lines = []
+    for f in sorted(files):
+        rel = os.path.relpath(f, prefix) if f.startswith(prefix) else f
+        file_lines.append(f"- `{f}` — TODO: 설명 추가")
+    file_list = "\n".join(file_lines) if file_lines else "- (파일 없음)"
+    return _SECTION_INDEX_TEMPLATE.format(
+        section=section, timestamp=timestamp, file_list=file_list
+    )
 
 
 def parse_index_md(path: str) -> set[str]:
@@ -249,15 +274,15 @@ def _auto_detail_block(file_path: str) -> str:
     return f"# {file_path} — 상세\n\n{_AUTO_DETAIL_TEMPLATE.format(cls_name=stem)}"
 
 
-def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int, int]:
-    """scope 내 모든 section의 DETAIL.md + L3 DETAIL.{stem}.md 동기화.
-    Returns (l2_added, l2_removed, l3_count)."""
-    l2_added, l2_removed, l3_count = 0, 0, 0
+def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int, int, int]:
+    """scope 내 모든 section의 DETAIL.md + L3 + section-level INDEX.md 동기화.
+    Returns (l2_added, l2_removed, l3_count, section_l1_count)."""
+    l2_added, l2_removed, l3_count, section_l1 = 0, 0, 0, 0
     meta_src = os.path.join(harness_root, "state", "meta", "src", scope)
     project_src = os.path.join(project_root, "src", scope)
 
     if not os.path.isdir(project_src):
-        return (0, 0, 0)
+        return (0, 0, 0, 0)
 
     # 프로젝트에 존재하는 디렉토리 집합
     project_dirs = {
@@ -285,6 +310,14 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
             if not os.path.isfile(l3_path):
                 _write_l3_skeleton(l3_path, fpath, section)
                 l3_count += 1
+
+        # ── Section-level INDEX.md 동기화 ──
+        section_index_path = os.path.join(section_meta_dir, "INDEX.md")
+        new_index_content = _generate_section_index(section, actual_in_section, scope)
+        if not os.path.isfile(section_index_path):
+            with open(section_index_path, "w") as f:
+                f.write(new_index_content)
+            section_l1 += 1
 
         # ── L2: DETAIL.md 동기화 ──
         existing_blocks = {}
@@ -347,22 +380,22 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
         with open(detail_path, "w") as f:
             f.write("\n".join(lines) + "\n")
 
-    # 2. 프로젝트에 없는 meta 디렉토리 → DETAIL.md + L3 정리
+    # 2. 프로젝트에 없는 meta 디렉토리 → DETAIL.md + L3 + INDEX.md 정리
     if os.path.isdir(meta_src):
         for meta_entry in os.listdir(meta_src):
             meta_entry_path = os.path.join(meta_src, meta_entry)
             if not os.path.isdir(meta_entry_path) or meta_entry.startswith("."):
                 continue
             if meta_entry not in project_dirs:
-                detail_file = os.path.join(meta_entry_path, "DETAIL.md")
-                if os.path.isfile(detail_file):
-                    os.remove(detail_file)
-                    l2_removed += 1
-                # L3 파일들도 삭제
+                # 모든 메타 파일 삭제 (DETAIL.md, DETAIL.*.md, INDEX.md)
                 for fname in os.listdir(meta_entry_path):
-                    if fname.startswith("DETAIL.") and fname.endswith(".md") and fname != "DETAIL.md":
-                        os.remove(os.path.join(meta_entry_path, fname))
-                        l3_count += 1
+                    fpath = os.path.join(meta_entry_path, fname)
+                    if os.path.isfile(fpath) and fname.endswith(".md"):
+                        os.remove(fpath)
+                        if fname == "DETAIL.md":
+                            l2_removed += 1
+                        elif fname.startswith("DETAIL."):
+                            l3_count += 1
                 # 빈 디렉토리 정리
                 try:
                     remaining = [f for f in os.listdir(meta_entry_path) if not f.startswith(".")]
@@ -371,7 +404,7 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
                 except OSError:
                     pass
 
-    return (l2_added, l2_removed, l3_count)
+    return (l2_added, l2_removed, l3_count, section_l1)
 
 
 def _write_l3_skeleton(l3_path: str, file_path: str, section: str) -> None:
@@ -777,15 +810,17 @@ def _sync_all():
         "L1_added": 0, "L1_removed": 0,
         "L2_added": 0, "L2_removed": 0,
         "L3_detail_added": 0, "L3_changed": False,
+        "section_l1": 0,
     }
 
     any_l2_change = False
     for scope in _SCOPES:
-        l2_a, l2_r, l3_c = sync_l2(h, p, scope)
+        l2_a, l2_r, l3_c, sl1 = sync_l2(h, p, scope)
         stats["L2_added"] += l2_a
         stats["L2_removed"] += l2_r
         stats["L3_detail_added"] += l3_c
-        if l2_a or l2_r or l3_c:
+        stats["section_l1"] += sl1
+        if l2_a or l2_r or l3_c or sl1:
             any_l2_change = True
 
     # L2 변경 → L1 갱신 (cascade)
@@ -813,6 +848,7 @@ def main():
             stats["L1_added"] or stats["L1_removed"]
             or stats["L2_added"] or stats["L2_removed"]
             or stats["L3_detail_added"] or stats["L3_changed"]
+            or stats["section_l1"]
         )
 
         # #4: [AUTO] TODO 감지 — 의미 검토 미수행 경고
@@ -822,6 +858,8 @@ def main():
             parts = []
             if stats["L1_added"] or stats["L1_removed"]:
                 parts.append(f"L1: +{stats['L1_added']}/-{stats['L1_removed']}")
+            if stats["section_l1"]:
+                parts.append(f"L1(section): +{stats['section_l1']}")
             if stats["L2_added"] or stats["L2_removed"]:
                 parts.append(f"L2: +{stats['L2_added']}/-{stats['L2_removed']}")
             if stats["L3_detail_added"]:
