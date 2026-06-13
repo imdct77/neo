@@ -313,6 +313,7 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
             continue
 
         blocks = {"_header": existing_blocks.get("_header", ""), **existing_blocks}
+        # 매칭된 stale 항목 제거 (key_map 경유)
         for s in list(blocks.keys()):
             if s == "_header":
                 continue
@@ -321,6 +322,13 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
                     del blocks[s]
                     l2_removed += 1
                     break
+        # 미매칭 stale 항목 직접 제거 (파일이 삭제되어 key_map에 없는 경우)
+        for s in list(blocks.keys()):
+            if s == "_header":
+                continue
+            if s in stale:
+                del blocks[s]
+                l2_removed += 1
 
         for m in sorted(missing):
             blocks[m] = _auto_detail_block(m)
