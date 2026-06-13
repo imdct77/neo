@@ -127,7 +127,9 @@ delegate_task(
 
 1. **트리거**: gate.md Q1~Q7 실행 후 하나 이상 "해당" → doubt-driven 사이클 진입 여부 판단
 2. **제외 대상**: Q7(보안 스캔)은 이미 자동화되어 있으므로 doubt-driven 제외. Q1~Q6가 대상
-3. **NEO 판단**: 모든 Q1~Q6 해당 건에 대해 doubt-driven을 실행하지 않는다. "이 결정이 틀리면 되돌리기 어려운가?" 또는 "내가 확신하지 못하는 영역인가?"를 기준으로 NEO가 선택
+3. **NEO 판단 (NEO Decision Criteria)**: 모든 Q1~Q6 해당 건에 대해 doubt-driven을 실행하지 않는다. 아래 기준으로 NEO가 선택:
+   - "이 결정이 틀리면 되돌리기 어려운가? (Is this decision hard to reverse if wrong?)"
+   - "내가 확신하지 못하는 영역인가? (Is this an area where I lack confidence?)"
 4. **사용자 보고**: RECONCILE 완료 후 발견 사항을 사용자에게 요약 보고. CONFIRMED ISSUE가 있으면 수정 전 승인 요청
 
 ---
