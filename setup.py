@@ -50,6 +50,51 @@ def _detect_git_identity():
         pass
     return name, email
 
+def _check_git():
+    """git 설치 여부 확인, 없으면 설치 도움"""
+    import subprocess as _sp, platform
+    try:
+        _sp.run(["git", "--version"], capture_output=True, check=True)
+        return True
+    except (FileNotFoundError, Exception):
+        pass
+
+    p("\n⚠️  git이 설치되어 있지 않습니다.", RED)
+    p("  Neo는 Git 버전 관리를 기본으로 사용합니다.", YELLOW)
+
+    system = platform.system()
+    install_cmds = {
+        "Linux":   "sudo apt-get install git  (Debian/Ubuntu)\n           sudo yum install git      (RHEL/CentOS)",
+        "Darwin":  "xcode-select --install      (Xcode CLI)\n           brew install git           (Homebrew)",
+        "Windows": "winget install Git.Git      (Windows)\n           scoop install git          (Scoop)",
+    }
+    cmd = install_cmds.get(system, "패키지 매니저로 git 설치")
+    p(f"\n  {system} 설치 방법:\n    {cmd}\n")
+
+    install = ask("지금 설치할까요? (y/n)", "y")
+    if install.lower() == "y":
+        if system == "Darwin":
+            try:
+                _sp.run(["brew", "install", "git"], check=True)
+                p("  ✓ git 설치 완료 (Homebrew)", GREEN)
+                return True
+            except Exception:
+                p("  Homebrew 실패. Xcode CLI로 시도:", YELLOW)
+                p("    xcode-select --install", CYAN)
+                return False
+        elif system == "Linux":
+            try:
+                _sp.run(["sudo", "apt-get", "install", "-y", "git"], check=True)
+                p("  ✓ git 설치 완료", GREEN)
+                return True
+            except Exception:
+                p("  apt-get 실패. 수동 설치가 필요합니다.", RED)
+                return False
+        else:
+            p("  자동 설치는 macOS/Linux만 지원합니다.", YELLOW)
+            return False
+    return False
+
 # ============================================================
 # 설정
 # ============================================================
@@ -161,6 +206,13 @@ def main():
     p("=" * 55, BOLD)
     p("\nNeo V1을 이 프로젝트에 설치합니다.")
     p("완료 후 'NEO, 시작해줘'로 바로 시작할 수 있습니다.\n")
+
+    # ── git 사전 체크 ──
+    if not _check_git():
+        p("git이 없으면 git init / git push 등이 동작하지 않습니다.", YELLOW)
+        cont = ask("git 없이 계속 진행할까요? (y/n)", "n")
+        if cont.lower() != "y":
+            sys.exit(1)
 
     # --------------------------------------------------------
     # Step 1. 프로젝트 정보 수집
