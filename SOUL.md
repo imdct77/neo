@@ -76,6 +76,10 @@ These apply in every session, every project, always:
 - Never finalize requirements without explicit CEO approval
 - Never write production code before a failing test exists
 - Never fix a bug without first reproducing it (debug skill)
+- Never implement or modify source code without first reading the corresponding
+  meta index files (INDEX.md → DETAIL.md → DETAIL.{file}.md). Run `--sync` after
+  file creation/deletion to auto-generate the cascade. Unreviewed `[AUTO] TODO`
+  markers block commits.
 - "This is simple so I'll skip it" is rationalization. It is not allowed.
 - Never fabricate or guess URLs, file paths, or command outputs.
   If you cannot verify something, state that clearly rather than

@@ -159,12 +159,14 @@ Phase 4 — 수정 (Fix)
 모든 메타 파일 경로는 harness/state/meta/src/be/ 아래에 위치한다.
 
 **파일 생성 시 (L3 신규 → L3 상태·내용을 들고 L2 검토):**
-8. harness/state/meta/src/be/{section}/DETAIL.{파일명}.md 생성 — 함수 시그니처·의존성·상수 기재
+8. `--sync`가 harness/state/meta/src/be/{section}/DETAIL.{파일명}.md (L3)를 `[AUTO] TODO` skeleton으로 자동 생성한다.
+   LLM의 역할: skeleton의 TODO를 의미 있는 내용(함수 시그니처·의존성·상수·중복 금지)으로 채운다.
 9. L3 내용을 기준으로 harness/state/meta/src/be/{section}/DETAIL.md 검토 → 파일 인덱스에 `# {file_path} — 상세` 항목 추가
    ⚠️  L2 DETAIL.md의 각 파일 항목은 반드시 `# src/be/{section}/{filename} — 상세` 형식이어야 한다 (#8).
    이 포맷을 벗어나면 메타 일관성 검증(`--exit-code`)이 항목을 감지하지 못해 누락 오탐이 발생한다.
 10. L2 변경 내용을 기준으로 harness/state/meta/src/be/{section}/INDEX.md 검토 → 파일 라인 추가
 11. 변경된 L1 상태·내용을 들고 상위 harness/state/meta/src/be/의 INDEX.md·DETAIL.md 검토
+    → `--sync`가 이 cascade(9~11)를 자동 수행한다.
 
 **파일 삭제 시 (L3 제거 → L3 상태를 들고 L2 검토):**
 12. 삭제 전 harness/state/meta/src/be/{section}/DETAIL.{파일명}.md (L3) 확인 → 의존성·Import by 확인

@@ -301,15 +301,28 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
             if not any(d.startswith(".") for d in Path(root).relative_to(section_full).parts)
         }
 
-        # ── L3: 각 파일별 DETAIL.{stem}.md 생성 ──
+        # ── L3: 각 파일별 DETAIL.{stem}.md 생성 + 고아 정리 ──
         section_meta_dir = os.path.join(meta_src, section)
         os.makedirs(section_meta_dir, exist_ok=True)
+
+        # 유효한 L3 stem 집합
+        valid_stems = {os.path.splitext(os.path.basename(f))[0] for f in actual_in_section}
+
+        # 생성
         for fpath in sorted(actual_in_section):
             stem = os.path.splitext(os.path.basename(fpath))[0]
             l3_path = os.path.join(section_meta_dir, f"DETAIL.{stem}.md")
             if not os.path.isfile(l3_path):
                 _write_l3_skeleton(l3_path, fpath, section)
                 l3_count += 1
+
+        # 고아 L3 정리 (소스 없는 DETAIL.{stem}.md)
+        for fname in os.listdir(section_meta_dir):
+            if fname.startswith("DETAIL.") and fname.endswith(".md") and fname != "DETAIL.md":
+                stem = fname[len("DETAIL."):-len(".md")]
+                if stem not in valid_stems:
+                    os.remove(os.path.join(section_meta_dir, fname))
+                    l3_count += 1
 
         # ── Section-level INDEX.md 동기화 ──
         section_index_path = os.path.join(section_meta_dir, "INDEX.md")
@@ -567,7 +580,7 @@ def check_consistency(harness_root: str, project_root: str, scope: str) -> list[
     issues = []
     issues.extend(_check_l1(harness_root, project_root, scope))
     issues.extend(_check_l2(harness_root, project_root, scope))
-    issues.extend(_check_l3_absence(harness_root, project_root, scope))
+    issues.extend(_check_l3_integrity(harness_root, project_root, scope))
     meta_src = os.path.join(harness_root, "state", "meta", "src", scope)
     issues.extend(_check_duplicate_functions(meta_src))
     return issues
@@ -578,9 +591,10 @@ def check_l3_consistency(harness_root: str, project_root: str) -> list[str]:
     return _check_l3(harness_root, project_root)
 
 
-def _check_l3_absence(harness_root: str, project_root: str, scope: str) -> list[str]:
-    """#10: L3(DETAIL.{stem}.md) 부재 검증.
-    소스 파일은 있으나 L3가 없는 경우 불완전 탐색 경고."""
+def _check_l3_integrity(harness_root: str, project_root: str, scope: str) -> list[str]:
+    """#5, #10: L3(DETAIL.{stem}.md) 양방향 검증.
+    - 소스 O + L3 X → 누락 경고
+    - 소스 X + L3 O → 고아 경고"""
     issues = []
     meta_src = os.path.join(harness_root, "state", "meta", "src", scope)
     project_src = os.path.join(project_root, "src", scope)
@@ -588,7 +602,10 @@ def _check_l3_absence(harness_root: str, project_root: str, scope: str) -> list[
     if not os.path.isdir(project_src) or not os.path.isdir(meta_src):
         return issues
 
-    missing_l3 = []
+    # 1. 소스 파일별 L3 존재 여부 수집
+    src_to_l3 = {}  # source_rel_path → l3_exists (bool)
+    l3_files = set()  # 모든 L3 파일의 (section, stem)
+
     for section in os.listdir(project_src):
         section_full = os.path.join(project_src, section)
         if not os.path.isdir(section_full) or section.startswith("."):
@@ -599,11 +616,32 @@ def _check_l3_absence(harness_root: str, project_root: str, scope: str) -> list[
                 if fname.startswith("."):
                     continue
                 stem = os.path.splitext(fname)[0]
+                rel = os.path.relpath(os.path.join(root, fname), project_root)
                 l3_path = os.path.join(meta_src, section, f"DETAIL.{stem}.md")
-                if not os.path.isfile(l3_path):
-                    rel = os.path.relpath(os.path.join(root, fname), project_root)
-                    missing_l3.append(rel)
+                src_to_l3[rel] = os.path.isfile(l3_path)
 
+    # 2. meta에서 고아 L3 수집 (소스 없는 L3)
+    for section in os.listdir(meta_src):
+        section_path = os.path.join(meta_src, section)
+        if not os.path.isdir(section_path) or section.startswith("."):
+            continue
+        for fname in os.listdir(section_path):
+            if fname.startswith("DETAIL.") and fname.endswith(".md") and fname != "DETAIL.md":
+                stem = fname[len("DETAIL."):-len(".md")]
+                # 대응 소스 파일 찾기
+                found = False
+                for src_rel in src_to_l3:
+                    if src_rel.endswith(f"/{section}/{stem}.py") or \
+                       src_rel.endswith(f"/{section}/{stem}.ts") or \
+                       src_rel.endswith(f"/{section}/{stem}.tsx") or \
+                       src_rel.endswith(f"/{section}/{stem}.js"):
+                        found = True
+                        break
+                if not found:
+                    l3_files.add((section, fname))
+
+    # 3. 누락 경고 (소스 O + L3 X)
+    missing_l3 = [rel for rel, exists in src_to_l3.items() if not exists]
     if missing_l3:
         sample = sorted(missing_l3)[:10]
         more = f" 외 {len(missing_l3) - 10}건" if len(missing_l3) > 10 else ""
@@ -611,6 +649,16 @@ def _check_l3_absence(harness_root: str, project_root: str, scope: str) -> list[
             f"[{scope}/L3] DETAIL.{{file}}.md 누락 — L3 없이 불완전 탐색 상태{more}:\n" +
             "\n".join(f"  - {f}" for f in sample) +
             "\n  → 'meta 인덱스 갱신' 또는 --sync 실행으로 자동 생성 가능"
+        )
+
+    # 4. 고아 경고 (소스 X + L3 O) — #5
+    if l3_files:
+        sample = sorted(f"{s}/{f}" for s, f in l3_files)[:10]
+        more = f" 외 {len(l3_files) - 10}건" if len(l3_files) > 10 else ""
+        issues.append(
+            f"[{scope}/L3] 고아 DETAIL.{{file}}.md — 소스 파일 없이 L3만 존재{more}:\n" +
+            "\n".join(f"  - {f}" for f in sample) +
+            "\n  → --sync 실행으로 자동 정리"
         )
 
     return issues
