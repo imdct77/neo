@@ -359,6 +359,20 @@ def sync_l3(harness_root: str, project_root: str) -> bool:
 
 
 def check_consistency(harness_root: str, project_root: str, scope: str) -> list[str]:
+    """L1+L2+L3 통합 검증. pre_llm_call 용."""
+    issues = []
+    issues.extend(_check_l1(harness_root, project_root, scope))
+    issues.extend(_check_l2(harness_root, project_root, scope))
+    return issues
+
+
+def check_l3_consistency(harness_root: str, project_root: str) -> list[str]:
+    """L3 검증 — src/INDEX.md vs 실제 디렉토리. scope 무관 전역 호출."""
+    return _check_l3(harness_root, project_root)
+
+
+def _check_l1(harness_root: str, project_root: str, scope: str) -> list[str]:
+    """L1 검증 — scope-level INDEX.md vs 실제 파일."""
     issues = []
     index_paths = [
         os.path.join(harness_root, "state", "meta", "src", scope, "INDEX.md"),
@@ -399,6 +413,142 @@ def check_consistency(harness_root: str, project_root: str, scope: str) -> list[
             f"[{scope}] 실제로 존재하지 않는 meta 인덱스 파일{more}:\n"
             + "\n".join(f"  - {f}" for f in sample)
         )
+    return issues
+
+
+def _check_l2(harness_root: str, project_root: str, scope: str) -> list[str]:
+    """L2 검증 — DETAIL.md 항목 vs 실제 파일 + 고아 디렉토리."""
+    issues = []
+    meta_src = os.path.join(harness_root, "state", "meta", "src", scope)
+    project_src = os.path.join(project_root, "src", scope)
+
+    if not os.path.isdir(meta_src) or not os.path.isdir(project_src):
+        return issues
+
+    project_dirs = {
+        d for d in os.listdir(project_src)
+        if os.path.isdir(os.path.join(project_src, d)) and not d.startswith(".")
+    }
+
+    # 1. 프로젝트 디렉토리별 DETAIL.md 검증
+    for section in sorted(project_dirs):
+        section_full = os.path.join(project_src, section)
+        detail_path = os.path.join(meta_src, section, "DETAIL.md")
+
+        actual_in_section = {
+            os.path.relpath(os.path.join(root, f), project_root)
+            for root, dirs, files in os.walk(section_full)
+            for f in files if not f.startswith(".")
+            if not any(d.startswith(".") for d in Path(root).relative_to(section_full).parts)
+        }
+
+        if not os.path.isfile(detail_path):
+            if actual_in_section:
+                sample = sorted(actual_in_section)[:5]
+                more = f" 외 {len(actual_in_section) - 5}건" if len(actual_in_section) > 5 else ""
+                issues.append(
+                    f"[{scope}/L2] DETAIL.md 누락 — {section}/ (파일 {len(actual_in_section)}건){more}:\n"
+                    + "\n".join(f"  - {f}" for f in sample)
+                )
+            continue
+
+        with open(detail_path) as f:
+            blocks = _parse_detail(f.read())
+
+        indexed_keys = {k for k in blocks if k != "_header"}
+        # 매칭: DETAIL.md 키("src/be/models/user.py — 상세")에서 실제 파일 찾기
+        matched = set()
+        unmatched_keys = set()
+        for k in indexed_keys:
+            file_part = k.split(" — ")[0]
+            found = False
+            for af in actual_in_section:
+                if af == file_part or af.endswith("/" + file_part.split("/")[-1]):
+                    matched.add(af)
+                    found = True
+                    break
+            if not found:
+                unmatched_keys.add(k)
+
+        missing_from_detail = actual_in_section - matched
+        if missing_from_detail:
+            sample = sorted(missing_from_detail)[:5]
+            more = f" 외 {len(missing_from_detail) - 5}건" if len(missing_from_detail) > 5 else ""
+            issues.append(
+                f"[{scope}/L2] DETAIL.md 누락 항목 — {section}/ {more}:\n"
+                + "\n".join(f"  - {f}" for f in sample)
+            )
+
+        if unmatched_keys:
+            sample = sorted(unmatched_keys)[:5]
+            more = f" 외 {len(unmatched_keys) - 5}건" if len(unmatched_keys) > 5 else ""
+            issues.append(
+                f"[{scope}/L2] DETAIL.md 고아 항목 — {section}/ {more}:\n"
+                + "\n".join(f"  - {k}" for k in sample)
+            )
+
+    # 2. 고아 디렉토리 (meta에 있지만 프로젝트에 없는)
+    if os.path.isdir(meta_src):
+        for meta_entry in os.listdir(meta_src):
+            if meta_entry.startswith(".") or not os.path.isdir(os.path.join(meta_src, meta_entry)):
+                continue
+            if meta_entry not in project_dirs:
+                detail_file = os.path.join(meta_src, meta_entry, "DETAIL.md")
+                if os.path.isfile(detail_file):
+                    issues.append(
+                        f"[{scope}/L2] 고아 디렉토리 — meta/src/{scope}/{meta_entry}/ 프로젝트에 없음"
+                    )
+
+    return issues
+
+
+def _check_l3(harness_root: str, project_root: str) -> list[str]:
+    """L3 검증 — src/INDEX.md 테이블 vs 실제 디렉토리."""
+    issues = []
+    index_path = os.path.join(harness_root, "state", "meta", "src", "INDEX.md")
+
+    if not os.path.isfile(index_path):
+        return [f"[L3] src/INDEX.md 파일이 존재하지 않습니다"]
+
+    with open(index_path) as f:
+        content = f.read()
+
+    # INDEX.md에서 `| `be/` | ...` 패턴 파싱
+    idx_dirs = {}
+    for scope in _SCOPES:
+        idx_dirs[scope] = set()
+    current_scope = None
+    for line in content.split("\n"):
+        stripped = line.strip()
+        if stripped.startswith("## be/"):
+            current_scope = "be"
+        elif stripped.startswith("## fe/"):
+            current_scope = "fe"
+        elif current_scope and stripped.startswith("| `") and "/` |" in stripped:
+            dir_name = stripped.split("`")[1].rstrip("/")
+            if dir_name and not dir_name.startswith("("):
+                idx_dirs[current_scope].add(dir_name)
+
+    for scope in _SCOPES:
+        src_dir = os.path.join(project_root, "src", scope)
+        actual = collect_directories(src_dir)
+        indexed = idx_dirs[scope]
+
+        if not actual and not indexed:
+            continue
+
+        missing = actual - indexed
+        stale = indexed - actual
+
+        if missing:
+            issues.append(
+                f"[L3/{scope}] INDEX.md 누락 디렉토리: {', '.join(sorted(missing))}"
+            )
+        if stale:
+            issues.append(
+                f"[L3/{scope}] INDEX.md 고아 디렉토리 (실제 없음): {', '.join(sorted(stale))}"
+            )
+
     return issues
 
 
@@ -453,6 +603,7 @@ def main():
     all_issues = []
     for scope in _SCOPES:
         all_issues.extend(check_consistency(str(HARNESS_ROOT), str(PROJECT_ROOT), scope))
+    all_issues.extend(check_l3_consistency(str(HARNESS_ROOT), str(PROJECT_ROOT)))
 
     if do_exit_code:
         if all_issues:
