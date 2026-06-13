@@ -205,57 +205,58 @@ def main():
     p("\n── Step 3. Git 레포지토리 ──", BOLD)
 
     cwd = Path.cwd()
-    is_git = (cwd / ".git").is_dir()
+    import subprocess as _sp
 
-    if not is_git:
-        p("현재 디렉토리가 Git 레포지토리가 아닙니다.", YELLOW)
-        auto = ask("GitHub에 새 레포를 만들어 clone할까요? (y/n/직접입력)", "y")
-        if auto.lower() == "y":
-            github_user = _detect_github_user()
-            if not github_user:
-                p("  GitHub 사용자명을 감지할 수 없습니다.", RED)
-                p("  gh auth login 후 다시 시도하거나, 직접입력(n)을 선택하세요.", YELLOW)
-                return
+    # 3a. Harness — clone된 상태이므로 확인만
+    harness_git = (NEO_ROOT / ".git").is_dir()
+    if harness_git:
+        p(f"  ✓ Harness Git: {NEO_ROOT}", GREEN)
+    else:
+        p(f"  ⚠ Harness에 .git이 없습니다 (clone 권장)", YELLOW)
+
+    # 3b. 프로젝트 — 무조건 git init
+    if not (cwd / ".git").is_dir():
+        _sp.run(["git", "init"], cwd=str(cwd), check=True)
+        p(f"  ✓ git init — {cwd}", GREEN)
+    else:
+        p(f"  ✓ 프로젝트 Git: {cwd}", GREEN)
+
+    # git identity 설정
+    try:
+        _sp.run(["git", "config", "user.name"], cwd=str(cwd),
+                capture_output=True, check=True)
+    except Exception:
+        name, email = _detect_git_identity()
+        if name:
+            _sp.run(["git", "config", "user.name", name], cwd=str(cwd))
+        if email:
+            _sp.run(["git", "config", "user.email", email], cwd=str(cwd))
+
+    # 3c. GitHub 연결 (선택)
+    github_user = _detect_github_user()
+    if github_user:
+        p("")
+        connect = ask("로컬 Git이 준비됐습니다. GitHub에도 연결할까요? (y/n)", "n")
+        if connect.lower() == "y":
             repo_name = ask(f"레포 이름 (Enter = {project_id})", project_id)
             p(f"  Creating {github_user}/{repo_name}...", CYAN)
-            import subprocess as _sp
             result = _sp.run(
                 ["gh", "repo", "create", f"{github_user}/{repo_name}", "--private",
                  "--description", project_desc or project_name],
                 capture_output=True, text=True
             )
             if result.returncode == 0:
-                clone_url = f"https://github.com/{github_user}/{repo_name}.git"
-                # Clone into parent's ./{repo_name}/
-                target = cwd.parent / repo_name
-                _sp.run(["git", "clone", clone_url, str(target)], check=True)
+                _sp.run(
+                    ["git", "-C", str(cwd), "remote", "add", "origin",
+                     f"https://github.com/{github_user}/{repo_name}.git"],
+                    check=True
+                )
                 p(f"  ✓ https://github.com/{github_user}/{repo_name}", GREEN)
-                p(f"  cd {target} 에서 다시 실행하거나, 지금 경로에 계속 설치합니다.", YELLOW)
-                # Continue with cwd — user might want to install here anyway
             else:
                 p(f"  ❌ 레포 생성 실패: {result.stderr.strip()}", RED)
-                p("  git init 으로 로컬 레포를 대신 만듭니다.", YELLOW)
-                _sp.run(["git", "init"], cwd=str(cwd), check=True)
-        elif auto.lower() == "직접입력" or auto.lower() == "n":
-            clone_url = ask("Git clone URL (Enter = git init)")
-            if clone_url:
-                _sp.run(["git", "clone", clone_url, str(cwd)], check=True)
-                p(f"  ✓ cloned", GREEN)
-            else:
-                _sp.run(["git", "init"], cwd=str(cwd), check=True)
-                p("  ✓ git init", GREEN)
+                p("  로컬 Git만으로 계속 진행합니다.", YELLOW)
     else:
-        p(f"✓ Git 레포 확인됨: {cwd}", GREEN)
-        # Configure identity if not set
-        import subprocess as _sp2
-        try:
-            _sp2.run(["git", "config", "user.name"], cwd=str(cwd), capture_output=True, check=True)
-        except Exception:
-            name, email = _detect_git_identity()
-            if name:
-                _sp2.run(["git", "config", "user.name", name], cwd=str(cwd))
-            if email:
-                _sp2.run(["git", "config", "user.email", email], cwd=str(cwd))
+        p("  (gh CLI 미감지 — GitHub 연결 건너뜀)", YELLOW)
 
     # --------------------------------------------------------
     # Step 4. 설치 경로 확인
