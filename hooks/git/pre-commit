@@ -152,7 +152,18 @@ if [[ -n "$TS_FILES" ]]; then
 fi
 
 # --------------------------------------------------------
-# 5. 메타 인덱스 동기화
+# 5. Neo substrate 게이트 (보안 패턴 + 상태 검증)
+# --------------------------------------------------------
+NEO_GATE="$(dirname "$0")/../neo_precommit_gate.py"
+if [ -f "$NEO_GATE" ]; then
+    if ! python3 "$NEO_GATE" 2>/dev/null; then
+        fail "Neo substrate 게이트 차단됨"
+    fi
+    pass "Neo substrate 게이트"
+fi
+
+# --------------------------------------------------------
+# 6. 메타 인덱스 동기화
 # --------------------------------------------------------
 META_CHECK="$(dirname "$0")/../meta_consistency_check.py"
 if [ -f "$META_CHECK" ]; then

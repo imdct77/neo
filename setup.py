@@ -511,19 +511,32 @@ def main():
             p("  ⚠ .git 디렉토리를 찾을 수 없습니다. 'git init'을 먼저 실행해주세요.", YELLOW)
         else:
             # 프로젝트 repo용 경량 프록시: harness의 meta 체크 호출
-            proxy_script = textwrap.dedent("""\
+            proxy_script = textwrap.dedent("""\\
                 #!/usr/bin/env bash
-                # Neo pre-commit 프록시 — harness meta 체크 호출
+                # Neo pre-commit 프록시 — harness gate + meta 체크 호출
                 HARNESS_DIR="../harness"
-                CHECK_SCRIPT="$HARNESS_DIR/hooks/meta_consistency_check.py"
-                if [ ! -f "$CHECK_SCRIPT" ]; then
+                HARNESS_ABS="$(cd "$HARNESS_DIR" 2>/dev/null && pwd)"
+                if [ -z "$HARNESS_ABS" ]; then
                     exit 0
                 fi
-                HARNESS_ABS="$(cd "$HARNESS_DIR" && pwd)"
-                NEO_HARNESS_ROOT="$HARNESS_ABS" \\
-                  PYTHONPATH="$HARNESS_ABS/hooks" \\
-                  python3 "$CHECK_SCRIPT" --exit-code --sync
-                exit $?
+
+                # 1. Neo substrate 게이트 (보안 패턴 + 상태 검증)
+                GATE_SCRIPT="$HARNESS_ABS/hooks/neo_precommit_gate.py"
+                if [ -f "$GATE_SCRIPT" ]; then
+                    NEO_HARNESS_ROOT="$HARNESS_ABS" \\\\
+                      PYTHONPATH="$HARNESS_ABS/hooks" \\\\
+                      python3 "$GATE_SCRIPT" || exit 1
+                fi
+
+                # 2. 메타 인덱스 동기화
+                CHECK_SCRIPT="$HARNESS_ABS/hooks/meta_consistency_check.py"
+                if [ -f "$CHECK_SCRIPT" ]; then
+                    NEO_HARNESS_ROOT="$HARNESS_ABS" \\\\
+                      PYTHONPATH="$HARNESS_ABS/hooks" \\\\
+                      python3 "$CHECK_SCRIPT" --exit-code --sync
+                    exit $?
+                fi
+                exit 0
             """)
             dst = git_dir / "pre-commit"
             dst.write_text(proxy_script)
