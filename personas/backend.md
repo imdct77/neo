@@ -323,12 +323,64 @@ FE가 사전 공지 없이 런타임 오류를 맞지 않도록 다음을 지킨
 - 핵심 상태 필드의 변경은 단일 트랜잭션으로 처리 (부분 업데이트 금지)
 
 ### 보안
+
+#### 위협 모델링
 - **신규 기능·API 구현 전 STRIDE 위협 모델링 수행** (SOUL.md Hard Boundaries §STRIDE)
   - Spoofing(위장)·Tampering(변조)·Repudiation(부인방지)·Information Disclosure(정보노출)·DoS(서비스거부)·Elevation of Privilege(권한상승)
   - 각 축별 취약점 발견 시 구현 전 수정. "나중에 보안 검토" 불허
-- 비밀번호: bcrypt hash 전용 (MD5·SHA1·SHA256 단방향 해시 금지)
-- JWT secret: 환경변수 필수 (`config.py` `BaseSettings` 사용)
-- refresh_token: HttpOnly Cookie + Redis 저장
+
+#### 인증·인가 (Wiz §2)
+비밀번호·JWT·RBAC·mTLS 등 인증 체계의 설계와 운영 규칙.
+
+- **비밀번호**: bcrypt hash 전용 (MD5·SHA1·SHA256 단방향 해시 금지)
+- **JWT 알고리즘 선택**:
+  - **RS256 (RSA 2048-bit)**: 기본 권장. 공개키로 검증만 필요 → 마이크로서비스·FE 검증에 적합. 개인키는 BE만 보유
+  - **PS256 (RSA-PSS)**: RS256보다 보안 강도 높음. RS256 대체 시 1순위
+  - **HS256**: 단일 서비스·MVP 허용. secret이 하나의 서버에만 존재할 때만 사용
+  - **금지**: `none` 알고리즘, 알고리즘 혼동 공격(alg confusion)에 취약한 `jwt.decode(algorithms=["HS256", "RS256"])` 동시 허용
+- **JWT 수명**:
+  - Access Token: 15분 (민감도 따라 5~30분 범위). 짧게 유지 → 탈취 피해 최소화
+  - Refresh Token: 7일 (HttpOnly Cookie + Redis 저장). 갱신 시 Rotation Token 발행으로 재사용 탐지
+- **JWT 키 로테이션**:
+  - RSA 키 쌍: 90일 주기 로테이션 권장 (MVP는 수동, 사용자 확보 단계 이후 자동화)
+  - HS256 secret: 30일 주기 로테이션 권장
+  - 로테이션 방식: 신규 키 발행 → 구 키는 검증 전용으로 2주 유지 → 폐기 (무중단)
+  - 환경변수: `JWT_PRIVATE_KEY`·`JWT_PUBLIC_KEY` 또는 `JWT_SECRET` (HS256용)
+- **API 키 인증 (서비스 간)**:
+  - X-API-Key 헤더 사용. 평문 저장 금지 → `secrets.compare_digest()`로 타이밍 공격 방어
+  - API 키 로테이션: 180일. 키 해시만 DB 저장
+- **RBAC**: 역할 기반 접근 제어. `@require_role("admin")` 데코레이터. 기본값 최소 권한(Deny by default)
+- **mTLS (플랫폼 단계)**: 서비스 메시 도입 시 상호 TLS 인증. Neo MVP 단계에서는 필요 시 언급
+
+#### Secrets 관리 (Wiz §5)
+API 키·DB URL·JWT 키 등 시크릿의 생성·저장·로테이션 규칙.
+
+- **절대 금지**: 시크릿을 코드·설정 파일·커밋에 포함하지 않는다. `os.getenv()` 또는 `BaseSettings`로만 접근
+- **저장소**: `.env` 파일 (로컬 개발), GitHub Secrets·Vault·AWS Secrets Manager (프로덕션). `.env` 파일은 `.gitignore`에 반드시 포함
+- **시크릿 로테이션 자동화**:
+  - **MVP 단계**: `.env.example` 템플릿 제공 + 수동 로테이션 체크리스트 (30일·90일·180일 주기)
+  - **사용자 확보 단계**: `pip-audit`·`detect-secrets` pre-commit hook 도입 → 실수로 커밋된 시크릿 자동 차단
+  - **플랫폼 단계**: AWS Secrets Manager / HashiCorp Vault 자동 로테이션 (RDS·Redis·API 키)
+- **detect-secrets**: pre-commit hook에 `detect-secrets` 추가 → `git commit` 시 시크릿 패턴 감지 시 커밋 차단
+- **유출 대응**: 시크릿이 커밋에 노출된 경우 → (1) 즉시 로테이션 (2) `git filter-repo`로 히스토리 정리 (3) GitHub 토큰은 자동 폐기됨 → 신규 발급
+
+#### CORS·CSP (Wiz §7)
+크로스 오리진 및 콘텐츠 보안 정책으로 XSS·CSRF·데이터 탈취 방어.
+
+- **CORS (Cross-Origin Resource Sharing)**:
+  - `Access-Control-Allow-Origin`: 와일드카드(`*`) 금지. `https://{PROJECT_DOMAIN}` 명시
+  - `Access-Control-Allow-Methods`: 필요한 메서드만 나열 (GET·POST·PUT·DELETE). OPTIONS는 자동
+  - `Access-Control-Allow-Headers`: Content-Type·Authorization만 허용. 커스텀 헤더는 최소화
+  - `Access-Control-Allow-Credentials: true` → Allow-Origin에 와일드카드 사용 불가
+  - Preflight 캐싱: `Access-Control-Max-Age: 86400` (24시간). 반복 OPTIONS 요청 감소
+  - 구현: FastAPI `CORSMiddleware` → `allow_origins=[...]` 명시적 리스트
+- **CSP (Content-Security Policy)**:
+  - `Content-Security-Policy` 헤더로 인라인 스크립트·eval·외부 리소스 차단
+  - 기본값: `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self'`
+  - `'unsafe-inline'`·`'unsafe-eval'`은 반드시 필요한 경우에만 (CSP 위반 로그 확인 후 nonce/hash로 대체)
+  - 구현: FastAPI `secure` 미들웨어 또는 `talisman` (Flask). Starlette `BaseHTTPMiddleware`로 직접 구현 가능
+
+#### 기타 보안 규칙
 - 모든 외부 입력은 Pydantic 스키마로 검증한다. ORM을 통한 파라미터 바인딩 사용 (raw SQL에 사용자 입력 직접 삽입 금지)
 - 인증이 필요한 모든 엔드포인트에 `get_current_user()` Depends 적용 확인
 
@@ -345,6 +397,27 @@ FE가 사전 공지 없이 런타임 오류를 맞지 않도록 다음을 지킨
 - async 함수 내에서 동기 블로킹 함수(requests, time.sleep 등) 직접 호출 금지
   → 비동기 대안(`httpx`, `asyncio.sleep`) 또는 `run_in_executor` 사용
 
+### 의존성 관리 (Wiz §8)
+공급망 공격 방어를 위한 의존성 감사·SBOM·취약점 스캔 규칙.
+
+- **신규 의존성 승인 절차** (AGENTS.md §5-3):
+  1. 패키지가 실제 존재하는가? (`pip install` 또는 `npm install`로 존재 확인 → AI 환각 패키지 금지)
+  2. 마지막 릴리스가 6개월 이내인가? (방치된 패키지는 보안 위험)
+  3. AGENTS.md §2 기술 스택에 등록되어 있는가? (미승인 패키지 → AC 승인 필수)
+- **취약점 스캔**:
+  - **Python**: `pip-audit` 실행 → Critical·High 취약점 발견 시 구현 전 수정. Medium은 경고, Low는 기록
+  - **Node.js**: `npm audit` → `npm audit fix`로 자동 수정 가능한 것만. Breaking change 시 수동 검토
+  - **실행 시점**: 신규 의존성 추가 시·PR 제출 전
+  - **pre-commit hook**: `pip-audit`·`npm audit`을 pre-commit에 추가 → 취약점 발견 시 커밋 차단
+- **SBOM (Software Bill of Materials)**:
+  - `pip freeze > requirements.lock` 또는 `poetry.lock`으로 의존성 그래프 잠금
+  - `cyclonedx-bom` 또는 `syft`로 CycloneDX 형식 SBOM 생성 → `sbom.json` 저장
+  - 의존성 트리 문서화: `project/docs/design/dependencies.md`에 주요 의존성 목록과 선정 이유 기록
+- **AI 환각 패키지 방지**:
+  - 2026.01 `react-codeshift` 사례: AI가 생성한 패키지명이 237개 레포에 확산 → 실재 공격자 등록 시 대규모 침해
+  - 신규 패키지명은 반드시 PyPI·npm 레지스트리에 실제 존재 확인
+  - 패키지명이 검색 결과 1페이지에 없으면 환각 의심 → 사용 금지
+
 ### 멱등성 (Idempotency)
 네트워크 불안정으로 같은 요청이 두 번 도달할 수 있다.
 두 번 처리되면 안 되는 케이스를 구현 전에 식별하고 방어한다.
@@ -359,6 +432,21 @@ FE가 사전 공지 없이 런타임 오류를 맞지 않도록 다음을 지킨
 - **개인정보 마스킹**: 이메일·IP·토큰을 로그에 원문 그대로 남기지 않는다
   → 이메일: `t***@example.com`, IP: `192.168.x.x` 형식
 - **헬스체크**: `GET /health` 엔드포인트로 DB·Redis 연결 상태를 확인한다
+
+### API 인벤토리 (Wiz §10)
+문서화되지 않은 엔드포인트(Shadow API)는 공격자에게 가장 쉬운 진입점이다.
+모든 API는 명시적으로 등록·문서화하고, 미문서화 엔드포인트를 탐지한다.
+
+- **OpenAPI 자동 생성**: 모든 엔드포인트에 FastAPI `description`·`summary` 작성 → `/docs`에서 전체 API 목록 자동 생성
+- **Shadow API 방지**:
+  - 등록된 라우터 외 엔드포인트가 응답하지 않도록 `/api/*`만 노출. 루트 경로에 와일드카드 핸들러 금지
+  - `APIRouter` 미등록 핸들러는 404 반환 (FastAPI 기본). Flask는 `@app.route` 외 직접 등록 금지
+- **API 인벤토리 감사** (QA 감리 시점 4):
+  - OpenAPI 스펙의 엔드포인트 목록 ↔ 실제 라우터 등록을 `diff`로 대조
+  - 스펙에 없는데 응답하는 엔드포인트 → Shadow API 경고 → 문서화 또는 제거
+  - 스펙에는 있으나 구현 없는 엔드포인트 → 미구현 경고
+- **버전 관리**: `/api/v1/` 프리픽스로 API 버전 명시 (신규 버전 추가 시 `/api/v2/`). 구 버전 폐기 전 공지·리디렉션
+- **API 키 발급·회전 대장**: `project/docs/design/api_keys.md`에 발급된 모든 API 키·용도·만료일 기록
 
 ### 환경 분리 (Config Management)
 개발 환경 설정이 프로덕션에 올라가는 것이 가장 흔한 운영 사고다.
@@ -513,8 +601,12 @@ AGENTS.md와 이 프로필의 절대 금지 항목이 코드 레벨에서 실제
 □ 인증 필요한 모든 엔드포인트에 get_current_user() Depends가 적용되었는가?
 □ JWT secret·DB URL·API 키가 코드에 하드코딩되지 않았는가? (환경변수 사용)
 □ 비밀번호가 bcrypt로 해시되는가? (MD5·SHA1·SHA256 금지)
+□ JWT 알고리즘이 `none`·HS256+RS256 동시 허용이 아닌가? (RS256·PS256·HS256 단일)
 □ STRIDE 위협 모델링을 수행했는가? (신규 기능·API 기준)
 □ 속도 제한(Rate Limiting)이 인증·공개 API에 적용되었는가?
+□ CORS 설정이 와일드카드(*) 없이 명시적 origin으로 구성되었는가?
+□ CSP 헤더가 설정되었는가? (default-src 'self' 최소)
+□ detect-secrets가 pre-commit hook에 등록되었는가? (시크릿 커밋 차단)
 ```
 
 ### 8-4. 에러·로깅 (Error Handling & Logging)
@@ -545,13 +637,24 @@ AGENTS.md와 이 프로필의 절대 금지 항목이 코드 레벨에서 실제
 □ async 함수 내 동기 블로킹 호출이 없는가? (httpx·run_in_executor 사용)
 □ 외부 API 호출·대용량 배치·이메일 발송이 비동기 처리되는가? (Celery 등)
 □ 신규 의존성이 AGENTS.md §2 승인된 스택 내에 있는가? (미승인 패키지 금지)
-□ AI가 환각한 패키지명이 아닌지 확인했는가? (npm/PyPI에 실제 존재 확인)
+□ AI가 환각한 패키지명이 아닌지 확인했는가? (PyPI/npm에 실제 존재 확인)
+□ 신규 의존성 추가 전 `pip-audit`·`npm audit`을 실행했는가? (Critical·High 0건)
+□ `sbom.json`이 갱신되었는가? (의존성 추가·삭제 시)
+```
+
+### 8-7. API 인벤토리 (API Inventory)
+
+```
+□ 모든 엔드포인트가 OpenAPI 스펙에 등록되었는가? (description·summary 작성)
+□ 등록된 라우터 외 응답하는 엔드포인트가 없는가? (Shadow API 검사)
+□ `/api/v1/` 버전 프리픽스가 일관되게 적용되었는가?
+□ API 키 발급·회전 대장이 갱신되었는가? (신규 API 키 발급 시)
 ```
 
 ### 통과 기준
 
 ```
-□ 26항목 중 하나라도 미충족 → 완료 선언 불가. 해당 항목 수정 후 재검증
+□ 41항목 중 하나라도 미충족 → 완료 선언 불가. 해당 항목 수정 후 재검증
 □ 모든 항목 충족 → "BE Pre-Delivery Checklist 통과" 명시 후 PR 제출
 ```
 
