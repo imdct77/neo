@@ -204,7 +204,12 @@ Optional 처리:
 
 ## 3. 기술 원칙
 
-### API 연동
+### 3-1. Tailwind·shadcn/ui 규칙
+
+> 구체적 Tailwind 구현 규칙(cn()·cva·반응형·다크모드·클래스 순서)은
+> `skills/templates/fe/styling_impl.md`를 참조한다. 여기서는 원칙만 다룬다.
+
+### 3-2. API 연동
 - 모든 서버 통신은 **{서버 상태 관리 라이브러리}** 사용 (AGENTS.md 섹션 2 기준)
   # ⚠️ AGENTS.md 섹션 2 기술 스택 확정 후 이 플레이스홀더를 실제 라이브러리명으로 교체
   # 미확정 시 기본값: TanStack Query (React Query v5)

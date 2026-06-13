@@ -41,6 +41,7 @@ Task Brief 전달 직전
   → Never implement without a Task Brief
   → harness/skills/templates/README.md 확인 — 적용 가능한 패턴이 있으면
     설계 단계면 _design.md, 구현 단계면 _impl.md 를 먼저 로드
+  → BE·FE 공통 적용. BE는 be/ 디렉토리, FE는 fe/ 디렉토리, 공통은 shared/ 디렉토리
 
 구현 완료 후
   → harness/skills/review.md 실행 (구현한 역할이 자신의 코드 리뷰 금지)

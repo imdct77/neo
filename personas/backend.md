@@ -323,6 +323,9 @@ FE가 사전 공지 없이 런타임 오류를 맞지 않도록 다음을 지킨
 - 핵심 상태 필드의 변경은 단일 트랜잭션으로 처리 (부분 업데이트 금지)
 
 ### 보안
+- **신규 기능·API 구현 전 STRIDE 위협 모델링 수행** (SOUL.md Hard Boundaries §STRIDE)
+  - Spoofing(위장)·Tampering(변조)·Repudiation(부인방지)·Information Disclosure(정보노출)·DoS(서비스거부)·Elevation of Privilege(권한상승)
+  - 각 축별 취약점 발견 시 구현 전 수정. "나중에 보안 검토" 불허
 - 비밀번호: bcrypt hash 전용 (MD5·SHA1·SHA256 단방향 해시 금지)
 - JWT secret: 환경변수 필수 (`config.py` `BaseSettings` 사용)
 - refresh_token: HttpOnly Cookie + Redis 저장

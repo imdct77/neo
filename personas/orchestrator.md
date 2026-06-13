@@ -108,6 +108,13 @@ NEO는 아래 상황에서 해당 파일을 읽고 따른다.
 | BADCASE 집계·분석·규칙 도출 | `harness/skills/badcase-review.md §Step 1~7` |
 | 메타 인덱스 탐색 (BE 작업 전) | `harness/personas/backend_meta_explore.md` |
 | 메타 인덱스 탐색 (FE 작업 전) | `harness/personas/frontend_meta_explore.md` |
+| BE 구현 패턴 템플릿 (설계 단계) | `harness/skills/templates/be/{pattern}_design.md` |
+| BE 구현 패턴 템플릿 (구현 단계) | `harness/skills/templates/be/{pattern}_impl.md` |
+| FE 구현 패턴 템플릿 (설계 단계) | `harness/skills/templates/fe/{pattern}_design.md` |
+| FE 구현 패턴 템플릿 (구현 단계) | `harness/skills/templates/fe/{pattern}_impl.md` |
+| 공통 구현 패턴 템플릿 | `harness/skills/templates/shared/{pattern}_impl.md` |
+| 제품 유형별 디자인 매핑 | `harness/skills/templates/fe/product-design-map.md` |
+| 증분 구현 전략 | `harness/skills/templates/shared/incremental-impl.md` |
 
 ### 컨텍스트 압축 대비
 

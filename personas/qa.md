@@ -164,6 +164,93 @@ Step 4. 감리 대상 문서·코드 로드
 - 측정 도구: {Lighthouse|PageSpeed Insights}
 ```
 
+#### 로컬 개발 환경 폴백 (Deployed URL 없을 시)
+
+배포된 URL이 없어 Lighthouse·PageSpeed Insights 측정이 불가한 경우:
+```
+□ Chrome DevTools Performance 패널로 LCP·CLS 측정 (로컬 환경)
+□ React DevTools Profiler로 렌더링 병목 확인
+□ Network 패널로 번들 크기·로딩 순서 확인
+□ 측정 도구 대신 수동 체크리스트로 전환:
+  - 이미지에 width/height 또는 aspect-ratio 지정 여부 (CLS 방지)
+  - font-display: swap 적용 여부
+  - dynamic import(code splitting) 적용 여부
+  - 번들 크기 수동 확인 (ls -lh .next/static/chunks/)
+```
+측정 불가 시 감리 보고서에 "로컬 환경 측정 (배포 전)"으로 표기. 배포 후 시점 5에서 재측정.
+
+---
+
+### 3-2. 코드 품질 감리 (Code Quality Audit)
+
+> 시점 3(Task Brief 완성 직후)·시점 4(도메인 Phase 완료 후)에 시행.
+> FE·BE 각각의 코드 품질을 점검한다.
+
+#### 3-2-1. Frontend 코드 품질 감리
+
+```
+□ 컴포넌트 품질
+  - 컴포넌트가 단일 책임을 갖는가? (150줄 초과 → 분리 검토)
+  - Props가 7개를 초과하지 않는가?
+  - 모든 컴포넌트가 className prop 허용하는가?
+  - ErrorBoundary가 적절히 배치되어 있는가?
+
+□ 상태 관리
+  - useEffect 내 fetch 직접 호출이 없는가?
+  - localStorage에 access_token 저장이 없는가?
+  - 서버 상태는 TanStack Query/SWR, 클라이언트 상태는 적절한 도구 사용?
+
+□ 접근성 (§5 확인)
+  - 모든 인터랙티브 요소에 aria-label 또는 visible label 존재?
+  - 키보드 Tab 순서가 시각적 순서와 일치?
+  - 색상 대비 4.5:1 이상 (측정 도구로 확인)?
+
+□ 스타일링
+  - 시맨틱 컬러 토큰만 사용? (원색 직접 사용 금지)
+  - 임의 픽셀값(px-[13px]) 사용 없음?
+  - rounded-2xl 남용 없음? (요소별 일관된 반경)
+  - 라이트·다크 모드 모두 확인?
+
+□ 번들·성능
+  - 초기 JS 번들 200KB 미만?
+  - 이미지에 WebP/AVIF + next/image 적용?
+  - 동적 import로 코드 스플리팅 적용?
+```
+
+#### 3-2-2. Backend 코드 품질 감리
+
+```
+□ API 설계
+  - 모든 엔드포인트에 OpenAPI description 작성?
+  - 에러 응답이 RFC 7807 형식인가?
+  - 요청·응답에 Pydantic 스키마 검증 적용?
+  - 인증 필요한 엔드포인트에 get_current_user() Depends 누락 없음?
+
+□ DB 접근
+  - Repository 패턴 + Service 레이어 분리 적용?
+  - API 핸들러에서 직접 DB 쿼리 없음?
+  - 두 개 이상 테이블 변경은 단일 트랜잭션?
+  - DB 책임 범위 외 테이블에 직접 INSERT/UPDATE 없음?
+
+□ 보안
+  - 외부 입력 Pydantic 검증 필수? (raw SQL에 사용자 입력 직접 삽입 금지)
+  - JWT secret 환경변수 분리? (코드에 하드코딩 금지)
+  - 비밀번호 bcrypt hash 사용? (MD5·SHA1 금지)
+  - 속도 제한(Rate Limiting) 적용? (인증·공개 API 모두)
+  - STRIDE 위협 모델링 수행 기록 존재?
+
+□ 에러·로깅
+  - except Exception: pass 없음?
+  - 에러 메시지에 내부 구현 정보(스택 트레이스·DB 쿼리) 노출 없음?
+  - 개인정보(이메일·IP) 로그 마스킹 적용?
+  - 500ms 이상 슬로우 쿼리 경고 로그?
+
+□ 운영
+  - DEBUG=True가 프로덕션 코드에 없음? (환경 분리)
+  - health check 엔드포인트(/health) 존재?
+  - 멱등성이 필요한 작업(결제·상태 변경)에 중복 방지 적용?
+```
+
 ---
 
 ## 4. BADCASE 기록 절차
