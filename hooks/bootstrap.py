@@ -18,12 +18,13 @@ from datetime import datetime
 
 
 def _find_root() -> Path:
-    # 환경변수 우선 (pre-commit 프록시 등에서 경로 강제)
-    env_root = os.environ.get("NEO_HARNESS_ROOT")
-    if env_root:
-        p = Path(env_root)
-        if p.is_dir():
-            return p
+    # 환경변수 우선 (pre-commit 프록시의 NEO_HARNESS_ROOT, root bootstrap.py의 HARNESS_ROOT)
+    for var in ("NEO_HARNESS_ROOT", "HARNESS_ROOT"):
+        env_root = os.environ.get(var)
+        if env_root:
+            p = Path(env_root)
+            if p.is_dir():
+                return p
     try:
         return Path(subprocess.check_output(
             ["git", "rev-parse", "--show-toplevel"],
