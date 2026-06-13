@@ -207,3 +207,68 @@ export function ThemeToggle() {
 // 올바른 순서 예시
 <div className="flex items-center gap-2 w-full px-4 py-2 bg-background border rounded-md text-sm hover:bg-accent dark:border-border">
 ```
+
+---
+
+## AI Aesthetic 회피 (Avoid the AI Aesthetic)
+
+> AI가 생성한 UI는 전형적인 실패 패턴이 있다.
+> 아래 규칙은 Tailwind·shadcn/ui 사용 시 특히 주의해야 할 함정들이다.
+> FE 페르소나 §8과 함께 적용한다.
+
+### 8가지 실패 패턴과 Tailwind 대안
+
+| AI 기본값 | 문제점 | 올바른 Tailwind 접근 |
+|----------|--------|---------------------|
+| Purple/indigo 도배 (`bg-purple-600`) | 모든 앱이 동일하게 보임 | **시맨틱 토큰 사용**: `bg-primary`, `text-accent` 등 CSS 변수 기반 |
+| 과도한 그라디언트 (`bg-gradient-to-r from-purple-500 to-pink-500`) | 시각적 소음, shadcn 테마와 충돌 | **평면 우선**: 배경은 `bg-background`, 강조는 `bg-accent` |
+| 모든 요소 `rounded-2xl` | 보더 반경 계층 무시, shadcn의 `--radius` 변수와 불일치 | **계층 적용**: 버튼 `rounded-md`, 카드 `rounded-lg`, 모달 `rounded-xl` |
+| 제네릭 히어로 섹션 | 템플릿 주도, 콘텐츠 연결 없음 | **콘텐츠 우선**: 실제 데이터에 맞는 레이아웃 먼저 설계 |
+| 로렘 입숨 (`Lorem ipsum dolor...`) | 실제 텍스트 길이·줄바꿈을 숨김 | **현실적 플레이스홀더**: 도메인에 맞는 예시 데이터 사용 |
+| 과도한 패딩 (`p-8` everywhere) | 시각적 계층 파괴, 모바일에서 콘텐츠 영역 축소 | **스케일 기반**: `p-4`(기본), `p-6`(섹션), `p-8`(페이지 최상위만) |
+| 주식형 카드 그리드 (동일 크기 카드 나열) | 정보 우선순위 무시 | **목적 기반**: 중요 콘텐츠는 더 큰 영역, 보조는 작게 |
+| 그림자 과잉 (`shadow-xl`, `shadow-2xl`) | 렌더링 비용, shadcn의 미니멀 미학과 충돌 | **최소화**: 카드 `shadow-sm`, 모달 `shadow-lg`, 나머지는 없음 |
+
+### 시맨틱 컬러 토큰 — 원색 직접 사용 금지
+
+```
+❌ text-purple-600     → ✅ text-primary
+❌ bg-indigo-500       → ✅ bg-accent
+❌ bg-gray-50          → ✅ bg-background
+❌ text-gray-900       → ✅ text-foreground
+❌ border-gray-200     → ✅ border-border
+```
+
+shadcn/ui의 CSS 변수(`--primary`, `--background` 등)를 Tailwind 유틸리티 클래스로 매핑해서 사용한다.
+임의 색상(`bg-[#7c3aed]`)은 디자인 토큰이 확정되기 전 임시 용도로만 허용.
+
+### 스페이싱 스케일 — 0.25rem 증분만 사용
+
+```
+❌ px-[13px]     ❌ py-[2.3rem]     ❌ gap-[22px]
+✅ p-4 (1rem)    ✅ py-6 (1.5rem)   ✅ gap-2 (0.5rem)
+```
+
+임의 값(arbitrary value)은 Tailwind의 `[]` 문법으로 가능하지만 사용하지 않는다.
+스케일을 벗어나는 간격이 필요하면 설계 재검토 신호다.
+
+### AI Aesthetic 자가 점검
+
+컴포넌트 PR 전에 확인:
+
+- [ ] `bg-purple-*` / `bg-indigo-*` / `text-purple-*` 직접 사용 없음
+- [ ] `bg-gradient-to-*` 2개 이상의 섹션에 사용 안 함
+- [ ] `rounded-2xl`이 3가지 이상의 다른 요소 유형에 사용 안 함
+- [ ] `shadow-xl` / `shadow-2xl` 카드에 사용 안 함
+- [ ] Lorem ipsum 텍스트 없음
+- [ ] `p-8` 이상이 작은 컨테이너(카드·모달 내부)에 사용 안 함
+- [ ] `px-[*]` / `py-[*]` 같은 임의 픽셀값 없음
+
+---
+
+## 참조
+
+- `personas/frontend.md` §8 — AI Aesthetic 회피 원칙
+- `skills/templates/fe/styling_design.md` — 스타일링 설계 뷰 (AC용)
+- `harness/skills/gate.md` — 게이트 검증 단계
+- 원본: `agent-skills/skills/frontend-ui-engineering/SKILL.md` — Avoid the AI Aesthetic
