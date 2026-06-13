@@ -53,7 +53,6 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
 - **시간 탐색**: 코드가 꼬였을 때 git log로 meta 변경 이력을 추적해 "왜 이렇게 설계됐는가" 발견
 
 탐색은 `harness/state/meta/src/fe/INDEX.md` 메타 인덱스를 통해 수행한다.
-search_files로는 컴포넌트명만 찾을 뿐, Props·리렌더 전파·상태 흐름·의존성은 보이지 않는다.
 
 **경로 도출 규칙**: 작업 대상 소스 파일이 `project/src/fe/{section}/{filename}`일 때, 대응되는 메타 인덱스 파일은 다음과 같다.
 
@@ -133,10 +132,6 @@ search_files로는 컴포넌트명만 찾을 뿐, Props·리렌더 전파·상�
 
 > 메타 인덱스는 raw diff보다 읽기 쉽다. Props·리렌더 전파·상태 흐름이
 > 명시되어 있어 "왜 바뀌었는가"를 코드 diff보다 빠르게 파악할 수 있다.
-
-참고: harness/state/meta/ 디렉토리가 아직 생성되지 않은 프로젝트는
-초기 단계이므로 search_files를 한시적으로 사용할 수 있다.
-meta 인덱스가 생성되는 대로 search_files 사용을 중단한다.
 ```
 
 ### 2-1. 컴포넌트 설계 원칙 (SOLID 적용)
