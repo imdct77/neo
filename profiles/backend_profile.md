@@ -114,7 +114,9 @@ Phase 4 — 수정 (Fix)
 
 **경로 도출 규칙**: 작업 대상 소스 파일이 `project/src/be/{section}/{filename}`일 때, 대응되는 메타 인덱스 파일은 다음과 같다.
 
-`{section}` = 소스 파일이 위치한 디렉토리명 (예: `models`, `services`)
+`{section}` = 소스 파일이 위치한 `src/{scope}/` 이후의 디렉토리 경로
+  예: `src/be/models/user.py` → `models`
+  예: `src/be/recipes/model/recipe.py` → `recipes/model`
 `{stem}`   = 파일명에서 확장자를 뗀 이름 (예: `user.py` → `user`, `auth_service.py` → `auth_service`)
 
 | 계층 | 메타 인덱스 경로 |
@@ -127,6 +129,11 @@ Phase 4 — 수정 (Fix)
   → L3: `harness/state/meta/src/be/models/DETAIL.user.md`
   → L2: `harness/state/meta/src/be/models/DETAIL.md`
   → L1: `harness/state/meta/src/be/models/INDEX.md`
+
+예: `project/src/be/recipes/model/recipe.py` → {section}=`recipes/model`, {stem}=`recipe`
+  → L3: `harness/state/meta/src/be/recipes/model/DETAIL.recipe.md`
+  → L2: `harness/state/meta/src/be/recipes/model/DETAIL.md`
+  → L1: `harness/state/meta/src/be/recipes/model/INDEX.md`
 
 ```
 구현·수정 전 탐색 순서 (모든 경로는 harness/state/meta/src/be/ 기준):

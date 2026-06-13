@@ -56,7 +56,9 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
 
 **경로 도출 규칙**: 작업 대상 소스 파일이 `project/src/fe/{section}/{filename}`일 때, 대응되는 메타 인덱스 파일은 다음과 같다.
 
-`{section}` = 소스 파일이 위치한 디렉토리명 (예: `components`, `hooks`)
+`{section}` = 소스 파일이 위치한 `src/{scope}/` 이후의 디렉토리 경로
+  예: `src/fe/components/Button.tsx` → `components`
+  예: `src/fe/layout/sidebar/Menu.tsx` → `layout/sidebar`
 `{stem}`   = 파일명에서 확장자를 뗀 이름 (예: `Button.tsx` → `Button`, `useAuth.ts` → `useAuth`)
 
 | 계층 | 메타 인덱스 경로 |
@@ -69,6 +71,11 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
   → L3: `harness/state/meta/src/fe/components/DETAIL.Button.md`
   → L2: `harness/state/meta/src/fe/components/DETAIL.md`
   → L1: `harness/state/meta/src/fe/components/INDEX.md`
+
+예: `project/src/fe/layout/sidebar/Menu.tsx` → {section}=`layout/sidebar`, {stem}=`Menu`
+  → L3: `harness/state/meta/src/fe/layout/sidebar/DETAIL.Menu.md`
+  → L2: `harness/state/meta/src/fe/layout/sidebar/DETAIL.md`
+  → L1: `harness/state/meta/src/fe/layout/sidebar/INDEX.md`
 
 ```
 구현·수정 전 탐색 순서 (모든 경로는 harness/state/meta/src/fe/ 기준):

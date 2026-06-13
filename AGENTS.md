@@ -411,13 +411,17 @@ neo/                              ← 부모 디렉토리 (Git 관리 X)
 │           └── src/
 │               ├── INDEX.md              ← L3: BE/FE 통합 개요
 │               ├── be/
-│               │   ├── INDEX.md          ← L1: be 파일 목록
-│               │   └── {section}/
-│               │       └── DETAIL.md     ← L2: 파일별 상세
+│               │   ├── INDEX.md          ← L1(scope): be 개요 + 섹션 목록
+│               │   └── {section}/        ← 재귀: src/be/ 이하 전체 미러링
+│               │       ├── INDEX.md      ← L1(section): 압축된 파일 목록
+│               │       ├── DETAIL.md     ← L2: 파일별 상세 인덱스
+│               │       └── DETAIL.{file}.md ← L3: 개별 파일 설계 의도
 │               └── fe/
-│                   ├── INDEX.md          ← L1: fe 파일 목록
-│                   └── {section}/
-│                       └── DETAIL.md     ← L2: 파일별 상세
+│                   ├── INDEX.md          ← L1(scope): fe 개요 + 섹션 목록
+│                   └── {section}/        ← 재귀: src/fe/ 이하 전체 미러링
+│                       ├── INDEX.md      ← L1(section)
+│                       ├── DETAIL.md     ← L2
+│                       └── DETAIL.{file}.md ← L3
 │
 └── project/                      ← imdct77/{project_id} (프로젝트 — 산출물·소스)
     │
@@ -453,16 +457,23 @@ briefs       : project/docs/briefs/{도메인 영문}.{역할}.{순번:3자리}.
                예) AUTH.BE.001.md, USER.FE.003.md
 ```
 
-### 7-3. Meta 인덱스 3계층 체계
+### 7-3. Meta 인덱스 계층 체계
 
-| 계층 | 위치 | 내용 | 자동화 |
-|------|------|------|:--:|
-| L1 | `harness/state/meta/src/{be,fe}/INDEX.md` | scope별 파일 목록 | `--sync` |
-| L2 | `harness/state/meta/src/{be,fe}/{section}/DETAIL.md` | 파일별 상세 | `--sync` |
-| L3 | `harness/state/meta/src/INDEX.md` | BE/FE 통합 개요 | `--sync` |
+`src/{scope}/` 이하 디렉토리 구조를 메타 디렉토리에 1:1 미러링. 리프(가장 깊은 디렉토리)부터 처리하여 상위로 cascade 전파.
+
+| 계층 | 위치 패턴 | 내용 | 생성 주체 |
+|------|----------|------|:--:|
+| L1(scope) | `harness/state/meta/src/{be,fe}/INDEX.md` | scope 전체 파일 목록 + 섹션 | `--sync` |
+| L1(section) | `harness/state/meta/src/{be,fe}/{section,...}/INDEX.md` | 디렉토리별 압축된 파일 목록 | `--sync` (재귀) |
+| L2 | `harness/state/meta/src/{be,fe}/{section,...}/DETAIL.md` | 파일별 상세 인덱스 | `--sync` (재귀) |
+| L3 | `harness/state/meta/src/{be,fe}/{section,...}/DETAIL.{file}.md` | 개별 파일 설계 의도·의존성 | `--sync` (자동 skeleton), LLM (의미 채움) |
+| 최상위 | `harness/state/meta/src/INDEX.md` | BE/FE 통합 개요 | `--sync` (cascade 종단) |
+
+`{section,...}` = `src/{scope}/` 이하의 전체 디렉토리 경로. 예: `recipes/model`, `auth/oauth`.
+파일 없는 중간 디렉토리는 L1(INDEX.md)만 생성.
 
 동기화: `project/.git/hooks/pre-commit` → `meta_consistency_check.py --exit-code --sync`
-→ 3계층 전체를 파일시스템 기준으로 자동 갱신. 생성·삭제 모두 자동 반영.
+→ 전체 트리를 파일시스템 기준으로 자동 갱신. `[AUTO] TODO` 미검토 시 커밋 차단.
 
 ### 7-4. ID 체계
 
