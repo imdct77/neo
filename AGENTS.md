@@ -142,8 +142,8 @@ Hermes: hermes model 또는 /model 명령으로 모델 교체.
   시점 1: tasks 완성 직후        → requirements→tasks 연결 검증
   시점 2: 설계 완성 직후         → project/docs/design/ 완성 후
   시점 3: Task Brief 완성 직후   → 구현 전 예방 감리
-  시점 4: 도메인 Phase 완료 후   → 구현 결과 감리
-  시점 5: MVP 완성 후            → 출시 전 최종 감리
+  시점 4: 도메인 Phase 완료 후   → 구현 결과 감리 + FE 도메인 시 웹 성능 감리(Core Web Vitals)
+  시점 5: MVP 완성 후            → 출시 전 최종 감리 + 웹 성능 최종 측정
 
 감리 결과:
   project/docs/qa/{시점}_{도메인}_{YYYYMMDD_hhmmss}.md 보고서 저장

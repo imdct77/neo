@@ -80,7 +80,89 @@ Step 4. 감리 대상 문서·코드 로드
 
 ## 3. 감리 시점별 체크리스트
 
-(기존 내용 동일 — 시점 0~5 체크리스트)
+(시점 0~5 기본 체크리스트 — AGENTS.md §3-3 참조)
+
+### 3-1. 웹 성능 감리 (Core Web Vitals Audit)
+
+> 시점 4(도메인 Phase 완료 후, FE 도메인) 및 시점 5(MVP 완성 후)에 시행.
+> Core Web Vitals 3대 지표를 기준으로 측정·판정한다.
+
+#### 측정 대상
+
+```
+측정 도구:
+  - Google Lighthouse (로컬 개발 서버 기준) — CI 통합 가능
+  - PageSpeed Insights (실제 사용자 데이터 + Lighthouse)
+  - Chrome DevTools Performance 패널
+
+측정 환경:
+  - 모바일 에뮬레이션 기준 (Slow 4G throttling + Moto G4 CPU)
+  - 데스크톱도 병행 측정 (비교 기준)
+```
+
+#### Core Web Vitals 3대 지표
+
+| 지표 | 측정 대상 | Good | Needs Improvement | Poor |
+|------|---------|------|-------------------|------|
+| **LCP** (Largest Contentful Paint) | 로딩 — 가장 큰 콘텐츠가 렌더링되는 시간 | ≤ 2.5s | ≤ 4.0s | > 4.0s |
+| **INP** (Interaction to Next Paint) | 반응성 — 사용자 입력 후 다음 프레임까지 지연 | ≤ 200ms | ≤ 500ms | > 500ms |
+| **CLS** (Cumulative Layout Shift) | 시각 안정성 — 레이아웃 변경 누적 점수 | ≤ 0.1 | ≤ 0.25 | > 0.25 |
+
+#### 감리 체크리스트
+
+```
+□ LCP 2.5s 이하인가? (Good 기준)
+  초과 시 원인 식별:
+    - 서버 응답 시간 (TTFB) — BE 최적화 대상
+    - 리소스 로드 지연 — 이미지 최적화·lazy loading
+    - 렌더링 차단 리소스 — CSS/JS 번들 크기
+
+□ INP 200ms 이하인가? (Good 기준)
+  초과 시 원인 식별:
+    - 긴 메인 스레드 작업 — 코드 스플리팅·Web Worker
+    - 과도한 리렌더링 — React.memo·useMemo 검토
+    - 무거운 이벤트 핸들러 — 디바운싱·쓰로틀링
+
+□ CLS 0.1 이하인가? (Good 기준)
+  초과 시 원인 식별:
+    - 이미지·iframe 크기 미지정 → 명시적 width/height 또는 aspect-ratio
+    - 동적 콘텐츠 주입 → 스켈레톤 UI로 공간 선점
+    - 웹폰트 FOUT/FOIT → font-display: swap + 유사 폴백 폰트
+
+□ 이미지 최적화
+  - next/image 또는 유사 CDN 변환 사용 중인가?
+  - WebP/AVIF 포맷 적용 여부
+  - 적절한 sizes 속성으로 반응형 이미지 제공 중인가?
+
+□ 번들 크기
+  - 초기 JS 번들 200KB 미만 (압축 전)?
+  - Tree-shaking 미사용 코드 제거 중인가?
+  - 동적 import(code splitting) 적용 중인가?
+
+□ 폰트 로딩
+  - font-display: swap 적용?
+  - 서브셋 폰트 또는 시스템 폰트 폴백?
+```
+
+#### 판정 기준
+
+```
+모든 지표 Good       → PASS — 성능 이슈 없음
+1개 이상 Needs Improvement → CONCERN — 수정 권장, 다음 시점 재측정
+1개 이상 Poor             → CONCERN (MVP 전: BLOCKER) — 출시 전 수정 필수
+```
+
+#### 보고서 포함 항목
+
+감리 보고서 §요약에 성능 항목 추가:
+```
+## 웹 성능 (Core Web Vitals)
+- LCP: {측정값}s → {Good|Needs Improvement|Poor}
+- INP: {측정값}ms → {Good|Needs Improvement|Poor}
+- CLS: {측정값} → {Good|Needs Improvement|Poor}
+- 종합: {PASS|CONCERN|BLOCKER}
+- 측정 도구: {Lighthouse|PageSpeed Insights}
+```
 
 ---
 
