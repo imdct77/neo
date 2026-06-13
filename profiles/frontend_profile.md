@@ -48,41 +48,42 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
 탐색은 `harness/state/meta/src/fe/INDEX.md` 메타 인덱스를 통해 수행한다.
 
 ```
-구현·수정 전 탐색 순서:
+구현·수정 전 탐색 순서 (모든 경로는 harness/state/meta/src/fe/ 기준):
 
 1. harness/state/meta/src/fe/INDEX.md 읽기 → 하위 디렉토리 목록 파악 (L1)
-2. 해당 디렉토리의 INDEX.md 읽기 → 파일 목록 + 공용 컴포넌트 확인 (L1)
+2. harness/state/meta/src/fe/{section}/INDEX.md 읽기 → 파일 목록 + 공용 컴포넌트 확인 (L1)
 3. 유사 컴포넌트·훅 발견 시:
-   a. (필요 시) DETAIL.md 읽기 → 파일별 설계 의도 확인 (L2)
+   a. (필요 시) harness/state/meta/src/fe/{section}/DETAIL.md 읽기 → 설계 의도 확인 (L2)
    b. 동일 기능이면 → 그것을 사용한다 (재구현 금지)
    c. 유사 기능이면 → 아래 패턴 적용 검토
 4. 상수·타입은 INDEX.md의 공용 요소 목록에서 확인.
    같은 의미의 것이 이미 있으면 import해서 사용.
    없을 때만 새로 정의.
-5. (컴포넌트·훅 수정·재사용 시) 반드시 DETAIL.{파일명}.md (L3)를 먼저 읽는다:
+5. (컴포넌트·훅 수정·재사용 시) 반드시 harness/state/meta/src/fe/{section}/DETAIL.{파일명}.md (L3)를 먼저 읽는다:
    a. Props·리렌더 전파·상태 흐름·의존성 확인
    b. "수정 시 영향" 필드 확인 → 연쇄 변경 범위 파악
 6. 없으면 → 신규 구현. Task Brief 완료 시 meta 갱신 항목 포함.
-7. 수정 완료 후 DETAIL.{파일명}.md 갱신 항목을 Task Brief에 포함.
+7. 수정 완료 후 harness/state/meta/src/fe/{section}/DETAIL.{파일명}.md 갱신 항목을 Task Brief에 포함.
 
 ### 파일 생성·삭제 시 메타 인덱스 cascade
 
 컴포넌트·훅·유틸 파일 생성과 삭제는 **무조건 L2 수정 트리거**다. 각 단계는 **하위 계층의 상태+내용을 들고 상위 계층을 검토**한다. L3→L2→L1→상위 순으로 전파.
+모든 메타 파일 경로는 harness/state/meta/src/fe/ 아래에 위치한다.
 
 **파일 생성 시 (L3 신규 → L3 상태·내용을 들고 L2 검토):**
-8. L3 DETAIL.{파일명}.md 생성 — Props·리렌더·상태흐름·의존성 기재
-9. L3의 내용을 기준으로 L2 DETAIL.md 검토 → 파일 인덱스에 `### {ComponentName}.tsx` 또는 `### {hookName}.ts` 항목 추가
-10. L2의 변경 내용을 기준으로 L1 INDEX.md 검토 → 해당 섹션에 파일 라인 추가
-11. 상위 디렉토리 L2/L1 검토 — 변경된 L1 상태·내용을 들고 상위 판단
+8. harness/state/meta/src/fe/{section}/DETAIL.{파일명}.md 생성 — Props·리렌더·상태흐름·의존성 기재
+9. L3 내용을 기준으로 harness/state/meta/src/fe/{section}/DETAIL.md 검토 → 파일 인덱스에 `### {ComponentName}.tsx` 또는 `### {hookName}.ts` 항목 추가
+10. L2 변경 내용을 기준으로 harness/state/meta/src/fe/{section}/INDEX.md 검토 → 파일 라인 추가
+11. 변경된 L1 상태·내용을 들고 상위 harness/state/meta/src/fe/의 INDEX.md·DETAIL.md 검토
 
 **파일 삭제 시 (L3 제거 → L3 상태를 들고 L2 검토):**
-12. 삭제 전 DETAIL.{파일명}.md (L3) 확인 → 의존성·리렌더 전파 확인
+12. 삭제 전 harness/state/meta/src/fe/{section}/DETAIL.{파일명}.md (L3) 확인 → 의존성·리렌더 전파 확인
     → 이 컴포넌트·훅을 참조하는 다른 코드가 있는지 파악
 13. 파일 삭제 후:
-    a. DETAIL.{파일명}.md (L3) 삭제
-    b. L3 삭제 상태를 기준으로 L2 DETAIL.md 검토 → 파일 인덱스에서 항목 제거. 남은 파일 0건이면 L2 삭제 판정
-    c. L2 변경 내용을 기준으로 L1 INDEX.md 검토 → 파일 라인 제거. 남은 파일 0건이면 섹션 삭제 판정
-    d. 변경된 L1 상태·내용을 들고 상위 디렉토리 L2/L1 검토 → 하위 디렉토리 인덱스 갱신
+    a. harness/state/meta/src/fe/{section}/DETAIL.{파일명}.md (L3) 삭제
+    b. L3 삭제 상태를 기준으로 harness/state/meta/src/fe/{section}/DETAIL.md 검토 → 파일 인덱스에서 항목 제거. 남은 파일 0건이면 L2 삭제 판정
+    c. L2 변경 내용을 기준으로 harness/state/meta/src/fe/{section}/INDEX.md 검토 → 파일 라인 제거. 남은 파일 0건이면 섹션 삭제 판정
+    d. 변경된 L1 상태·내용을 들고 상위 harness/state/meta/src/fe/의 INDEX.md·DETAIL.md 검토
     e. Task Brief "meta 갱신 항목"에 삭제분 반영
 
 참고: harness/state/meta/ 디렉토리가 아직 생성되지 않은 프로젝트는
