@@ -2,7 +2,7 @@
 """Neo meta-consistency-check hook — meta 인덱스 3계층 일관성 검증·동기화.
 
 pre_llm_call 이벤트: 불일치 발견 시 경고 컨텍스트 주입
-pre-commit  --sync:  L1(INDEX.md) + L2(DETAIL.md) + L3(src/INDEX.md) 자동 갱신
+pre-commit  --sync:  L1+L2+L3 자동 생성·갱신 + 상위 전파
 """
 
 import json
@@ -20,6 +20,37 @@ _SECTION_RE = re.compile(r"^## (.+)")
 _INDEX_ENTRY_RE = re.compile(r"^- `([^`]+)`")
 _DETAIL_H1_RE = re.compile(r"^# (.+ — 상세)")
 _TABLE_EMPTY_ROW_RE = re.compile(r"^\| \(코드가 추가되면")
+_AUTO_TODO_MARKER = "[AUTO] TODO"
+
+# L3 템플릿 — 자동 생성용 skeleton
+_L3_TEMPLATE = """# {file_path} — 상세
+
+> [AUTO] TODO — 자동 생성됨, LLM 검토 필요
+> 상위: [DETAIL.md](./DETAIL.md)
+
+## 함수 상세
+
+### TODO
+- **하는 일**: [AUTO] TODO — 검토 후 작성
+- **호출처**: TODO
+- **실패 시**: TODO
+- **중복 금지**: TODO
+- **수정 시 영향**: TODO
+
+## 상수
+
+| 이름 | 값 | 의미 | 수정 시 영향 |
+|------|-----|------|------------|
+| TODO | TODO | TODO | TODO |
+
+## 의존성
+
+### Import
+- TODO
+
+### Imported by
+- TODO
+"""
 
 
 # ═══════════════════════════════════════════════════════════
@@ -73,6 +104,14 @@ def collect_directories(src_dir: str) -> set[str]:
         if os.path.isdir(full) and not entry.startswith(".") and entry != "__pycache__":
             dirs.add(entry)
     return dirs
+
+
+def _auto_desc(file_path: str) -> str:
+    fname = os.path.basename(file_path)
+    stem = os.path.splitext(fname)[0]
+    if stem == "__init__":
+        return f"{os.path.basename(os.path.dirname(file_path))} 패키지 초기화"
+    return f"{stem} — TODO: 설명 추가"
 
 
 # ═══════════════════════════════════════════════════════════
@@ -152,6 +191,7 @@ def _regenerate_l1(scope: str, sections: dict, actual_files: set[str]) -> str:
 
 
 def sync_l1(harness_root: str, project_root: str, scope: str) -> tuple[int, int]:
+    """scope-level INDEX.md 동기화. (added, removed) 반환."""
     index_path = os.path.join(harness_root, "state", "meta", "src", scope, "INDEX.md")
     if not os.path.isfile(index_path):
         return (0, 0)
@@ -182,7 +222,10 @@ _AUTO_DETAIL_TEMPLATE = """## {cls_name}
 
 
 def _parse_detail(content: str) -> dict:
-    """DETAIL.md → {파일경로: 내용블록}. # {file} — 상세 기준 분할."""
+    """DETAIL.md → {파일경로: 내용블록}. # {file} — 상세 기준 분할.
+
+    ⚠️ 포맷 제약: L2 항목은 반드시 '# {file_path} — 상세' 형식이어야 한다.
+    이 형식을 벗어나면 _parse_detail()이 항목을 감지하지 못해 검증이 실패한다."""
     blocks = {}
     current_key = "_header"
     current_lines = []
@@ -206,14 +249,15 @@ def _auto_detail_block(file_path: str) -> str:
     return f"# {file_path} — 상세\n\n{_AUTO_DETAIL_TEMPLATE.format(cls_name=stem)}"
 
 
-def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int]:
-    """scope 내 모든 section의 DETAIL.md 동기화."""
-    added, removed = 0, 0
+def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int, int]:
+    """scope 내 모든 section의 DETAIL.md + L3 DETAIL.{stem}.md 동기화.
+    Returns (l2_added, l2_removed, l3_count)."""
+    l2_added, l2_removed, l3_count = 0, 0, 0
     meta_src = os.path.join(harness_root, "state", "meta", "src", scope)
     project_src = os.path.join(project_root, "src", scope)
 
     if not os.path.isdir(project_src):
-        return (0, 0)
+        return (0, 0, 0)
 
     # 프로젝트에 존재하는 디렉토리 집합
     project_dirs = {
@@ -221,7 +265,7 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int]
         if os.path.isdir(os.path.join(project_src, d)) and not d.startswith(".")
     }
 
-    # 1. 존재하는 디렉토리 → DETAIL.md 동기화
+    # 1. 존재하는 디렉토리 → DETAIL.md 동기화 + L3 생성
     for section in project_dirs:
         section_full = os.path.join(project_src, section)
         detail_path = os.path.join(meta_src, section, "DETAIL.md")
@@ -232,6 +276,17 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int]
             if not any(d.startswith(".") for d in Path(root).relative_to(section_full).parts)
         }
 
+        # ── L3: 각 파일별 DETAIL.{stem}.md 생성 ──
+        section_meta_dir = os.path.join(meta_src, section)
+        os.makedirs(section_meta_dir, exist_ok=True)
+        for fpath in sorted(actual_in_section):
+            stem = os.path.splitext(os.path.basename(fpath))[0]
+            l3_path = os.path.join(section_meta_dir, f"DETAIL.{stem}.md")
+            if not os.path.isfile(l3_path):
+                _write_l3_skeleton(l3_path, fpath, section)
+                l3_count += 1
+
+        # ── L2: DETAIL.md 동기화 ──
         existing_blocks = {}
         if os.path.isfile(detail_path):
             with open(detail_path) as f:
@@ -264,12 +319,12 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int]
             for old_k, new_k in key_map.items():
                 if s == old_k and new_k in stale:
                     del blocks[s]
-                    removed += 1
+                    l2_removed += 1
                     break
 
         for m in sorted(missing):
             blocks[m] = _auto_detail_block(m)
-            added += 1
+            l2_added += 1
 
         lines = []
         if "_header" in blocks and blocks["_header"]:
@@ -281,11 +336,10 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int]
                 lines.append("")
             lines.append(blocks[k].rstrip())
 
-        os.makedirs(os.path.dirname(detail_path), exist_ok=True)
         with open(detail_path, "w") as f:
             f.write("\n".join(lines) + "\n")
 
-    # 2. 프로젝트에 없는 meta 디렉토리 → DETAIL.md 삭제
+    # 2. 프로젝트에 없는 meta 디렉토리 → DETAIL.md + L3 정리
     if os.path.isdir(meta_src):
         for meta_entry in os.listdir(meta_src):
             meta_entry_path = os.path.join(meta_src, meta_entry)
@@ -295,7 +349,12 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int]
                 detail_file = os.path.join(meta_entry_path, "DETAIL.md")
                 if os.path.isfile(detail_file):
                     os.remove(detail_file)
-                    removed += 1
+                    l2_removed += 1
+                # L3 파일들도 삭제
+                for fname in os.listdir(meta_entry_path):
+                    if fname.startswith("DETAIL.") and fname.endswith(".md") and fname != "DETAIL.md":
+                        os.remove(os.path.join(meta_entry_path, fname))
+                        l3_count += 1
                 # 빈 디렉토리 정리
                 try:
                     remaining = [f for f in os.listdir(meta_entry_path) if not f.startswith(".")]
@@ -304,7 +363,15 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int]
                 except OSError:
                     pass
 
-    return (added, removed)
+    return (l2_added, l2_removed, l3_count)
+
+
+def _write_l3_skeleton(l3_path: str, file_path: str, section: str) -> None:
+    """[AUTO] TODO 마커가 포함된 L3 skeleton 파일 생성."""
+    stem = os.path.splitext(os.path.basename(file_path))[0]
+    content = _L3_TEMPLATE.format(file_path=file_path, stem=stem, section=section)
+    with open(l3_path, "w") as f:
+        f.write(content)
 
 
 # ═══════════════════════════════════════════════════════════
@@ -354,21 +421,158 @@ def sync_l3(harness_root: str, project_root: str) -> bool:
 
 
 # ═══════════════════════════════════════════════════════════
+# 함수 중복 감지 (#9)
+# ═══════════════════════════════════════════════════════════
+
+def _levenshtein(s1: str, s2: str) -> int:
+    """두 문자열 간 편집 거리."""
+    if len(s1) < len(s2):
+        return _levenshtein(s2, s1)
+    if len(s2) == 0:
+        return len(s1)
+    prev = range(len(s2) + 1)
+    for i, c1 in enumerate(s1):
+        curr = [i + 1]
+        for j, c2 in enumerate(s2):
+            curr.append(min(
+                prev[j + 1] + 1,      # insertion
+                curr[j] + 1,           # deletion
+                prev[j] + (c1 != c2),  # substitution
+            ))
+        prev = curr
+    return prev[-1]
+
+
+def _extract_function_names_from_l3(l3_path: str) -> set[str]:
+    """L3 파일에서 함수명 추출. '### {name}({params})' 패턴 파싱."""
+    names = set()
+    if not os.path.isfile(l3_path):
+        return names
+    try:
+        with open(l3_path) as f:
+            content = f.read()
+        if _AUTO_TODO_MARKER in content:
+            return names  # 자동 생성된 skeleton은 skip
+        # "### {name}({params})" 또는 "### {name}" 패턴
+        for m in re.finditer(r"^###\s+(\w+)", content, re.MULTILINE):
+            names.add(m.group(1))
+    except Exception:
+        pass
+    return names
+
+
+def _check_duplicate_functions(meta_src: str) -> list[str]:
+    """L3 파일들에서 동일·유사 함수명을 감지하여 경고 반환."""
+    issues = []
+    if not os.path.isdir(meta_src):
+        return issues
+
+    # {함수명: [파일목록]} 수집
+    func_map = {}
+    similar_pairs = []
+
+    for entry in os.listdir(meta_src):
+        section_path = os.path.join(meta_src, entry)
+        if not os.path.isdir(section_path) or entry.startswith("."):
+            continue
+        for fname in os.listdir(section_path):
+            if not fname.startswith("DETAIL.") or fname == "DETAIL.md":
+                continue
+            l3_path = os.path.join(section_path, fname)
+            func_names = _extract_function_names_from_l3(l3_path)
+            for fn in func_names:
+                func_map.setdefault(fn, []).append(f"{entry}/{fname}")
+
+    # Level 1: 정확히 동일한 함수명
+    for fn, files in func_map.items():
+        if len(files) > 1:
+            issues.append(
+                f"[L3/중복] 동일 함수명 '{fn}()' 이 여러 파일에 정의:\n" +
+                "\n".join(f"  - {f}" for f in files)
+            )
+
+    # Level 2: 유사 함수명 (Levenshtein ≤ 3)
+    checked = set()
+    for fn1 in func_map:
+        for fn2 in func_map:
+            if fn1 >= fn2:
+                continue
+            pair = (fn1, fn2)
+            if pair in checked:
+                continue
+            checked.add(pair)
+            dist = _levenshtein(fn1.lower(), fn2.lower())
+            if 1 <= dist <= 3:
+                files1 = func_map[fn1]
+                files2 = func_map[fn2]
+                # 서로 다른 파일 집합일 때만 경고
+                if set(files1) != set(files2):
+                    issues.append(
+                        f"[L3/유사] 유사 함수명 감지 — '{fn1}()' vs '{fn2}()' (편집거리 {dist}):\n" +
+                        f"  - {fn1}(): {', '.join(files1)}\n" +
+                        f"  - {fn2}(): {', '.join(files2)}"
+                    )
+
+    return issues
+
+
+# ═══════════════════════════════════════════════════════════
 # 검증 (pre_llm_call 용)
 # ═══════════════════════════════════════════════════════════
 
 
 def check_consistency(harness_root: str, project_root: str, scope: str) -> list[str]:
-    """L1+L2+L3 통합 검증. pre_llm_call 용."""
+    """L1+L2+L3 통합 검증 + 중복 함수명 감지. pre_llm_call 용."""
     issues = []
     issues.extend(_check_l1(harness_root, project_root, scope))
     issues.extend(_check_l2(harness_root, project_root, scope))
+    issues.extend(_check_l3_absence(harness_root, project_root, scope))
+    meta_src = os.path.join(harness_root, "state", "meta", "src", scope)
+    issues.extend(_check_duplicate_functions(meta_src))
     return issues
 
 
 def check_l3_consistency(harness_root: str, project_root: str) -> list[str]:
     """L3 검증 — src/INDEX.md vs 실제 디렉토리. scope 무관 전역 호출."""
     return _check_l3(harness_root, project_root)
+
+
+def _check_l3_absence(harness_root: str, project_root: str, scope: str) -> list[str]:
+    """#10: L3(DETAIL.{stem}.md) 부재 검증.
+    소스 파일은 있으나 L3가 없는 경우 불완전 탐색 경고."""
+    issues = []
+    meta_src = os.path.join(harness_root, "state", "meta", "src", scope)
+    project_src = os.path.join(project_root, "src", scope)
+
+    if not os.path.isdir(project_src) or not os.path.isdir(meta_src):
+        return issues
+
+    missing_l3 = []
+    for section in os.listdir(project_src):
+        section_full = os.path.join(project_src, section)
+        if not os.path.isdir(section_full) or section.startswith("."):
+            continue
+        for root, dirs, files in os.walk(section_full):
+            dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
+            for fname in files:
+                if fname.startswith("."):
+                    continue
+                stem = os.path.splitext(fname)[0]
+                l3_path = os.path.join(meta_src, section, f"DETAIL.{stem}.md")
+                if not os.path.isfile(l3_path):
+                    rel = os.path.relpath(os.path.join(root, fname), project_root)
+                    missing_l3.append(rel)
+
+    if missing_l3:
+        sample = sorted(missing_l3)[:10]
+        more = f" 외 {len(missing_l3) - 10}건" if len(missing_l3) > 10 else ""
+        issues.append(
+            f"[{scope}/L3] DETAIL.{{file}}.md 누락 — L3 없이 불완전 탐색 상태{more}:\n" +
+            "\n".join(f"  - {f}" for f in sample) +
+            "\n  → 'meta 인덱스 갱신' 또는 --sync 실행으로 자동 생성 가능"
+        )
+
+    return issues
 
 
 def _check_l1(harness_root: str, project_root: str, scope: str) -> list[str]:
@@ -456,7 +660,6 @@ def _check_l2(harness_root: str, project_root: str, scope: str) -> list[str]:
             blocks = _parse_detail(f.read())
 
         indexed_keys = {k for k in blocks if k != "_header"}
-        # 매칭: DETAIL.md 키("src/be/models/user.py — 상세")에서 실제 파일 찾기
         matched = set()
         unmatched_keys = set()
         for k in indexed_keys:
@@ -513,7 +716,6 @@ def _check_l3(harness_root: str, project_root: str) -> list[str]:
     with open(index_path) as f:
         content = f.read()
 
-    # INDEX.md에서 `| `be/` | ...` 패턴 파싱
     idx_dirs = {}
     for scope in _SCOPES:
         idx_dirs[scope] = set()
@@ -557,28 +759,39 @@ def _check_l3(harness_root: str, project_root: str) -> list[str]:
 # ═══════════════════════════════════════════════════════════
 
 
-def _auto_desc(file_path: str) -> str:
-    fname = os.path.basename(file_path)
-    stem = os.path.splitext(fname)[0]
-    if stem == "__init__":
-        return f"{os.path.basename(os.path.dirname(file_path))} 패키지 초기화"
-    return f"{stem} — TODO: 설명 추가"
-
-
 def _sync_all():
-    """3계층 전체 동기화."""
+    """3계층 전체 동기화 + cascade 상위 전파 (#3).
+
+    순서: L2(파일별 DETAIL+L3 생성) → L1(scope INDEX.md) → L3(top INDEX.md)
+    각 단계에서 변경이 발생하면 상위로 전파한다."""
     h, p = str(HARNESS_ROOT), str(PROJECT_ROOT)
-    stats = {"L1_added": 0, "L1_removed": 0, "L2_added": 0, "L2_removed": 0, "L3_changed": False}
+    stats = {
+        "L1_added": 0, "L1_removed": 0,
+        "L2_added": 0, "L2_removed": 0,
+        "L3_detail_added": 0, "L3_changed": False,
+    }
 
+    any_l2_change = False
     for scope in _SCOPES:
-        a, r = sync_l1(h, p, scope)
-        stats["L1_added"] += a
-        stats["L1_removed"] += r
-        a, r = sync_l2(h, p, scope)
-        stats["L2_added"] += a
-        stats["L2_removed"] += r
+        l2_a, l2_r, l3_c = sync_l2(h, p, scope)
+        stats["L2_added"] += l2_a
+        stats["L2_removed"] += l2_r
+        stats["L3_detail_added"] += l3_c
+        if l2_a or l2_r or l3_c:
+            any_l2_change = True
 
-    stats["L3_changed"] = sync_l3(h, p)
+    # L2 변경 → L1 갱신 (cascade)
+    if any_l2_change:
+        for scope in _SCOPES:
+            a, r = sync_l1(h, p, scope)
+            stats["L1_added"] += a
+            stats["L1_removed"] += r
+
+    # L1 변경 또는 L2 변경 → 최상위 L3 갱신 (cascade)
+    l1_changed = stats["L1_added"] > 0 or stats["L1_removed"] > 0
+    if any_l2_change or l1_changed:
+        stats["L3_changed"] = sync_l3(h, p)
+
     return stats
 
 
@@ -588,16 +801,39 @@ def main():
 
     if do_sync:
         stats = _sync_all()
-        changed = stats["L1_added"] or stats["L1_removed"] or stats["L2_added"] or stats["L2_removed"] or stats["L3_changed"]
+        changed = (
+            stats["L1_added"] or stats["L1_removed"]
+            or stats["L2_added"] or stats["L2_removed"]
+            or stats["L3_detail_added"] or stats["L3_changed"]
+        )
+
+        # #4: [AUTO] TODO 감지 — 의미 검토 미수행 경고
+        auto_todo_files = _find_auto_todo_files(str(HARNESS_ROOT))
+
         if do_exit_code and changed:
             parts = []
             if stats["L1_added"] or stats["L1_removed"]:
                 parts.append(f"L1: +{stats['L1_added']}/-{stats['L1_removed']}")
             if stats["L2_added"] or stats["L2_removed"]:
                 parts.append(f"L2: +{stats['L2_added']}/-{stats['L2_removed']}")
+            if stats["L3_detail_added"]:
+                parts.append(f"L3(detail): +{stats['L3_detail_added']}")
             if stats["L3_changed"]:
-                parts.append("L3: UPDATED")
-            print(f"  meta-index synced — {' | '.join(parts)}", file=sys.stderr)
+                parts.append("L3(top): UPDATED")
+            msg = f"  meta-index synced — {' | '.join(parts)}"
+            if auto_todo_files:
+                sample = sorted(auto_todo_files)[:5]
+                more = f" 외 {len(auto_todo_files) - 5}건" if len(auto_todo_files) > 5 else ""
+                msg += (
+                    f"\n  ⚠️  [AUTO] TODO 미검토 {len(auto_todo_files)}건{more}. "
+                    "LLM 의미 검토가 필요합니다:\n" +
+                    "\n".join(f"    - {f}" for f in sample)
+                )
+            print(msg, file=sys.stderr)
+            if auto_todo_files:
+                sys.exit(1)
+            sys.exit(0)
+
         sys.exit(0)
 
     all_issues = []
@@ -619,6 +855,32 @@ def main():
             + "\n\n".join(all_issues)
             + "\n\nNEO에게 'meta 인덱스 갱신'을 요청하세요."
         )}))
+
+
+def _find_auto_todo_files(harness_root: str) -> list[str]:
+    """[AUTO] TODO 마커가 남아있는 L2/L3 파일 목록 반환."""
+    todo_files = []
+    meta_src = os.path.join(harness_root, "state", "meta", "src")
+    if not os.path.isdir(meta_src):
+        return todo_files
+    for scope in _SCOPES:
+        scope_dir = os.path.join(meta_src, scope)
+        if not os.path.isdir(scope_dir):
+            continue
+        for root, dirs, files in os.walk(scope_dir):
+            dirs[:] = [d for d in dirs if not d.startswith(".")]
+            for fname in files:
+                if not fname.endswith(".md"):
+                    continue
+                fpath = os.path.join(root, fname)
+                try:
+                    with open(fpath) as f:
+                        if _AUTO_TODO_MARKER in f.read(1024):
+                            rel = os.path.relpath(fpath, harness_root)
+                            todo_files.append(rel)
+                except Exception:
+                    pass
+    return todo_files
 
 
 if __name__ == "__main__":

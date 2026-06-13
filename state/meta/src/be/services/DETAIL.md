@@ -1,6 +1,6 @@
-# services/auth.py — 상세
+# src/be/services/auth.py — 상세
 
-## Auth 서비스
-- **용도**: 토큰 인증
-- **함수**: `verify_token(token: str) → bool`
-- **의존성**: 없음
+## Auth
+
+- **용도**: [AUTO] TODO — 자동 생성됨, 검토 필요
+- **의존성**: TODO

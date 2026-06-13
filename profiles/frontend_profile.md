@@ -85,8 +85,15 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
 5. (컴포넌트·훅 수정·재사용 시) 반드시 harness/state/meta/src/fe/{section}/DETAIL.{파일명}.md (L3)를 먼저 읽는다:
    a. Props·리렌더 전파·상태 흐름·의존성 확인
    b. "수정 시 영향" 필드 확인 → 연쇄 변경 범위 파악
-6. 없으면 → 신규 구현. Task Brief 완료 시 meta 갱신 항목 포함.
+   ⚠️  L3가 존재하지 않으면 불완전 탐색 상태다. 다음 fallback으로 진행한다:
+   - L3 없음 → L2(DETAIL.md)로 fallback. 가용한 정보로 판단.
+   - L2도 없음 → L1(INDEX.md) 수준에서 진행.
+   - 수정 전 L3를 먼저 생성(`--sync` 또는 수동)하고 시작한다.
+6. 없으면 → 신규 구현.
+   **Task Brief의 완료 조건에 반드시 'meta 갱신 완료'를 포함한다.**
+   `[AUTO] TODO` 마커가 L2·L3에 남아있으면 구현 완료로 간주하지 않는다.
 7. 수정 완료 후 harness/state/meta/src/fe/{section}/DETAIL.{파일명}.md 갱신 항목을 Task Brief에 포함.
+   `--exit-code` 훅이 `[AUTO] TODO` 마커를 감지하면 커밋이 차단된다.
 
 ### 파일 생성·삭제 시 메타 인덱스 cascade
 
@@ -95,7 +102,9 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
 
 **파일 생성 시 (L3 신규 → L3 상태·내용을 들고 L2 검토):**
 8. harness/state/meta/src/fe/{section}/DETAIL.{파일명}.md 생성 — Props·리렌더·상태흐름·의존성 기재
-9. L3 내용을 기준으로 harness/state/meta/src/fe/{section}/DETAIL.md 검토 → 파일 인덱스에 `### {ComponentName}.tsx` 또는 `### {hookName}.ts` 항목 추가
+9. L3 내용을 기준으로 harness/state/meta/src/fe/{section}/DETAIL.md 검토 → 파일 인덱스에 `# {file_path} — 상세` 항목 추가
+   ⚠️  L2 DETAIL.md의 각 파일 항목은 반드시 `# src/fe/{section}/{filename} — 상세` 형식이어야 한다 (#8).
+   이 포맷을 벗어나면 메타 일관성 검증(`--exit-code`)이 항목을 감지하지 못해 누락 오탐이 발생한다.
 10. L2 변경 내용을 기준으로 harness/state/meta/src/fe/{section}/INDEX.md 검토 → 파일 라인 추가
 11. 변경된 L1 상태·내용을 들고 상위 harness/state/meta/src/fe/의 INDEX.md·DETAIL.md 검토
 
@@ -115,12 +124,21 @@ API가 무엇을 반환하는지보다 **사용자가 무엇을 경험하는지*
 메타 인덱스의 공간 탐색(L3→L2→L1)만으로는 부족하다.
 **git 히스토리**를 통해 소스 코드와 메타 인덱스의 변경 이력을 시간축으로 교차 분석한다.
 
+**시간 탐색 트리거 — 다음 중 하나라도 해당하면 발동한다 (#6):**
+- 예상치 못한 연쇄 수정 발생 (A 수정했는데 B, C도 같이 깨짐)
+- 동일 컴포넌트·훅이 여러 곳에 중복 구현된 것을 발견
+- L2·L1 정보와 실제 코드의 의미적 불일치 감지 (meta는 A라는데 코드는 B)
+- 수정 후 `--exit-code`가 예상보다 많은 불일치를 보고
+
+> ⚠️  소스 코드는 `{PROJECT_ROOT}` (project repo), 메타 인덱스는 `{HARNESS_ROOT}` (harness repo)에 있다.
+> 두 repo는 분리되어 있으므로 각 명령을 올바른 디렉토리에서 실행해야 한다.
+
 14. 소스 코드의 git 히스토리 탐색:
-    `git log -- project/src/fe/{section}/{filename}`
+    `cd {PROJECT_ROOT} && git log -- project/src/fe/{section}/{filename}`
     → 언제, 누가, 왜 변경했는지 파악
 
 15. 메타 인덱스의 git 히스토리 탐색:
-    `git log -- harness/state/meta/src/fe/{section}/`
+    `cd {HARNESS_ROOT} && git log -- harness/state/meta/src/fe/{section}/`
     → L3·L2·L1이 언제, 어떤 설계 의도로 변경되었는지 파악
 
 16. 두 시간축 교차 분석:

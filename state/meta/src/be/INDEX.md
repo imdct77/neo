@@ -1,6 +1,6 @@
 # be — 구현 메타 인덱스
 
-> 마지막 갱신: 2026-06-12 11:04:04
+> 마지막 갱신: 2026-06-13 06:22:20
 > 담당: BE 프로필
 
 ## models/
@@ -10,5 +10,5 @@
 
 ## services/
 
-- `src/be/services/auth.py` — 인증 서비스 (verify_token)
+- `src/be/services/auth.py` — auth — TODO: 설명 추가
 
