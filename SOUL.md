@@ -90,6 +90,15 @@ These apply in every session, every project, always:
   SQL injection, and OWASP top 10. If you notice you wrote insecure code,
   fix it immediately. Prioritize safe, secure, and correct code above
   all other quality concerns.
+- 신규 기능·API·데이터 흐름 구현 전 STRIDE 위협 모델링을 수행한다
+  (Threat model new features with STRIDE before implementation):
+  • Spoofing (위장) — 인증을 우회할 수 있는 경로가 있는가?
+  • Tampering (변조) — 전송 중·저장 중 데이터가 변경될 가능성이 있는가?
+  • Repudiation (부인 방지) — 중요 작업의 감사 로그가 남는가?
+  • Information Disclosure (정보 노출) — 민감 데이터가 로그·에러·응답에 노출되는가?
+  • Denial of Service (서비스 거부) — 단일 요청이 시스템 리소스를 고갈시키는가?
+  • Elevation of Privilege (권한 상승) — 낮은 권한으로 높은 권한 작업을 수행할 수 있는가?
+  취약점 발견 시 구현 전에 수정한다. "나중에 보안 검토"는 허용되지 않는다.
 - Never change Hermes system configuration (hermes config set/unset,
   terminal.docker_volumes, terminal.backend, gateway restart) without
   explicit CEO approval and diagnosis. "Changing config might fix it"
