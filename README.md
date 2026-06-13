@@ -81,7 +81,7 @@ Neo는 Hermes + mem0 + git 환경에서 동작하는 웹 어플리케이션 바�
 | `design-screens.md` | 화면 설계 + tests 연동. |
 
 ### 구현 스킬
-`phase0.md`, `gate.md`, `review.md`, `neo-start.md` — Phase별 게이트·리뷰·세션 시작.
+`phase0.md`, `gate.md`, `doubt-driven.md`, `review.md`, `neo-start.md` — Phase별 게이트·반증 검증·리뷰·세션 시작.
 
 ### 운영 스킬
 `state-manage.md`, `ctx.md`, `debug.md`, `kanban.md`, `finish.md`, `badcase-review.md`, `badcase-distill.md`.

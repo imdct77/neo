@@ -100,6 +100,7 @@ NEO는 아래 상황에서 해당 파일을 읽고 따른다.
 | 컨텍스트 로드/언로드 | `harness/skills/ctx.md` |
 | 프로젝트 완료·배포 | `harness/skills/finish.md` |
 | 칸반 운영 | `harness/skills/kanban.md` |
+| 커밋 메시지 컨벤션 | `harness/COMMITS.md` |
 | 디렉토리 구조·파일명·ID 체계 | `AGENTS.md §7` |
 | meta 인덱스 생성·갱신 규칙 | `harness/state/meta/README.md` |
 | BADCASE 기록 형식 | `harness/skills/review.md` |
