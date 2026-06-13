@@ -159,7 +159,84 @@ NEO:
 
 ---
 
-## Step 2. 아이디어 구체화 대화
+## Step 1-2. 인프라 설정 — 인증·환경변수·gitignore (첫 세션)
+
+Step 1-1 완료 후, NEO가 프로젝트 인프라 기본 설정을 진행한다.
+
+### 1-2-1. 인증 방식 선택 (필요 시)
+
+CEO의 아이디어에 사용자 계정·로그인이 필요하면:
+
+```
+NEO:
+  "이 서비스에 사용자 인증이 필요할 것 같습니다.
+   직접 JWT를 구현하는 대신, 관리형 인증 서비스 사용을 추천합니다.
+
+   [1. Supabase Auth]  — PostgreSQL + Auth 내장. 1인 개발에 최적.
+                        무료 티어 50,000 MAU. 소셜 로그인·매직 링크·MFA 내장.
+   [2. Clerk]          — React 통합 최강. next-auth보다 세련된 UI 컴포넌트.
+                        무료 티어 10,000 MAU.
+   [3. Auth0]          — 엔터프라이즈급. 다양한 IdP 연동·규제 대응.
+                        무료 티어 25,000 MAU.
+   [4. Lucia Auth]     — 오픈소스·데이터베이스 기반. 직접 제어 원할 때.
+                        무료. 직접 호스팅.
+   [5. 직접 구현]      — JWT + bcrypt. 제어권 완전 확보.
+                        단, 보안 구현 책임은 개발자에게.
+
+   이 서비스의 규모와 요구사항에 가장 잘 맞는 것을 선택해 주세요.
+
+   (지금 선택하지 않으면 Supabase Auth를 기본값으로 합니다.)"
+```
+
+CEO 선택 → AGENTS.md §2 기술 스택에 인증 방식 기록 → project.json에 `auth_provider` 추가.
+
+인증이 필요 없으면 건너뛴다.
+
+### 1-2-2. .env.example 자동 생성
+
+NEO가 프로젝트 루트에 `.env.example` 템플릿을 생성한다:
+
+```
+NEO:
+  ".env.example 파일을 생성했습니다.
+   실제 API 키·비밀번호를 여기에 복사하고 .env로 저장하세요.
+
+   .env.example에는 아래 항목이 포함됩니다:
+   - DATABASE_URL
+   - JWT_SECRET
+   - {선택한 인증 서비스의 키}
+   - S3 버킷·CloudFront URL (미디어 업로드 시)
+   - DEBUG=False (프로덕션 기본값)
+
+   .env는 절대 Git에 커밋하지 않습니다. (.gitignore에 등록됨)"
+```
+
+### 1-2-3. .gitignore 자동 생성
+
+NEO가 프로젝트 루트 `.gitignore`를 생성한다:
+
+```
+기본 항목:
+  .env
+  .env.local
+  .env.production
+  node_modules/
+  __pycache__/
+  .next/
+  dist/
+  *.pyc
+
+LLM 세션 보호 (Secure Vibe Coding 인용):
+  .claude/
+  .codex/
+  .cursor/
+  .hermes/sessions/
+  .hermes/scratchpad/
+
+AI가 실수로 세션 파일을 커밋하는 것을 방지한다.
+```
+
+
 
 ```
 대화 원칙:

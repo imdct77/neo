@@ -71,6 +71,42 @@ Git Hook이 커밋 시 pytest를 이미 통과시켰으므로
    재확인 후 브랜치 삭제
 ```
 
+### Step 3-1. 배포 전 체크리스트 (MERGE·PR 선택 시)
+
+> main 브랜치 병합 전, 프로덕션 배포 준비 상태를 확인한다.
+> MVP 첫 배포 시 전체 항목, 이후 배포 시 해당 항목만 확인.
+
+```
+□ 환경변수·시크릿
+  - .env.production이 올바르게 설정되었는가?
+  - API 키·JWT_SECRET·DB URL이 환경변수로 분리되었는가?
+  - 코드에 하드코딩된 시크릿이 없는가? (git-secrets 또는 review.md 확인)
+
+□ 배포 설정
+  - Vercel·Netlify·Railway 등에서 Preview 배포가 비공개로 설정되었는가?
+  - 프로덕션 배포에 DEBUG=False가 적용되었는가?
+  - 개발 DB URL이 프로덕션 설정에 남아있지 않은가?
+
+□ 보안
+  - CORS가 특정 도메인으로 제한되었는가? (와일드카드 * 금지)
+  - Rate Limiting이 인증·공개 API에 적용되었는가?
+  - CSP(Content Security Policy) 헤더가 설정되었는가?
+  - SSL/TLS가 강제되는가? (HSTS 헤더)
+
+□ 모니터링·복구
+  - /health 엔드포인트가 정상 응답하는가?
+  - 에러 로깅이 설정되었는가? (Sentry·Datadog 또는 최소 파일 로그)
+  - DB 백업 전략이 수립되었는가? (자동 백업 또는 수동 절차)
+  - 롤백 계획이 문서화되었는가? (이전 배포로 되돌리는 방법)
+
+□ 콘텐츠·메타
+  - console.log(user)·console.log(session) 등 개인정보 로깅이 제거되었는가?
+  - robots.txt·sitemap.xml이 생성되었는가? (SEO 필요 시)
+  - Open Graph 메타 태그가 설정되었는가? (소셜 공유 시)
+```
+
+> 출처: Keploy Software Deployment 2026·Secure Vibe Coding 2026
+
 ## Step 4. mem0 저장
 
 ```

@@ -48,6 +48,16 @@ AC 관점으로 전환하여 독립적으로 검토한다.
   - N+1 쿼리 발생 가능성
   - 인증 없는 엔드포인트
 
+□ 보안 6축 검증 (Secure Vibe Self-Review — 코드 작성 직후 필수)
+  구현 직후, 구현자와 다른 관점(AC 또는 반대 역할)으로 다음을 점검한다:
+  1. Injection (SQL·XSS·Command·Prompt) — 사용자 입력이 검증 없이 쿼리·쉘·LLM에 전달되는가?
+  2. Auth/Authz Bypass — 클라이언트 측 인증 체크만 있는가? get_current_user() 누락?
+  3. Secrets Exposure — API 키·토큰이 로그·에러·클라이언트 코드에 노출되는가?
+  4. Missing Input Validation — Pydantic·Zod 스키마 없이 외부 입력을 신뢰하는가?
+  5. Insecure Defaults — CORS 전체 허용·Rate Limit 없음·와일드카드 권한이 기본값인가?
+  6. Hallucinated Dependencies — npm/PyPI에 실제 존재하지 않는 패키지를 import하는가?
+  각 항목 발견 시: Critical. 즉시 수정. reassure하지 않는다.
+
 □ SIMPLICITY CHECK (증분 구현 규율)
   - "비슷한 코드 세 줄이 성급한 추상화보다 낫다" 원칙 위반 여부
   - 불필요한 추상화·과잉 설계가 있는가?
