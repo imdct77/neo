@@ -115,6 +115,23 @@ mem0 기록이 없으면:
 
 ---
 
+## Step 0-2. 증분 구현 전략 선택
+
+Step 0-1에서 유사 기능이 발견되지 않아 신규 구현이 확정되면, 수직 슬라이싱으로 태스크를 분해한다.
+
+**전략 선택 기준**:
+- 기본: 수직 슬라이싱 (Vertical Slices) — 한 기능의 전체 스택을 먼저 완성
+- BE·FE 분리 작업: 계약 우선 (Contract-First) — API 계약 정의 후 병렬 구현
+- 불확실성 높은 기능: 리스크 우선 (Risk-First) — 가장 위험한 부분 먼저 증명
+
+상세 규칙은 `harness/skills/templates/shared/incremental-impl.md` 참조.
+
+**핵심 원칙**:
+> "비슷한 코드 세 줄이 성급한 추상화보다 낫다. (Three similar lines > premature abstraction)"
+> "가장 단순하게 동작하는 것은 무엇인가? (What is the simplest thing that could work?)"
+
+---
+
 ## Step 1. AC 기본 검토
 
 Step 0의 탐색 결과를 컨텍스트로 갖고 AC 관점에서 검토한다.
