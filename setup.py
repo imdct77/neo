@@ -358,7 +358,6 @@ def main():
         "project_name": project_name,
         "github_user": github_user,
         "git": {
-            "harness": "{HARNESS_REPO_URL}",
             "project": "{PROJECT_REPO_URL}"
         }
     }
