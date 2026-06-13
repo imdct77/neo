@@ -356,10 +356,7 @@ def main():
     project_data = {
         "project_id": project_id,
         "project_name": project_name,
-        "github_user": github_user,
-        "git": {
-            "project": "{PROJECT_REPO_URL}"
-        }
+        "github_user": github_user
     }
     with open(project_json_path, "w") as f:
         json_module.dump(project_data, f, ensure_ascii=False, indent=2)

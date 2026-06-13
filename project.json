@@ -1,8 +1,5 @@
 {
   "project_id": "jggbgg-v1",
   "project_name": "지글보글-v1",
-  "github_user": "{GITHUB_USER}",
-  "git": {
-    "project": "{PROJECT_REPO_URL}"
-  }
+  "github_user": "{GITHUB_USER}"
 }
