@@ -131,7 +131,8 @@ _SECTION_INDEX_TEMPLATE = """# {section}/ — 디렉토리 인덱스
 
 
 def _generate_section_index(section: str, files: set[str], scope: str) -> str:
-    """section-level INDEX.md 생성."""
+    """section-level INDEX.md 생성. section은 src/{scope}/ 이하의 전체 디렉토리 경로.
+    예: 'recipes/model', 'auth/oauth'."""
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     prefix = f"src/{scope}/{section}/"
     file_lines = []
@@ -354,15 +355,23 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
                         os.remove(os.path.join(meta_dir, fname))
                         l3_count += 1
 
-        # ── Section-level INDEX.md (L1) ──
+        # ── Section-level INDEX.md (L1) 동기화 ──
         if dir_rel:  # scope 루트는 sync_l1에서 별도 처리
             section_index_path = os.path.join(meta_dir, "INDEX.md")
-            if not os.path.isfile(section_index_path):
-                section_name = os.path.basename(dir_rel)
-                new_idx = _generate_section_index(section_name, actual_in_dir, scope)
+            is_new = not os.path.isfile(section_index_path)
+            new_idx = _generate_section_index(dir_rel, actual_in_dir, scope)
+            old_idx = None
+            if not is_new:
+                try:
+                    with open(section_index_path) as f:
+                        old_idx = f.read()
+                except Exception:
+                    pass
+            if is_new or old_idx != new_idx:
                 with open(section_index_path, "w") as f:
                     f.write(new_idx)
-                section_l1 += 1
+                if is_new:
+                    section_l1 += 1
 
         # ── L2: DETAIL.md 동기화 ──
         detail_path = os.path.join(meta_dir, "DETAIL.md")
@@ -559,26 +568,26 @@ def _extract_function_names_from_l3(l3_path: str) -> set[str]:
 
 
 def _check_duplicate_functions(meta_src: str) -> list[str]:
-    """L3 파일들에서 동일·유사 함수명을 감지하여 경고 반환."""
+    """L3 파일들에서 동일·유사 함수명을 감지하여 경고 반환.
+
+    os.walk로 전체 트리 순회 — 중첩 디렉토리(recipes/model/ 등)의 L3도 포함."""
     issues = []
     if not os.path.isdir(meta_src):
         return issues
 
     # {함수명: [파일목록]} 수집
     func_map = {}
-    similar_pairs = []
 
-    for entry in os.listdir(meta_src):
-        section_path = os.path.join(meta_src, entry)
-        if not os.path.isdir(section_path) or entry.startswith("."):
-            continue
-        for fname in os.listdir(section_path):
+    for root, dirs, files in os.walk(meta_src):
+        dirs[:] = [d for d in dirs if not d.startswith(".")]
+        for fname in files:
             if not fname.startswith("DETAIL.") or fname == "DETAIL.md":
                 continue
-            l3_path = os.path.join(section_path, fname)
+            l3_path = os.path.join(root, fname)
             func_names = _extract_function_names_from_l3(l3_path)
+            rel = os.path.relpath(l3_path, meta_src)
             for fn in func_names:
-                func_map.setdefault(fn, []).append(f"{entry}/{fname}")
+                func_map.setdefault(fn, []).append(rel)
 
     # Level 1: 정확히 동일한 함수명
     for fn, files in func_map.items():
@@ -669,15 +678,16 @@ def _check_l3_integrity(harness_root: str, project_root: str, scope: str) -> lis
         for fname in files:
             if fname.startswith("DETAIL.") and fname.endswith(".md") and fname != "DETAIL.md":
                 stem = fname[len("DETAIL."):-len(".md")]
-                # 대응 소스 파일 찾기 — 파일명만 비교 (중첩 경로 대응)
-                found = False
-                for src_rel in src_to_l3:
-                    if os.path.basename(src_rel) == f"{stem}.py" or \
-                       os.path.basename(src_rel) == f"{stem}.ts" or \
-                       os.path.basename(src_rel) == f"{stem}.tsx" or \
-                       os.path.basename(src_rel) == f"{stem}.js":
-                        found = True
-                        break
+                meta_rel_dir = os.path.relpath(root, meta_src)
+                if meta_rel_dir == ".":
+                    meta_rel_dir = ""
+                # 대응 소스 파일 찾기 — 디렉토리 경로 + 파일명 매칭
+                expected_base = f"src/{scope}/{meta_rel_dir}/{stem}" if meta_rel_dir else f"src/{scope}/{stem}"
+                found = any(
+                    src_rel in (f"{expected_base}.py", f"{expected_base}.ts",
+                                f"{expected_base}.tsx", f"{expected_base}.js")
+                    for src_rel in src_to_l3
+                )
                 if not found:
                     rel = os.path.relpath(os.path.join(root, fname), meta_src)
                     l3_files.add(rel)
