@@ -215,6 +215,23 @@ def _regenerate_l1(scope: str, sections: dict, actual_files: set[str]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _init_empty_scope(meta_src: str, scope: str) -> bool:
+    """scope 메타 디렉토리가 없으면 최소 INDEX.md 템플릿 생성."""
+    if not os.path.isdir(meta_src):
+        os.makedirs(meta_src, exist_ok=True)
+        index_path = os.path.join(meta_src, "INDEX.md")
+        with open(index_path, "w") as f:
+            f.write(
+                f"# {scope} — 파일 목록\n\n"
+                f"> [AUTO] — 소스 디렉토리 `src/{scope}/`가 비어있습니다.\n"
+                f"파일을 추가하면 `--sync`가 자동 갱신합니다.\n\n"
+                f"## 기타\n\n"
+                f"(파일 없음)\n"
+            )
+        return True
+    return False
+
+
 def sync_l1(harness_root: str, project_root: str, scope: str) -> tuple[int, int]:
     """scope-level INDEX.md 동기화. (added, removed) 반환."""
     index_path = os.path.join(harness_root, "state", "meta", "src", scope, "INDEX.md")
@@ -326,7 +343,7 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
                 l3_path = os.path.join(meta_dir, f"DETAIL.{stem}.md")
                 if not os.path.isfile(l3_path):
                     fpath = os.path.relpath(os.path.join(src_dir, fname), project_root)
-                    _write_l3_skeleton(l3_path, fpath, os.path.basename(dir_rel) if dir_rel else "")
+                    _write_l3_skeleton(l3_path, fpath)
                     l3_count += 1
 
             # 고아 L3 정리
@@ -447,10 +464,9 @@ def _purge_meta_dir(meta_dir: str) -> None:
         pass
 
 
-def _write_l3_skeleton(l3_path: str, file_path: str, section: str) -> None:
+def _write_l3_skeleton(l3_path: str, file_path: str) -> None:
     """[AUTO] TODO 마커가 포함된 L3 skeleton 파일 생성."""
-    stem = os.path.splitext(os.path.basename(file_path))[0]
-    content = _L3_TEMPLATE.format(file_path=file_path, stem=stem, section=section)
+    content = _L3_TEMPLATE.format(file_path=file_path)
     with open(l3_path, "w") as f:
         f.write(content)
 
@@ -893,6 +909,11 @@ def _sync_all():
         "section_l1": 0,
     }
 
+    # 빈 scope 초기화 (#9) — 소스 없어도 최소 INDEX.md 확보
+    for scope in _SCOPES:
+        meta_scope = os.path.join(h, "state", "meta", "src", scope)
+        _init_empty_scope(meta_scope, scope)
+
     any_l2_change = False
     for scope in _SCOPES:
         l2_a, l2_r, l3_c, sl1 = sync_l2(h, p, scope)
@@ -983,10 +1004,10 @@ def main():
         )}))
 
 
-def _find_auto_todo_files(harness_root: str) -> list[str]:
-    """[AUTO] TODO 마커가 남아있는 L2/L3 파일 목록 반환."""
-    todo_files = []
+def _find_auto_todo_files(harness_root: str):
+    """[AUTO] TODO 마커가 포함된 모든 meta 파일을 찾아 반환."""
     meta_src = os.path.join(harness_root, "state", "meta", "src")
+    todo_files = []
     if not os.path.isdir(meta_src):
         return todo_files
     for scope in _SCOPES:
@@ -1001,7 +1022,7 @@ def _find_auto_todo_files(harness_root: str) -> list[str]:
                 fpath = os.path.join(root, fname)
                 try:
                     with open(fpath) as f:
-                        if _AUTO_TODO_MARKER in f.read(1024):
+                        if _AUTO_TODO_MARKER in f.read():
                             rel = os.path.relpath(fpath, harness_root)
                             todo_files.append(rel)
                 except Exception:
