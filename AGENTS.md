@@ -374,7 +374,7 @@ FAIL → 원인 분석 → 수정 → 재검증 → PASS 반복
 ```
 neo/                              ← 부모 디렉토리 (Git 관리 X)
 │
-├── harness/                      ← imdct77/neo (하네스 — 도구·규칙·상태)
+├── harness/                      ← 하네스 (도구·규칙·상태)
 │   ├── AGENTS.md                 ← 프로젝트 헌법
 │   ├── .hermes.md                ← 최우선 금지선 + Project Identity
 │   ├── SOUL.md                   ← 전역 에이전트 정체성
@@ -432,7 +432,7 @@ neo/                              ← 부모 디렉토리 (Git 관리 X)
 │                       ├── DETAIL.md     ← L2
 │                       └── DETAIL.{file}.md ← L3
 │
-└── project/                      ← imdct77/{project_id} (프로젝트 — 산출물·소스)
+└── project/                      ← 프로젝트 (산출물·소스)
     │
     ├── .git/hooks/
     │   └── pre-commit            ← 프록시 — harness의 meta_consistency_check 호출

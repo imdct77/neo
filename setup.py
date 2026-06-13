@@ -175,19 +175,19 @@ def main():
         auto = ask("GitHub에 새 레포를 만들어 clone할까요? (y/n/직접입력)", "y")
         if auto.lower() == "y":
             repo_name = ask(f"레포 이름 (Enter = {project_id})", project_id)
-            p(f"  Creating imdct77/{repo_name}...", CYAN)
+            p(f"  Creating {GITHUB_USER}/{repo_name}...", CYAN)
             import subprocess as _sp
             result = _sp.run(
-                ["gh", "repo", "create", f"imdct77/{repo_name}", "--private",
+                ["gh", "repo", "create", f"{GITHUB_USER}/{repo_name}", "--private",
                  "--description", project_desc or project_name],
                 capture_output=True, text=True
             )
             if result.returncode == 0:
-                clone_url = f"https://github.com/imdct77/{repo_name}.git"
+                clone_url = f"https://github.com/{GITHUB_USER}/{repo_name}.git"
                 # Clone into parent's ./{repo_name}/
                 target = cwd.parent / repo_name
                 _sp.run(["git", "clone", clone_url, str(target)], check=True)
-                p(f"  ✓ https://github.com/imdct77/{repo_name}", GREEN)
+                p(f"  ✓ https://github.com/{GITHUB_USER}/{repo_name}", GREEN)
                 p(f"  cd {target} 에서 다시 실행하거나, 지금 경로에 계속 설치합니다.", YELLOW)
                 # Continue with cwd — user might want to install here anyway
             else:
@@ -209,8 +209,8 @@ def main():
         try:
             _sp2.run(["git", "config", "user.name"], cwd=str(cwd), capture_output=True, check=True)
         except Exception:
-            _sp2.run(["git", "config", "user.name", "imdct77"], cwd=str(cwd))
-            _sp2.run(["git", "config", "user.email", "imdct77@gmail.com"], cwd=str(cwd))
+            _sp2.run(["git", "config", "user.name", "{GIT_USER_NAME}"], cwd=str(cwd))
+            _sp2.run(["git", "config", "user.email", "{GIT_USER_EMAIL}"], cwd=str(cwd))
 
     # --------------------------------------------------------
     # Step 4. 설치 경로 확인
@@ -311,8 +311,8 @@ def main():
         "project_id": project_id,
         "project_name": project_name,
         "git": {
-            "harness": "https://github.com/imdct77/neo",
-            "project": f"https://github.com/imdct77/{project_id}"
+            "harness": "{HARNESS_REPO_URL}",
+            "project": "{PROJECT_REPO_URL}"
         }
     }
     with open(project_json_path, "w") as f:

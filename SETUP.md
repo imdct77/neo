@@ -66,7 +66,7 @@ setup.py가 아래를 자동으로 처리합니다:
 
 ```
 neo/                          ← 부모 디렉토리
-├── harness/                  ← imdct77/neo (하네스)
+├── harness/                  ← 하네스
 │   ├── .hermes.md
 │   ├── AGENTS.md
 │   ├── SOUL.md
@@ -84,7 +84,7 @@ neo/                          ← 부모 디렉토리
 │       ├── tasks_templ.md
 │       └── tests_templ.md
 │
-└── project/                  ← imdct77/{project_id} (프로젝트)
+└── project/                  ← 프로젝트
     ├── src/
     │   ├── be/
     │   └── fe/

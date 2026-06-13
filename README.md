@@ -34,7 +34,7 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 ## 디렉토리 구조
 
-### harness/ (imdct77/neo) — 도구·규칙·상태
+### harness/ — 도구·규칙·상태
 
 | 디렉토리 | 역할 |
 |----------|------|
@@ -45,7 +45,7 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 | `harness/state/` | Neo 구조적 상태. `.neo_state.json`, 메타 인덱스. |
 | `harness/state/meta/` | 코드 메타 인덱스 (3계층). L1/L2/L3 자동 동기화. |
 
-### project/ (imdct77/{project_id}) — 산출물·소스코드
+### project/ — 산출물·소스코드
 
 | 디렉토리 | 생성 시점 | 역할 |
 |----------|----------|------|
