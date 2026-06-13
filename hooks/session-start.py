@@ -20,9 +20,7 @@ def main():
             text=True, stderr=subprocess.DEVNULL).strip()
     except Exception:
         root = os.getcwd()
-    ns = os.path.join(root, "docs", "skills", "neo-start.md")
-    if not os.path.exists(ns):
-        ns = os.path.join(root, "skills", "neo-start.md")
+    ns = os.path.join(root, "skills", "neo-start.md")
     if not os.path.exists(ns): return
     pn = ""
     am = os.path.join(root, "AGENTS.md")

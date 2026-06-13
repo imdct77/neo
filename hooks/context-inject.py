@@ -8,7 +8,11 @@
   - §13: PROJECT_ID / PROJECT_NAME 런타임 해석 지시문 주입
     → harness/skills/, harness/personas/의 {PROJECT_ID} 리터럴을 LLM이 올바르게 해석하도록 함
 """
-import sys, json, os, subprocess, re
+import sys, json, os, re
+
+# ── bootstrap을 통한 HARNESS_ROOT 감지 (from same hooks/ directory) ──
+from bootstrap import HARNESS_ROOT as _hr
+_HARNESS_ROOT = str(_hr)
 
 
 def main():
@@ -16,12 +20,7 @@ def main():
         payload = json.load(sys.stdin)
     except Exception:
         return
-    try:
-        root = subprocess.check_output(
-            ["git", "rev-parse", "--show-toplevel"],
-            text=True, stderr=subprocess.DEVNULL).strip()
-    except Exception:
-        root = os.getcwd()
+    root = _HARNESS_ROOT
 
     # ── 프로젝트 아이덴티티 (project.json 우선, .hermes.md fallback) ──
     project_id, project_name = "", ""

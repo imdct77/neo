@@ -129,6 +129,15 @@ if [[ -n "$TS_FILES" ]]; then
     fi
 fi
 
+# --------------------------------------------------------
+# 5. 메타 인덱스 동기화
+# --------------------------------------------------------
+META_CHECK="$(dirname "$0")/../meta_consistency_check.py"
+if [ -f "$META_CHECK" ]; then
+    python3 "$META_CHECK" --sync 2>/dev/null
+    pass "메타 인덱스 동기화"
+fi
+
 echo "================================"
 echo -e "${GREEN}모든 검사 통과. 커밋 진행합니다.${NC}"
 echo ""

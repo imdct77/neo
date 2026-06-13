@@ -530,6 +530,22 @@ def main():
             dst.chmod(0o755)
             p("  ✓ Git pre-commit Hook 설치 완료 (프록시)", GREEN)
 
+    # ── 초기 메타 인덱스 생성 제안 ──
+    if (cwd / ".git").is_dir():
+        p("")
+        sync_now = ask("메타 인덱스를 지금 생성할까요? (권장) (y/n)", "y")
+        if sync_now.lower() == "y":
+            checker = NEO_ROOT / "hooks" / "meta_consistency_check.py"
+            if checker.exists():
+                result = _sp.run(
+                    [sys.executable, str(checker), "--sync"],
+                    cwd=str(cwd), capture_output=True, text=True
+                )
+                if result.returncode == 0:
+                    p("  ✓ 초기 메타 인덱스 생성 완료", GREEN)
+                else:
+                    p(f"  ⚠ 메타 인덱스 생성 실패: {result.stderr.strip()}", YELLOW)
+
     # --------------------------------------------------------
     # Step 8. 완료 안내
     # --------------------------------------------------------
