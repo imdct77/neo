@@ -1,6 +1,6 @@
-# Neo V1 — 범용 바이브코딩 하네스
+# Neo V2.03 — 범용 바이브코딩 하네스
 
-Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네스입니다.
+Neo는 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네스입니다.
 어떤 소프트웨어 프로젝트에도 적용할 수 있습니다.
 
 설치 및 사용법은 `SETUP.md`를 참조하세요.
@@ -11,12 +11,13 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 | 파일 | 역할 |
 |------|------|
+| `harness-env.py` | `harness/` → 세션 시작 시 실행. `__file__`로 HARNESS_ROOT·NEO_ROOT 자동 감지 후 환경변수 주입. |
 | `SETUP.md` | `harness/` | 새 프로젝트 설치 가이드. 플레이스홀더 작성법·Hooks 설치 안내. |
 | `SOUL.md` | `harness/` → `~/.hermes/SOUL.md`에 설치. NEO의 전역 정체성. 모든 세션에 적용. |
-| `.hermes.md` | `harness/` | Omission Constraints 템플릿 + Project Identity에 배치. Omission Constraints 템플릿. Hermes 최우선 로드. |
+| `.hermes.md` | `harness/` | 프로젝트 최우선 규칙. Omission Constraints 템플릿. 컨텍스트 압축 최후 생존 계층. |
 | `AGENTS.md` | `harness/` | 프로젝트 헌법. 역할·스택·절대 금지선·게이트·브랜치 전략. |
-| `setup.py` | `harness/` | 설치 자동화 스크립트. 플레이스홀더 자동 치환·Hooks 설치. |
-| `project.json` | `harness/` | 프로젝트 메타데이터 SSoT (project_id, git URLs). | Phase -1~4 전체 흐름. 모든 프로젝트 공통. |
+| `setup.py` | `harness/` | 설치 자동화 스크립트. 플레이스홀더 자동 치환·Hooks 설치·git init. |
+| `project.json` | `harness/` | 프로젝트 메타데이터 SSoT (project_id, project_name, github_user). context-inject.py가 매 턴 주입. |
 
 ---
 
@@ -27,7 +28,9 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 | `harness/personas/orchestrator.md` | NEO | Orchestrator. 사람과 소통·전체 조율. 기본 프로필. |
 | `harness/personas/architect.md` | AC | 아키텍처 검토·게이트 담당. |
 | `harness/personas/backend.md` | BE | 백엔드 구현 전담. |
+| `harness/personas/backend_meta_explore.md` | BE | 메타 인덱스 탐색 규칙 (BE 작업 전 지연 로딩). |
 | `harness/personas/frontend.md` | FE | 프론트엔드 구현 전담. |
+| `harness/personas/frontend_meta_explore.md` | FE | 메타 인덱스 탐색 규칙 (FE 작업 전 지연 로딩). |
 | `harness/personas/qa.md` | QA | 감리 전담. **반드시 다른 LLM 모델로 동작.** |
 
 ---
@@ -40,7 +43,8 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 |----------|------|
 | `harness/hooks/` | Hermes + Git 훅. 실행 강제력. |
 | `harness/personas/` | 역할별 프로필 파일. |
-| `harness/skills/` | Neo 스킬 (트리거 조건 시 자동 로드). 상세: `harness/skills/README.md` |
+| `harness/skills/` | Neo 스킬 (설계 5종 + 구현 4종 + 운영 4종). 상세: `harness/skills/README.md` |
+| `harness/skills/templates/` | BE/FE/shared 구현 템플릿 27파일. design/impl 쌍. |
 | `harness/works/` | 업무 파이프라인 템플릿. |
 | `harness/state/` | Neo 구조적 상태. `.neo_state.json`, 메타 인덱스. |
 | `harness/state/meta/` | 코드 메타 인덱스 (3계층). L1/L2/L3 자동 동기화. |
@@ -66,6 +70,25 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 ---
 
+## 스킬
+
+### 설계 스킬 (design-*)
+| 스킬 | 용도 |
+|------|------|
+| `design-init.md` | 새 프로젝트 초기 설계 흐름 진입점. 아이디어 구체화. |
+| `design-arch.md` | architecture.md 작성. |
+| `design-db.md` | database.md 작성 + 갱신 정책. |
+| `design-api.md` | API 스펙 협업 루프. |
+| `design-screens.md` | 화면 설계 + tests 연동. |
+
+### 구현 스킬
+`phase0.md`, `gate.md`, `review.md`, `neo-start.md` — Phase별 게이트·리뷰·세션 시작.
+
+### 운영 스킬
+`state-manage.md`, `ctx.md`, `debug.md`, `kanban.md`, `finish.md`, `badcase-review.md`, `badcase-distill.md`.
+
+---
+
 ## 템플릿 파일
 
 프로젝트마다 복사해서 채워 쓰는 파일들입니다.
@@ -82,8 +105,8 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 | 디렉토리 | 역할 |
 |----------|------|
-| `harness/hooks/` | Hermes Hooks. 실행 강제력 ~95%. 설치: `harness/hooks/HOOKS_SETUP.md`. 실행 강제력 ~95%. 설치: `hooks/HOOKS_SETUP.md` 참조. |
-| `harness/hooks/git/` | Git pre-commit. 코드 품질·보안.. 코드 품질·보안·브랜치 보호. |
+| `harness/hooks/` | Hermes Hooks. 실행 강제력 ~95%. 설치: `harness/hooks/HOOKS_SETUP.md` 참조. |
+| `harness/hooks/git/` | Git pre-commit. 코드 품질·보안·브랜치 보호 + 메타 인덱스 자동 동기화. |
 
 ---
 
@@ -96,4 +119,6 @@ python3 setup.py   # 플레이스홀더 자동 치환 + Hooks 설치
 ```
 
 ## Version History
+
+- **V2.03** — bootstrap.py → harness-env.py (이름 충돌 방지), git 블록 제거 (SSoT 정리), 컨텍스트 최적화 (meta_explore 분할, 규칙 단일화), QA 전수 검사 8건 해결, setup.py git init 우선 → GitHub opt-in
 - **V2.02** — 소스 디렉토리 표준화 (src/be/, src/fe/)
