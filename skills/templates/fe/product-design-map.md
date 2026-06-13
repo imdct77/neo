@@ -237,4 +237,56 @@
 ---
 
 > 총 161개 제품 유형. Neo의 design-init Step 1-1에서 이 표를 검색하여 자동 추천.
-> 스타일명은 `styling_design.md`의 15개 Neo 프리셋 + UI UX Pro Max의 67개 스타일을 교차 참조.
+> 스타일명은 아래 매핑 테이블로 Neo 15개 프리셋으로 변환한다.
+
+---
+
+## 스타일 매핑 테이블 (Style Mapping)
+
+> UI UX Pro Max의 58개 스타일명을 Neo의 15개 프리셋으로 변환.
+> ⚠️ AI Aesthetic 위반 스타일은 WARN 표시 — 추천 시 CEO에게 경고.
+
+| 원본 스타일 | → Neo 프리셋 | 비고 |
+|-----------|------------|------|
+| Bento Box Grid | **Bento** | 정확 일치 |
+| Swiss Modernism / 2.0 | **Swiss** | 정확 일치 |
+| Organic Biophilic / 2.0 | **Organic** | 정확 일치 |
+| Minimalism / Minimal / Minimal & Direct / Exaggerated Minimalism | **Swiss** | 미니멀 계열 |
+| Flat Design | **Swiss** | 평면 미니멀 |
+| Zero Interface | **Scandinavian** | 극단적 절제 |
+| Accessible & Ethical / Inclusive Design | **Scandinavian** | 접근성 최우선 |
+| Glassmorphism / Liquid Glass | **Soft Modern** | 블러·투명도 |
+| Soft UI Evolution | **Soft Modern** | 부드러운 UI |
+| Neumorphism | **Soft Modern** | 부드러운 그림자 |
+| Micro-interactions / Motion-Driven | **Soft Modern** | 동적 인터랙션 |
+| Dark Mode / Dark Mode (OLED) | **Dark SaaS** | 다크 테마 |
+| AI-Native UI | **Dark SaaS** | 기술적 현대성 |
+| HUD / Sci-Fi FUI / Holographic / HUD | **Blueprint** | 기술 도면 |
+| Clean Science | **Blueprint** | 과학적 정밀 |
+| Data-Dense / Heat Map / Real-Time Monitor | **Dashboard** | 대시보드 |
+| Trust & Authority / Conversion-Optimized | **Corporate** | 신뢰·전환 |
+| Masonry Grid | **Corporate** | 구조적 B2B |
+| Storytelling-Driven / Editorial Grid | **Newspaper** | 편집·내러티브 |
+| E-Ink / Paper | **Newspaper** | 종이 질감 |
+| Vibrant & Block / Vibrant & Block-based | **Dot Grid** | 대담한 색상 |
+| Neubrutalism | **Dot Grid** | 하드 섀도우+컬러 |
+| Brutalism | **Monolith** | 원시적 구조 |
+| Anti-Polish Raw | **Monolith** | 가공하지 않은 |
+| Aurora UI / Parallax / Feature-Rich / High Imagery | **Enterprise Editorial** | 풍부한 시각 |
+| Spatial UI / Spatial UI (VisionOS) | **Bento** | 공간적 그리드 |
+| Claymorphism / Claymorphism (for patients) | **Organic** | 물리적 깊이·따뜻함 |
+| Sketch Hand-Drawn | **Organic** | 자연스러운 손맛 |
+| Biomimetic / Organic 2.0 | **Organic** | 생체모방 |
+| Retro-Futurism | **Dot Grid** | 레트로+모던 |
+| Pixel Art | **Monolith** | 픽셀 미학 |
+| ⚠️ Cyberpunk UI | **Dark Mono** | WARN: 네온·위험 패턴 §8 위반 가능 |
+| ⚠️ 3D & Hyperrealism | **Enterprise Editorial** | WARN: 렌더링 비용·복잡도 |
+| ⚠️ Gen Z Chaos | **Dot Grid** | WARN: 맥시멀·AI Aesthetic 위반 가능 |
+| (럭셔리 제품 전용) Liquid Glass + Glassmorphism | **Luxury** | 명품·프리미엄 브랜드 시 대체 매핑 |
+
+### 매핑 규칙
+
+1. **WARN 표시 스타일**: 추천 시 CEO에게 "이 스타일은 Neo의 AI Aesthetic 규칙과 일부 충돌합니다. 적용 전 검토가 필요합니다." 고지
+2. **럭셔리 제품**: 제품 유형에 "Luxury" "Premium" "High-End"가 포함되면 → **Luxury** 프리셋 우선 매핑 (세리프·골드·크림)
+3. **매핑 없는 스타일**: 위 테이블에 없는 원본 스타일명 → 가장 키워드 유사도가 높은 Neo 프리셋으로 매핑
+4. **복합 스타일** (예: "Glassmorphism + Flat Design"): `+` 앞의 첫 번째 스타일 기준으로 매핑

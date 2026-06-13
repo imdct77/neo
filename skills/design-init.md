@@ -84,10 +84,10 @@ CEO의 답변을 받으면:
 1. `harness/skills/templates/fe/product-design-map.md`에서 제품 유형 검색
    - 161개 제품 유형 중 키워드 매칭으로 최적 1~3개 후보 선별
 2. 매칭된 유형의 **1차 스타일·컬러 팔레트·랜딩 패턴·대시보드 스타일** 추출
-3. 1차 스타일을 Neo의 15개 스타일 프리셋(`styling_design.md`)과 교차 매핑:
-   - 정확히 일치하는 프리셋이 있으면 해당 HSL 변수 사용
-   - 일치하는 프리셋이 없으면 가장 유사한 Neo 프리셋 + 원본 스타일 참조
-4. 추천 결과를 CEO에게 제시:
+3. `product-design-map.md`의 **스타일 매핑 테이블**로 1차 스타일을 Neo 프리셋으로 변환
+   - WARN 스타일(⚠️ Cyberpunk·3D Hyperrealism·Gen Z Chaos)이면 CEO에게 경고 + 대안 제시
+4. Neo 프리셋의 HSL 변수를 `styling_design.md`에서 추출
+5. 추천 결과를 CEO에게 제시:
 
 ```
 NEO:
