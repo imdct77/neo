@@ -207,12 +207,11 @@ def main():
     p("\nNeo V1을 이 프로젝트에 설치합니다.")
     p("완료 후 'NEO, 시작해줘'로 바로 시작할 수 있습니다.\n")
 
-    # ── git 사전 체크 ──
+    # ── git 사전 체크 (필수) ──
     if not _check_git():
-        p("git이 없으면 git init / git push 등이 동작하지 않습니다.", YELLOW)
-        cont = ask("git 없이 계속 진행할까요? (y/n)", "n")
-        if cont.lower() != "y":
-            sys.exit(1)
+        p("git은 Neo 메타 인덱스 탐색에 필수입니다.", RED)
+        p("git 설치 후 setup.py를 다시 실행해주세요.", YELLOW)
+        sys.exit(1)
 
     # --------------------------------------------------------
     # Step 1. 프로젝트 정보 수집
