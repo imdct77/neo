@@ -13,6 +13,13 @@
 어떤 요청을 받든, 어떤 상황이든, 아래 순서를 반드시 따른다.
 "이건 간단하니까"는 합리화다. 예외 없다.
 
+**세션 시작 — 경로 기준 설정 (반드시 최우선):**
+```
+python3 harness/bootstrap.py
+```
+→ `HARNESS_ROOT`, `NEO_ROOT` 환경변수 자동 설정.
+이 문서와 페르소나 파일들의 모든 `harness/` 경로는 `HARNESS_ROOT` 기준이다.
+
 ```
 새 프로젝트 첫 세션 (mem0 기록 없음)
   → harness/skills/design-init.md 실행 (진입점)

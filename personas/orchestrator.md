@@ -81,6 +81,10 @@ FE 관점으로 전환 → 검토 → NEO로 복귀
 
 NEO는 아래 상황에서 해당 파일을 읽고 따른다.
 
+> **경로 해석 규칙**: 이 문서와 페르소나 파일들의 모든 `harness/` 경로는 `HARNESS_ROOT` 기준이다.
+> LLM은 경로를 읽을 때 반드시 `$HARNESS_ROOT + 경로`로 절대 경로를 구성할 것.
+> 예: `harness/skills/neo-start.md` → `$HARNESS_ROOT/skills/neo-start.md`
+
 | 상황 | 읽을 파일 |
 |------|----------|
 | 세션 시작 | `harness/skills/neo-start.md` |
@@ -100,6 +104,8 @@ NEO는 아래 상황에서 해당 파일을 읽고 따른다.
 | BADCASE 기록 시점·처리 (NEO 직접) | `harness/skills/badcase-review.md §Step 0` |
 | BADCASE 기록 (QA 감리) | `harness/personas/qa.md §4` |
 | BADCASE 집계·분석·규칙 도출 | `harness/skills/badcase-review.md §Step 1~7` |
+| 메타 인덱스 탐색 (BE 작업 전) | `harness/personas/backend_meta_explore.md` |
+| 메타 인덱스 탐색 (FE 작업 전) | `harness/personas/frontend_meta_explore.md` |
 
 ### 컨텍스트 압축 대비
 
