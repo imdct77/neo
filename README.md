@@ -24,11 +24,11 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 
 | 파일 | 역할 코드 | 역할 |
 |------|----------|------|
-| `harness/profiles/orchestrator_profile.md` | NEO | Orchestrator. 사람과 소통·전체 조율. 기본 프로필. |
-| `harness/profiles/architect_profile.md` | AC | 아키텍처 검토·게이트 담당. |
-| `harness/profiles/backend_profile.md` | BE | 백엔드 구현 전담. |
-| `harness/profiles/frontend_profile.md` | FE | 프론트엔드 구현 전담. |
-| `harness/profiles/qa_profile.md` | QA | 감리 전담. **반드시 다른 LLM 모델로 동작.** |
+| `harness/personas/orchestrator.md` | NEO | Orchestrator. 사람과 소통·전체 조율. 기본 프로필. |
+| `harness/personas/architect.md` | AC | 아키텍처 검토·게이트 담당. |
+| `harness/personas/backend.md` | BE | 백엔드 구현 전담. |
+| `harness/personas/frontend.md` | FE | 프론트엔드 구현 전담. |
+| `harness/personas/qa.md` | QA | 감리 전담. **반드시 다른 LLM 모델로 동작.** |
 
 ---
 
@@ -39,7 +39,7 @@ Neo V1은 Hermes + mem0 환경에서 동작하는 범용 바이브코딩 하네�
 | 디렉토리 | 역할 |
 |----------|------|
 | `harness/hooks/` | Hermes + Git 훅. 실행 강제력. |
-| `harness/profiles/` | 역할별 프로필 파일. |
+| `harness/personas/` | 역할별 프로필 파일. |
 | `harness/skills/` | Neo 스킬 (트리거 조건 시 자동 로드). 상세: `harness/skills/README.md` |
 | `harness/works/` | 업무 파이프라인 템플릿. |
 | `harness/state/` | Neo 구조적 상태. `.neo_state.json`, 메타 인덱스. |

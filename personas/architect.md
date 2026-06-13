@@ -1,4 +1,4 @@
-# harness/profiles/architect_profile.md — Architect 검토 프로필
+# harness/personas/architect.md — Architect 검토 프로필
 
 > 이 파일은 Orchestrator(NEO)가 아키텍처 검토 게이트(AGENTS.md 섹션 6)를
 > 실행할 때 로드하는 검토 기준입니다.

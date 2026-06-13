@@ -13,7 +13,7 @@ triggers:
 
 # state-manage — 상태 관리 명령어 레퍼런스
 
-상태 전환 판단 기준과 에스컬레이션 규칙은 `harness/profiles/orchestrator_profile.md §4-2, §4-3`에 있다.
+상태 전환 판단 기준과 에스컬레이션 규칙은 `harness/personas/orchestrator.md §4-2, §4-3`에 있다.
 이 파일은 판단이 끝난 후 **어떻게 실행하는가**를 담는다.
 
 ---

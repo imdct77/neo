@@ -108,11 +108,11 @@ Phase 전환·태스크 시작·완료·BLOCKED 시점
 
 | 코드명 | 한글 발음 | 역할 | 프로필 파일 |
 |--------|---------|------|-----------| 
-| **NEO** | 네오 | Orchestrator. 기본 프로필. 사람과 소통하는 유일한 역할 | `orchestrator_profile.md` |
-| **AC** | 에이시 | Architect. 아키텍처 검토 전담. 게이트 조건 시 자동 전환 | `architect_profile.md` |
-| **BE** | 베 | Backend Engineer. 전체 도메인 백엔드 담당 | `backend_profile.md` |
-| **FE** | 페 | Frontend Engineer. 전체 도메인 프론트엔드 담당 | `frontend_profile.md` |
-| **QA** | 큐에이 | Quality Auditor. 감리 전담. 반드시 다른 LLM 모델로 동작. | `qa_profile.md` |
+| **NEO** | 네오 | Orchestrator. 기본 프로필. 사람과 소통하는 유일한 역할 | `orchestrator.md` |
+| **AC** | 에이시 | Architect. 아키텍처 검토 전담. 게이트 조건 시 자동 전환 | `architect.md` |
+| **BE** | 베 | Backend Engineer. 전체 도메인 백엔드 담당 | `backend.md` |
+| **FE** | 페 | Frontend Engineer. 전체 도메인 프론트엔드 담당 | `frontend.md` |
+| **QA** | 큐에이 | Quality Auditor. 감리 전담. 반드시 다른 LLM 모델로 동작. | `qa.md` |
 
 ### 3-3. 호출 방법
 
@@ -165,10 +165,10 @@ harness/AGENTS.md                 ← 프로젝트 헌법 (이 문서)
 
 [세션 시작 시 로드]
 harness/hooks/context-inject.py   ← Project Identity + 제약조건 자동 주입
-harness/profiles/orchestrator_profile.md  ← NEO (기본)
-harness/profiles/architect_profile.md     ← AC
-harness/profiles/backend_profile.md       ← BE
-harness/profiles/frontend_profile.md      ← FE
+harness/personas/orchestrator.md  ← NEO (기본)
+harness/personas/architect.md     ← AC
+harness/personas/backend.md       ← BE
+harness/personas/frontend.md      ← FE
 project/docs/design/ (선택)       ← 프로젝트 전체 설계
 
 [작업 시 선택적 로드]
@@ -194,7 +194,7 @@ NEO는 현재 작업 중인 도메인의 문서만 컨텍스트에 로드한다.
 
 ```
 harness/AGENTS.md
-harness/profiles/orchestrator_profile.md
+harness/personas/orchestrator.md
 project/docs/design/ (있으면 로드)
   architecture.md·database.md·api/·screens/
 ```
@@ -306,7 +306,7 @@ git diff --stat            (파일이 실제 변경됐는지)
 ## 6. NEO 필수 검토 게이트
 
 Task Brief 생성 전, 아래 질문에 하나라도 **"예"**이면
-AC(architect_profile.md)로 전환하고 아키텍처 검토를 실행한다.
+AC(architect.md)로 전환하고 아키텍처 검토를 실행한다.
 
 | # | 질문 | 해당 예시 |
 |---|------|----------|
@@ -337,7 +337,7 @@ AC(architect_profile.md)로 전환하고 아키텍처 검토를 실행한다.
 
 - NEO 자신의 검증이나 서브에이전트의 자체 검증으로 대체할 수 없다
 - QA 감리(시점 4)가 예정되어 있으면 그 결과를 기다린다
-  (QA 감리는 qa_profile.md를 로드한 후 실행된다 — §3-3 QA 감리 운영 원칙 참조)
+  (QA 감리는 qa.md를 로드한 후 실행된다 — §3-3 QA 감리 운영 원칙 참조)
 - QA 감리가 예정되지 않은 경량 변경은 NEO가 직접 검증하고
   그 결과를 "자체 검증"으로 명시
 
@@ -387,12 +387,12 @@ neo/                              ← 부모 디렉토리 (Git 관리 X)
 │   │   └── git/
 │   │       └── pre-commit        ← harness 자체 pre-commit (ruff, pytest 등)
 │   │
-│   ├── profiles/                 ← 역할 프로필 (LLM 로드용)
-│   │   ├── orchestrator_profile.md
-│   │   ├── architect_profile.md
-│   │   ├── backend_profile.md
-│   │   ├── frontend_profile.md
-│   │   └── qa_profile.md
+│   ├── personas/                 ← 역할 프로필 (LLM 로드용)
+│   │   ├── orchestrator.md
+│   │   ├── architect.md
+│   │   ├── backend.md
+│   │   ├── frontend.md
+│   │   └── qa.md
 │   │
 │   ├── skills/                   ← Neo 스킬 (트리거 조건 시 자동 로드)
 │   │   ├── design-init.md

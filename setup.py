@@ -24,7 +24,7 @@ PLACEHOLDER_FILES = [
     "SOUL.md",
     "AGENTS.md",
     ".hermes.md",
-    "orchestrator_profile.md",
+    "orchestrator.md",
 ]
 
 STACK_OPTIONS = {
@@ -262,10 +262,10 @@ def main():
     p("  ✓ src/be/, src/fe/ (하위 구조는 프로젝트 자유)", GREEN)
 
     doc_files = [
-        ("profiles/orchestrator_profile.md", "orchestrator_profile.md"),
-        ("profiles/architect_profile.md", "architect_profile.md"),
-        ("profiles/backend_profile.md", "backend_profile.md"),
-        ("profiles/frontend_profile.md", "frontend_profile.md"),
+        ("personas/orchestrator.md", "orchestrator.md"),
+        ("personas/architect.md", "architect.md"),
+        ("personas/backend.md", "backend.md"),
+        ("personas/frontend.md", "frontend.md"),
         ("works/workflow.md", "workflow.md"),
         ("works/task_brief_templ.md", "task_brief_templ.md"),
         ("works/tasks_templ.md", "tasks_templ.md"),
@@ -361,16 +361,16 @@ def main():
     })
     p(f"  ✓ AGENTS.md — 프로젝트 정보·기술스택 채움", GREEN)
 
-    # orchestrator_profile.md
+    # orchestrator.md
     replace_in_file(
-        docs_dst / "orchestrator_profile.md",
+        docs_dst / "orchestrator.md",
         {**replacements,
          "나는 **{PROJECT_NAME} 구현을 총괄하는 Orchestrator NEO(네오)**다.":
              f"나는 **{project_name} 구현을 총괄하는 Orchestrator NEO(네오)**다.",
          "- {PROJECT_NAME} 서비스 전체 목적과 MVP 범위":
              f"- {project_name} 서비스 전체 목적과 MVP 범위"},
     )
-    p(f"  ✓ orchestrator_profile.md — PROJECT_NAME, PROJECT_ID 치환", GREEN)
+    p(f"  ✓ orchestrator.md — PROJECT_NAME, PROJECT_ID 치환", GREEN)
 
     # --------------------------------------------------------
     # Step 7. Hooks 설치 (선택)

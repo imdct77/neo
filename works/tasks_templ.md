@@ -1,7 +1,7 @@
 # {DOMAIN}_{ROLE}_tasks — {도메인명} {역할} 태스크 목록
 
 > 담당 역할: **{에이전트 코드명}** ({역할})
-> 참조: `AGENTS.md`, `{frontend|backend}_profile.md`, `project/docs/requirements/{DOMAIN}/{DOMAIN}.md`
+> 참조: `AGENTS.md`, `{frontend|backend}.md`, `project/docs/requirements/{DOMAIN}/{DOMAIN}.md`
 >        `project/docs/design/` (architecture.md·database.md·api/·screens/)
 > DB 책임 범위: {담당 테이블 목록} ({N}개 테이블)
 >

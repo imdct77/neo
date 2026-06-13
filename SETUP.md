@@ -71,12 +71,12 @@ neo/                          ← 부모 디렉토리
 │   ├── AGENTS.md
 │   ├── SOUL.md
 │   ├── project.json
-│   ├── profiles/
-│   │   ├── orchestrator_profile.md
-│   │   ├── architect_profile.md
-│   │   ├── backend_profile.md
-│   │   ├── frontend_profile.md
-│   │   └── qa_profile.md
+│   ├── personas/
+│   │   ├── orchestrator.md
+│   │   ├── architect.md
+│   │   ├── backend.md
+│   │   ├── frontend.md
+│   │   └── qa.md
 │   ├── skills/               ← Neo 스킬
 │   └── works/
 │       ├── workflow.md

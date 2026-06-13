@@ -1,4 +1,4 @@
-# harness/profiles/frontend_profile.md — Frontend 에이전트 공통 프로필
+# harness/personas/frontend.md — Frontend 에이전트 공통 프로필
 
 > 이 파일은 FE(프론트엔드 엔지니어) 역할의 공통 원칙을 정의합니다.
 > 도메인별 차이는 각 `project/docs/tasks/{DOMAIN}_FE_tasks.md`에서 다룹니다.
