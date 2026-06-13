@@ -352,9 +352,11 @@ def main():
 
     # project.json 초기화 (§13)
     project_json_path = NEO_ROOT / "project.json"
+    github_user = _detect_github_user() or "your-github-username"
     project_data = {
         "project_id": project_id,
         "project_name": project_name,
+        "github_user": github_user,
         "git": {
             "harness": "{HARNESS_REPO_URL}",
             "project": "{PROJECT_REPO_URL}"
@@ -372,6 +374,7 @@ def main():
     replacements = {
         "{PROJECT_NAME}": project_name,
         "{PROJECT_ID}": project_id,
+        "{GITHUB_USER}": github_user,
     }
 
     # SOUL.md (전역)

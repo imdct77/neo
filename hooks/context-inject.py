@@ -25,6 +25,7 @@ def main():
 
     # ── 프로젝트 아이덴티티 (project.json 우선, .hermes.md fallback) ──
     project_id, project_name = "", ""
+    github_user = ""
 
     # 1) project.json 시도 (harness 쪽에 있음)
     pj_path = os.path.join(root, "project.json")
@@ -34,6 +35,7 @@ def main():
                 pj = json.load(f)
             project_id = pj.get("project_id", "")
             project_name = pj.get("project_name", "")
+            github_user = pj.get("github_user", "")
         except Exception:
             pass
 
@@ -84,10 +86,13 @@ def main():
             identity_parts.append(f"PROJECT_ID: {project_id}")
         if project_name:
             identity_parts.append(f"PROJECT_NAME: {project_name}")
+        if github_user:
+            identity_parts.append(f"GITHUB_USER: {github_user}")
         ctx += "  " + " | ".join(identity_parts) + "\n"
         ctx += (
             "  문서 내 {PROJECT_ID} → 위 PROJECT_ID 값으로 해석.\n"
             "  문서 내 {PROJECT_NAME} → 위 PROJECT_NAME 값으로 해석.\n"
+            "  문서 내 {GITHUB_USER} → 위 GITHUB_USER 값으로 해석.\n"
         )
 
     # ── 상태 컨텍스트 주입 (§6-3) — Fail-Open ──
