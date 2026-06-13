@@ -13,6 +13,43 @@ import sys
 import textwrap
 from pathlib import Path
 
+def _detect_github_user():
+    """gh CLI나 git config에서 GitHub 사용자명 감지"""
+    import subprocess as _sp
+    try:
+        r = _sp.run(["gh", "api", "user", "--jq", ".login"],
+                    capture_output=True, text=True, timeout=5)
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip()
+    except Exception:
+        pass
+    try:
+        r = _sp.run(["git", "config", "github.user"],
+                    capture_output=True, text=True)
+        if r.returncode == 0 and r.stdout.strip():
+            return r.stdout.strip()
+    except Exception:
+        pass
+    return None
+
+def _detect_git_identity():
+    """git config에서 user.name, user.email 감지"""
+    import subprocess as _sp
+    name = email = None
+    try:
+        r = _sp.run(["git", "config", "user.name"], capture_output=True, text=True)
+        if r.returncode == 0:
+            name = r.stdout.strip()
+    except Exception:
+        pass
+    try:
+        r = _sp.run(["git", "config", "user.email"], capture_output=True, text=True)
+        if r.returncode == 0:
+            email = r.stdout.strip()
+    except Exception:
+        pass
+    return name, email
+
 # ============================================================
 # 설정
 # ============================================================
@@ -174,20 +211,25 @@ def main():
         p("현재 디렉토리가 Git 레포지토리가 아닙니다.", YELLOW)
         auto = ask("GitHub에 새 레포를 만들어 clone할까요? (y/n/직접입력)", "y")
         if auto.lower() == "y":
+            github_user = _detect_github_user()
+            if not github_user:
+                p("  GitHub 사용자명을 감지할 수 없습니다.", RED)
+                p("  gh auth login 후 다시 시도하거나, 직접입력(n)을 선택하세요.", YELLOW)
+                return
             repo_name = ask(f"레포 이름 (Enter = {project_id})", project_id)
-            p(f"  Creating {GITHUB_USER}/{repo_name}...", CYAN)
+            p(f"  Creating {github_user}/{repo_name}...", CYAN)
             import subprocess as _sp
             result = _sp.run(
-                ["gh", "repo", "create", f"{GITHUB_USER}/{repo_name}", "--private",
+                ["gh", "repo", "create", f"{github_user}/{repo_name}", "--private",
                  "--description", project_desc or project_name],
                 capture_output=True, text=True
             )
             if result.returncode == 0:
-                clone_url = f"https://github.com/{GITHUB_USER}/{repo_name}.git"
+                clone_url = f"https://github.com/{github_user}/{repo_name}.git"
                 # Clone into parent's ./{repo_name}/
                 target = cwd.parent / repo_name
                 _sp.run(["git", "clone", clone_url, str(target)], check=True)
-                p(f"  ✓ https://github.com/{GITHUB_USER}/{repo_name}", GREEN)
+                p(f"  ✓ https://github.com/{github_user}/{repo_name}", GREEN)
                 p(f"  cd {target} 에서 다시 실행하거나, 지금 경로에 계속 설치합니다.", YELLOW)
                 # Continue with cwd — user might want to install here anyway
             else:
@@ -209,8 +251,11 @@ def main():
         try:
             _sp2.run(["git", "config", "user.name"], cwd=str(cwd), capture_output=True, check=True)
         except Exception:
-            _sp2.run(["git", "config", "user.name", "{GIT_USER_NAME}"], cwd=str(cwd))
-            _sp2.run(["git", "config", "user.email", "{GIT_USER_EMAIL}"], cwd=str(cwd))
+            name, email = _detect_git_identity()
+            if name:
+                _sp2.run(["git", "config", "user.name", name], cwd=str(cwd))
+            if email:
+                _sp2.run(["git", "config", "user.email", email], cwd=str(cwd))
 
     # --------------------------------------------------------
     # Step 4. 설치 경로 확인
