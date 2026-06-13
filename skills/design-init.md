@@ -138,7 +138,20 @@ NEO:
 1. `harness/skills/templates/fe/styling_design.md`에서 해당 프리셋 CSS 변수 참조
 2. `globals.css` `:root {}` 블록에 반영
 3. Google Fonts import + `tailwind.config.ts` 등록
-4. mem0 저장: `"NEO: 스타일={프리셋명}, 제품유형={매칭된 유형}, 날짜={YYYY-MM-DD}"`
+4. `harness/project.json`의 `design` 필드 갱신:
+   ```json
+   "design": {
+     "product_type": "{매칭된 제품 유형}",
+     "neo_preset": "{선택된 Neo 프리셋}",
+     "color_palette": "{컬러 팔레트}",
+     "font": "{폰트}",
+     "landing_pattern": "{랜딩 패턴}",
+     "selected_at": "{YYYY-MM-DD HH:MM:SS}"
+   }
+   ```
+   → context-inject.py가 매 LLM 호출 전 이 정보를 컨텍스트에 주입
+   → FE·BE가 구현 시 자신의 디자인 정보를 자동 확보
+5. mem0 저장: `"NEO: 스타일={프리셋명}, 제품유형={매칭된 유형}, 날짜={YYYY-MM-DD}"`
 
 
 

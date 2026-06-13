@@ -27,6 +27,7 @@ def main():
     github_user = ""
 
     # 1) project.json 시도 (harness 쪽에 있음)
+    pj = {}
     pj_path = os.path.join(root, "project.json")
     if os.path.exists(pj_path):
         try:
@@ -93,6 +94,21 @@ def main():
             "  문서 내 {PROJECT_NAME} → 위 PROJECT_NAME 값으로 해석.\n"
             "  문서 내 {GITHUB_USER} → 위 GITHUB_USER 값으로 해석.\n"
         )
+
+    # ── 디자인 정보 주입 (project.json design 필드) ──
+    design = pj.get("design", {})
+    if design.get("neo_preset"):
+        ctx += f"\n[{pn}] Design System:\n"
+        ctx += f"  프리셋: {design.get('neo_preset', '미선택')}\n"
+        if design.get("product_type"):
+            ctx += f"  제품 유형: {design.get('product_type')}\n"
+        if design.get("color_palette"):
+            ctx += f"  컬러 팔레트: {design.get('color_palette')}\n"
+        if design.get("font"):
+            ctx += f"  폰트: {design.get('font')}\n"
+        if design.get("landing_pattern"):
+            ctx += f"  랜딩 패턴: {design.get('landing_pattern')}\n"
+        ctx += f"  선택 일시: {design.get('selected_at', '미기록')}\n"
 
     # ── 상태 컨텍스트 주입 (§6-3) — Fail-Open ──
     try:

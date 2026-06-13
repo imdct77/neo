@@ -1,5 +1,13 @@
 {
   "project_id": "jggbgg-v1",
   "project_name": "지글보글-v1",
-  "github_user": "{GITHUB_USER}"
+  "github_user": "{GITHUB_USER}",
+  "design": {
+    "product_type": "",
+    "neo_preset": "",
+    "color_palette": "",
+    "font": "",
+    "landing_pattern": "",
+    "selected_at": ""
+  }
 }
