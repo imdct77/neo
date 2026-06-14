@@ -63,6 +63,13 @@ def main():
         _block(exfil)
         return
 
+    # ── #1c. 허용목록 명령 인자 스캔 (terminal, CVE-2026-22708 류) ──
+    if tool_name == "terminal":
+        inj = neo_security.scan_command_injection(args.get("command", ""))
+        if inj:
+            _block(inj)
+            return
+
     # ── 파일 수정 액션이 아니면 상태 검사 불필요 ──
     if tool_name not in ("write_file", "patch") or not file_path:
         return

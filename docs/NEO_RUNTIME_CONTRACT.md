@@ -220,6 +220,39 @@ echo '{}' | python3 hooks/context-inject.py
 
 ---
 
+## 9. BADCASE 승격 강제 지점 (런타임 이벤트 밖)
+
+3장의 네 이벤트(PRE_LLM_CALL·PRE_TOOL_CALL·POST_TOOL_CALL·ON_SESSION_START)는
+모두 에이전트 루프의 *실행 경계*다. 그러나 BADCASE의 mem0 기록·규칙 승격은
+이 경계에 걸리지 않는다 — mem0 쓰기는 Neo가 통제하는 도구 호출이 아니기 때문이다.
+따라서 메모리 포이즈닝(OWASP ASI04) 방어는 다른 층에서 강제한다.
+
+| 강제 층 | 메커니즘 | 위치 |
+|---------|---------|------|
+| 절차 강제 | 승격 전 `promote-check` CLI 실행 의무 | `badcase-review.md` Step 2.5, `badcase-distill.md` Step 3 |
+| 결정론적 판정 | `neo_security.check_badcase_promotable()` | CLI: `python3 hooks/neo_security.py promote-check` |
+| 최종 백스톱 | 사람 승인 (영구 반영 시) | `badcase-distill.md` Step 3·6 |
+
+```
+판정 규칙 (check_badcase_promotable):
+  origin_actor 누락           → 차단
+  origin_actor ∉ {NEO,AC,BE,FE,QA} → 차단
+  source ∈ 신뢰불가 집합(web_*, tool_output, mcp, ...) → 차단
+  untrusted_input = true      → 차단
+  그 외                       → 승격 허용
+```
+
+**왜 결정론적 훅이 아니라 절차+CLI인가**: mem0는 Hermes의 네이티브 메모리 제공자라
+쓰기 시점을 Neo 훅으로 가로챌 수 없다. 그래서 "기록은 자유, 승격만 게이트"로 설계하고,
+승격이 일어나는 스킬 단계에서 CLI로 결정론적 판정을 강제한다. 영구 반영(SOUL/AGENTS)에는
+사람 승인이 최종 백스톱으로 남는다 — 기계 게이트가 1차로 오염을 거르고, 사람이 2차로 확인한다.
+
+> **향후**: Hermes가 mem0 쓰기 훅(`pre_memory_write` 등)을 노출하면, 그 이벤트를
+> 포트에 추가하고 `require_provenance()`를 기록 시점에 결정론적으로 강제할 수 있다.
+> 그 전까지는 절차+CLI가 최선의 강제 수준이다.
+
+---
+
 ## 부록. 버전 정합성 주의
 
 - 이 계약은 Phase 1·2 리팩토링(`neo_checks.py` 코어 추출, git 어댑터 추가)을 전제로 한다. `forbidden-check.py`가 `neo_checks`에 위임하는 구조여야 적합성 테스트가 의도대로 동작한다.

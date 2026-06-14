@@ -76,6 +76,22 @@ def _project_root(harness_root: Path) -> Path:
         return harness_root
 
 
+def _staged_added_lines(path: str) -> list[str]:
+    """staged diff에서 추가된('+') 줄만 반환 (접두 '+' 제거)."""
+    try:
+        out = subprocess.check_output(
+            ["git", "diff", "--cached", "--unified=0", "--", path],
+            text=True, stderr=subprocess.DEVNULL,
+        )
+    except Exception:
+        return []
+    lines = []
+    for ln in out.splitlines():
+        if ln.startswith("+") and not ln.startswith("+++"):
+            lines.append(ln[1:])
+    return lines
+
+
 def _staged_files() -> list[str]:
     out = subprocess.check_output(
         ["git", "diff", "--cached", "--name-only", "--diff-filter=ACM"],
@@ -140,6 +156,11 @@ def main() -> int:
         exfil = neo_security.scan_exfiltration(content, allowed)
         if exfil:
             violations.append(f"  {path}: {exfil}")
+            continue
+        # #1d 공급망: 미고정 의존성 추가 검사
+        dep = neo_security.scan_dependency_manifest(path, _staged_added_lines(path))
+        if dep:
+            violations.append(f"  {path}: {dep}")
             continue
         # #2~#6 상태 게이트 (state 비어있으면 통과)
         if state:

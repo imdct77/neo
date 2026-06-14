@@ -213,3 +213,170 @@ def load_allowed_hosts(harness_root) -> frozenset[str]:
             pass
 
     return frozenset(hosts)
+
+
+# ════════════════════════════════════════════════════════════════
+# E. Ch6 하드닝 — 허용목록 명령 인자 스캔 (CVE-2026-22708 류)
+#    허용된 베이스 명령(git 등)이 인자로 임의 페이로드를 실어 나르는 공격.
+# ════════════════════════════════════════════════════════════════
+
+_CMD_INJECTION = (
+    r"\$\([^)]*\)",                    # 명령 치환 $(...)
+    r"`[^`]+`",                          # 백틱 치환
+    r";\s*rm\s+-rf",                    # 연쇄 파괴 명령
+    r"\|\s*(?:bash|sh|zsh)\b",          # 파이프 to 셸
+    r"(?:curl|wget)\s+[^|]*\|\s*(?:bash|sh)",  # curl|bash
+    r"core\.hooksPath\s*=",             # git hooks 경로 탈취
+    r"--upload-file\b",                 # curl 업로드(유출)
+    r">\s*/dev/tcp/",                    # bash /dev/tcp 역방향
+    r"\beval\b",                        # eval
+    r"chmod\s+[0-7]*777",               # 과도 권한
+)
+
+
+def scan_command_injection(command: str) -> str | None:
+    """터미널 명령의 인자에서 주입·탈취 패턴을 탐지한다.
+
+    베이스 명령이 허용목록(git/terminal 등)에 있어도 인자가 위험하면 차단.
+    forbidden-check의 terminal 경로(PRE_TOOL_CALL)에서 호출한다.
+    """
+    if not command:
+        return None
+    for pat in _CMD_INJECTION:
+        if re.search(pat, command):
+            return (
+                "[Neo] 명령 인자 차단: 허용 명령에 위험 페이로드가 포함됨 "
+                f"(패턴: {pat}). 명령 치환·셸 파이프·hooks 경로 변경 등은 "
+                "사람이 직접 실행하세요."
+            )
+    return None
+
+
+# ════════════════════════════════════════════════════════════════
+# F. Ch6 하드닝 — 의존성 매니페스트 검사 (공급망)
+#    신규/미고정(unpinned) 의존성 추가를 커밋 시점에 검토 대상으로 표시.
+#    AGENTS.md "패키지 실존 확인"을 결정론적으로 격상.
+# ════════════════════════════════════════════════════════════════
+
+_MANIFESTS = ("requirements.txt", "pyproject.toml", "package.json")
+
+
+def _is_manifest(path: str) -> bool:
+    base = path.rsplit("/", 1)[-1]
+    return base in _MANIFESTS
+
+
+def scan_dependency_manifest(path: str, added_lines: list[str]) -> str | None:
+    """매니페스트에 추가된 의존성 줄에서 미고정 핀을 탐지한다.
+
+    added_lines: git diff에서 '+'로 추가된 줄(접두 '+' 제거된 상태).
+    미고정 의존성(버전 핀 없음)은 슬롭스쿼팅·공급망 변조에 취약하므로 차단.
+    requirements.txt: 'pkg==1.2.3' 형태(==)가 아니면 미고정.
+    package.json: '^'/'~'/'*'/'latest'/git URL은 미고정.
+    """
+    if not _is_manifest(path):
+        return None
+    base = path.rsplit("/", 1)[-1]
+    flagged: list[str] = []
+
+    if base == "requirements.txt":
+        for ln in added_lines:
+            t = ln.strip()
+            if not t or t.startswith("#") or t.startswith("-"):
+                continue
+            # 핀(==) 또는 해시(--hash) 없으면 미고정
+            name = re.split(r"[<>=!~ ]", t, 1)[0]
+            if "==" not in t:
+                flagged.append(f"{name} (== 핀 없음)")
+
+    elif base == "package.json":
+        for ln in added_lines:
+            m = re.search(r'"([^"]+)"\s*:\s*"([^"]+)"', ln)
+            if not m:
+                continue
+            ver = m.group(2)
+            if (ver.startswith(("^", "~", "*", ">"))
+                    or ver in ("latest", "*")
+                    or "git" in ver or "://" in ver):
+                flagged.append(f"{m.group(1)} ({ver})")
+
+    elif base == "pyproject.toml":
+        for ln in added_lines:
+            t = ln.strip()
+            m = re.match(r'["\']?([A-Za-z0-9_.\-]+)["\']?\s*=\s*["\']([^"\']+)["\']', t)
+            if m and ("*" in m.group(2) or m.group(2).startswith("^")):
+                flagged.append(f"{m.group(1)} ({m.group(2)})")
+
+    if flagged:
+        return (
+            "[Neo] 미고정 의존성 차단: " + ", ".join(flagged[:5])
+            + ". 정확한 버전으로 고정(==)하고 패키지가 npm/PyPI에 실재하는지 "
+            "확인한 뒤 커밋하세요(슬롭스쿼팅·공급망 변조 방어)."
+        )
+    return None
+
+
+# ════════════════════════════════════════════════════════════════
+# D. CLI — 스킬(badcase-review/distill)이 승격 전 결정론적으로 호출
+#    사용:
+#      echo '{"actor":"QA","source":"qa_audit","untrusted_input":false}' \
+#        | python3 neo_security.py promote-check
+#      python3 neo_security.py promote-check --json '{...}'
+#    종료코드: 0=허용(PROMOTABLE), 1=차단(사유 출력), 2=사용법 오류
+# ════════════════════════════════════════════════════════════════
+
+def _cli_load_record(argv) -> dict:
+    import json
+    import sys
+    if "--json" in argv:
+        i = argv.index("--json")
+        return json.loads(argv[i + 1])
+    data = sys.stdin.read().strip()
+    if not data:
+        raise ValueError("레코드 없음 (stdin 또는 --json 필요)")
+    return json.loads(data)
+
+
+def _main(argv) -> int:
+    import sys
+    if len(argv) < 1:
+        print("사용법: neo_security.py {promote-check|require|tag} [--json '<record>']",
+              file=sys.stderr)
+        return 2
+    cmd = argv[0]
+    try:
+        if cmd == "tag":
+            # tag --actor QA --source qa_audit [--untrusted] [--json '{base}']
+            import json
+            base = {}
+            if "--json" in argv:
+                base = json.loads(argv[argv.index("--json") + 1])
+            actor = argv[argv.index("--actor") + 1] if "--actor" in argv else ""
+            source = argv[argv.index("--source") + 1] if "--source" in argv else ""
+            untrusted = "--untrusted" in argv
+            print(json.dumps(tag_badcase(base, actor, source, untrusted),
+                             ensure_ascii=False))
+            return 0
+
+        record = _cli_load_record(argv[1:])
+        if cmd == "require":
+            reason = require_provenance(record)
+        elif cmd == "promote-check":
+            reason = check_badcase_promotable(record)
+        else:
+            print(f"알 수 없는 명령: {cmd}", file=sys.stderr)
+            return 2
+    except Exception as e:
+        print(f"입력 오류: {e}", file=sys.stderr)
+        return 2
+
+    if reason:
+        print(reason)
+        return 1
+    print("PROMOTABLE" if cmd == "promote-check" else "OK")
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(_main(sys.argv[1:]))
