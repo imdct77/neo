@@ -1,18 +1,17 @@
 #!/usr/bin/env bash
-# Neo V1 — Git pre-commit Hook
-# 설치: cp git-hooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
-# 또는: pre-commit install (pre-commit 패키지 사용 시)
+# Neo — Git pre-commit Hook (substrate-first)
+# 설치(권장): git config core.hooksPath hooks/git
+#   또는: cp hooks/git/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+#   복사 설치 시에도 NEO_HARNESS_ROOT 또는 HARNESS_ROOT 환경변수가 있으면
+#   게이트·메타 경로가 절대경로로 해석되어 정상 동작한다(아래 HOOKS_DIR 해석 참조).
 #
 # 커밋 시점에 자동 실행:
-#   1. pytest — 단위 테스트
-#   2. ruff   — Python 린트·포맷
-#   3. bandit — Python 보안 스캔
-#   4. ESLint — TypeScript 린트
-#   5. prettier — TypeScript 포맷
-#   6. detect-secrets — 민감 키 하드코딩 방지
-#   7. pip-audit — Python 의존성 취약점 스캔
-#   8. npm audit — Node.js 의존성 취약점 스캔
-#   9. 브랜치 보호 — main/develop 직접 커밋 차단
+#   1. 브랜치 보호 — main/develop 직접 커밋 차단
+#   2. 민감 키 하드코딩 방지
+#   3. Python 검사 — pytest, 하네스 테스트, bandit, pip-audit
+#   4. TypeScript 검사 — ESLint, prettier, npm audit
+#   5. Neo substrate 게이트 — 보안 패턴 + lethal trifecta + 상태 검증
+#   6. 메타 인덱스 동기화
 
 set -e
 
@@ -26,8 +25,22 @@ fail() { echo -e "${RED}✗${NC} $1"; exit 1; }
 warn() { echo -e "${YELLOW}⚠${NC} $1"; }
 info() { echo -e "  $1"; }
 
+# --------------------------------------------------------
+# 0. 하네스 hooks/ 디렉토리 해석 (설치 방식 무관)
+#    우선순위: NEO_HARNESS_ROOT → HARNESS_ROOT → in-place($0 기준)
+#    이유: cp로 .git/hooks/에 설치하면 $(dirname "$0")/.. 가 .git/ 을 가리켜
+#          게이트·메타가 조용히 건너뛰어진다(거짓 안심). 절대경로로 고정한다.
+# --------------------------------------------------------
+if [ -n "$NEO_HARNESS_ROOT" ] && [ -d "$NEO_HARNESS_ROOT/hooks" ]; then
+    HOOKS_DIR="$NEO_HARNESS_ROOT/hooks"
+elif [ -n "$HARNESS_ROOT" ] && [ -d "$HARNESS_ROOT/hooks" ]; then
+    HOOKS_DIR="$HARNESS_ROOT/hooks"
+else
+    HOOKS_DIR="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd || echo "")"
+fi
+
 echo ""
-echo "Neo V1 pre-commit 검사 시작..."
+echo "Neo pre-commit 검사 시작..."
 echo "================================"
 
 # --------------------------------------------------------
@@ -84,8 +97,11 @@ if [[ -n "$PY_FILES" ]]; then
     fi
 
     # pytest (exit code 5 = no tests collected → 허용)
+    #   주의: 'pytest; pyret=$?' 는 set -e 에서 exit!=0 시 즉시 종료되어
+    #         exit-5 관용 로직에 도달하지 못한다. '|| pyret=$?' 로 우회한다.
     if command -v pytest &>/dev/null; then
-        pytest --tb=short -q 2>/dev/null; pyret=$?
+        pyret=0
+        pytest --tb=short -q 2>/dev/null || pyret=$?
         if [ $pyret -ne 0 ] && [ $pyret -ne 5 ]; then
             fail "pytest 실패 (exit=$pyret). 테스트를 통과시킨 후 커밋하세요."
         fi
@@ -95,10 +111,12 @@ if [[ -n "$PY_FILES" ]]; then
     fi
 
     # 하네스 자체 테스트 (python3만 필요, pytest 불필요)
+    #   repo-relative 경로로 자기 스코프 — 하네스 레포에서만 발동,
+    #   project 레포에서는 파일이 없어 -f 가드로 건너뜀.
     for t in hooks/test_neo_checks.py hooks/test_neo_security.py; do
         if [ -f "$t" ]; then
-            python3 "$t" || fail "하네스 테스트 실패: $t"
-            pass "하네스 테스트 ($(basename $t))"
+            python3 "$t" >/dev/null || fail "하네스 테스트 실패: $t (python3 $t 로 상세 확인)"
+            pass "하네스 테스트 ($(basename "$t"))"
         fi
     done
 
@@ -161,23 +179,31 @@ if [[ -n "$TS_FILES" ]]; then
 fi
 
 # --------------------------------------------------------
-# 5. Neo substrate 게이트 (보안 패턴 + 상태 검증)
+# 5. Neo substrate 게이트 (보안 패턴 + lethal trifecta + 상태 검증)
+#    절대경로(HOOKS_DIR)로 호출 — 설치 방식 무관.
+#    stderr 미리다이렉트 금지: 차단 사유(어느 파일·무슨 위반)가 보여야 한다.
 # --------------------------------------------------------
-NEO_GATE="$(dirname "$0")/../neo_precommit_gate.py"
+NEO_GATE="$HOOKS_DIR/neo_precommit_gate.py"
 if [ -f "$NEO_GATE" ]; then
     if ! python3 "$NEO_GATE"; then
-        fail "Neo substrate 게이트 차단됨"
+        fail "Neo substrate 게이트 차단됨 (위 사유 참조)"
     fi
     pass "Neo substrate 게이트"
+else
+    # 조용한 건너뜀은 거짓 안심을 낳는다 — 반드시 경고한다.
+    warn "Neo substrate 게이트 미발견: $NEO_GATE"
+    warn "  HOOKS_DIR 해석 실패. NEO_HARNESS_ROOT/HARNESS_ROOT 환경변수 또는 core.hooksPath 설치를 확인하세요."
 fi
 
 # --------------------------------------------------------
 # 6. 메타 인덱스 동기화
 # --------------------------------------------------------
-META_CHECK="$(dirname "$0")/../meta_consistency_check.py"
+META_CHECK="$HOOKS_DIR/meta_consistency_check.py"
 if [ -f "$META_CHECK" ]; then
     python3 "$META_CHECK" --sync 2>/dev/null
     pass "메타 인덱스 동기화"
+else
+    warn "메타 동기화 스크립트 미발견: $META_CHECK"
 fi
 
 echo "================================"
