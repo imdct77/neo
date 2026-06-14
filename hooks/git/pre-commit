@@ -83,15 +83,24 @@ if [[ -n "$PY_FILES" ]]; then
         warn "ruff 미설치 (건너뜀)"
     fi
 
-    # pytest
+    # pytest (exit code 5 = no tests collected → 허용)
     if command -v pytest &>/dev/null; then
-        if ! pytest --tb=short -q 2>/dev/null; then
-            fail "pytest 실패. 테스트를 통과시킨 후 커밋하세요."
+        pytest --tb=short -q 2>/dev/null; pyret=$?
+        if [ $pyret -ne 0 ] && [ $pyret -ne 5 ]; then
+            fail "pytest 실패 (exit=$pyret). 테스트를 통과시킨 후 커밋하세요."
         fi
         pass "pytest"
     else
         warn "pytest 미설치 (건너뜀)"
     fi
+
+    # 하네스 자체 테스트 (python3만 필요, pytest 불필요)
+    for t in hooks/test_neo_checks.py hooks/test_neo_security.py; do
+        if [ -f "$t" ]; then
+            python3 "$t" || fail "하네스 테스트 실패: $t"
+            pass "하네스 테스트 ($(basename $t))"
+        fi
+    done
 
     # bandit 보안 스캔
     if command -v bandit &>/dev/null; then
@@ -156,7 +165,7 @@ fi
 # --------------------------------------------------------
 NEO_GATE="$(dirname "$0")/../neo_precommit_gate.py"
 if [ -f "$NEO_GATE" ]; then
-    if ! python3 "$NEO_GATE" 2>/dev/null; then
+    if ! python3 "$NEO_GATE"; then
         fail "Neo substrate 게이트 차단됨"
     fi
     pass "Neo substrate 게이트"
