@@ -12,7 +12,7 @@
 
 ## 파일 목록
 
-- `src/be/services/auth.py` — TODO: 설명 추가
+- `src/be/services/auth.py` — {정체성} ({주요함수}: {요약}) [AUTO] TODO
 
 ## 하위 디렉토리
 

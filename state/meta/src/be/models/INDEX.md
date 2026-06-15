@@ -12,8 +12,8 @@
 
 ## 파일 목록
 
-- `src/be/models/__init__.py` — TODO: 설명 추가
-- `src/be/models/user.py` — TODO: 설명 추가
+- `src/be/models/__init__.py` — {정체성} ({주요함수}: {요약}) [AUTO] TODO
+- `src/be/models/user.py` — {정체성} ({주요함수}: {요약}) [AUTO] TODO
 
 ## 하위 디렉토리
 
