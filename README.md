@@ -45,8 +45,9 @@ Neo는 Hermes + mem0 + git 환경에서 동작하는 웹 어플리케이션 바�
 | `harness/skills/` | Neo 스킬 (설계 5종 + 구현 4종 + 운영 4종). 상세: `harness/skills/README.md` |
 | `harness/skills/templates/` | BE/FE/shared 구현 템플릿 27파일. design/impl 쌍. |
 | `harness/works/` | 업무 파이프라인 템플릿. |
-| `harness/state/` | Neo 구조적 상태. `.neo_state.json`, 메타 인덱스. |
+| `harness/state/` | Neo 구조적 상태. `.neo_state.json`, 메타 인덱스, 다분기 탐색. |
 | `harness/state/meta/` | 코드 메타 인덱스 (3계층). L1/L2/L3 자동 동기화. |
+| `harness/state/exploration/` | 다분기 탐색. 레코드(`{id}.json`), 점수(`score/`), 프롬프트(`score/prompt/`). |
 
 ### project/ — 산출물·소스코드
 
