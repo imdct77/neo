@@ -47,6 +47,7 @@
 | `design-api.md` | api/ 작성 조건 충족 시 | API 협업 루프. BLOCKER 기반 종료. 싱글 에이전트 순차. |
 | `design-screens.md` | screens/ 작성 조건 충족 시 | 화면 설계 문서 작성. STATE 정의 → tests 자동 도출. |
 | `kanban.md` | Phase 전환·태스크 시작·완료·BLOCKED | Hermes 칸반 연동 규칙. 진척도 가시화. |
+| `meta-propagate.md` | 디렉토리·파일 구조 변경, 주요 함수·디렉토리 목적 변화 시 | 메타 인덱스 전파. `--sync`로 구조 동기화 후, 변화를 자신·상위 디렉토리로 전파(존재 체크→목적 비교→승급). |
 | `badcase-review.md` | finish.md MERGE/PR 또는 DISCARD 선택 후 | 도메인 단위 BADCASE 집계 → 패턴 추출 → 규칙 적용. SCOPE 즉시 승격 포함. |
 | `badcase-distill.md` | MVP 완성 후 | 프로젝트 전체 BADCASE 증류 → 효과 검증 → 장기 반영. SCOPE 재평가 포함. |
 
@@ -67,6 +68,9 @@
 
 새 기능 개발
   └→ phase0 → (Task Brief 전) gate → (구현 후) review → finish
+
+구조·의미 변경
+  └→ meta-propagate (디렉토리·파일·주요 함수·디렉토리 목적 변화 시)
 
 버그 발생
   └→ debug

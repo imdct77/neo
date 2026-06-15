@@ -18,7 +18,7 @@ _SCOPES = ("be", "fe")
 _TODAY = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 _SECTION_RE = re.compile(r"^## (.+)")
 _INDEX_ENTRY_RE = re.compile(r"^- `([^`]+)`")
-_DETAIL_H1_RE = re.compile(r"^# (.+ — 상세)")
+_DETAIL_H1_RE = re.compile(r"^#\s+(.+?\s+[—-]\s+상세)\s*$")
 _TABLE_EMPTY_ROW_RE = re.compile(r"^\| \(코드가 추가되면")
 _AUTO_TODO_MARKER = "[AUTO] TODO"
 
@@ -58,26 +58,15 @@ _L3_TEMPLATE = """# {file_path} — 상세
 # ═══════════════════════════════════════════════════════════
 
 
-def _file_to_section(file_path: str, scope: str) -> str:
-    """파일 경로에서 src/{scope}/ 이후의 디렉토리 경로 추출.
-    예: src/be/recipes/model/recipe.py → recipes/model/"""
-    prefix = f"src/{scope}/"
-    if file_path.startswith(prefix):
-        rest = file_path[len(prefix):]
-        dir_part = os.path.dirname(rest)
-        if dir_part:
-            return f"{dir_part}/"
-    return "기타/"
+# F3: 메타 인덱스는 '코드' 파일만 색인한다(소스↔메타 쌍으로 함수/컴포넌트 맥락을 담기 위함).
+# .json/.sql/.md/.txt/.yaml/.css/.html 등 비코드 파일은 색인하지 않는다.
+# 언어를 추가하려면 여기에 확장자를 더한다.
+_CODE_EXTENSIONS = (".py", ".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs")
 
 
-def _file_to_dir(file_path: str, scope: str) -> str:
-    """"src/{scope}/" 제거한 디렉토리 경로.
-    예: src/be/recipes/model/recipe.py → recipes/model"""
-    prefix = f"src/{scope}/"
-    if file_path.startswith(prefix):
-        rest = file_path[len(prefix):]
-        return os.path.dirname(rest)
-    return "기타"
+def _is_code_file(fname: str) -> bool:
+    """색인 대상 코드 파일인가(확장자 화이트리스트). 비코드 파일은 제외(F3)."""
+    return fname.endswith(_CODE_EXTENSIONS)
 
 
 def collect_actual_files(src_dir: str, project_root: str) -> set[str]:
@@ -87,8 +76,8 @@ def collect_actual_files(src_dir: str, project_root: str) -> set[str]:
     for root, dirs, filenames in os.walk(src_dir):
         dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
         for fname in filenames:
-            if fname.startswith("."):
-                continue
+            if fname.startswith(".") or not _is_code_file(fname):
+                continue  # 숨김·비코드 파일 제외(F3)
             full = os.path.join(root, fname)
             files.add(os.path.relpath(full, project_root))
     return files
@@ -115,34 +104,98 @@ def _auto_desc(file_path: str) -> str:
 
 
 # ═══════════════════════════════════════════════════════════
-# L1 — scope-level + section-level INDEX.md  (파일 목록)
+# INDEX.md — 디렉토리별 청사진 (직속 파일 목록 + 직속 하위 디렉토리)
 # ═══════════════════════════════════════════════════════════
 
 # section-level INDEX.md 템플릿
-_SECTION_INDEX_TEMPLATE = """# {section}/ — 디렉토리 인덱스
-
-> 마지막 갱신: {timestamp}
-> 상위: [../INDEX.md](../INDEX.md)
-
-## 파일 목록
-
-{file_list}
-"""
+_DIR_INDEX_PH = "[AUTO] TODO"  # 미작성 표시 — 채워지면 _find_auto_todo가 통과시킴
 
 
-def _generate_section_index(section: str, files: set[str], scope: str) -> str:
-    """section-level INDEX.md 생성. section은 src/{scope}/ 이하의 전체 디렉토리 경로.
-    예: 'recipes/model', 'auth/oauth'."""
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    prefix = f"src/{scope}/{section}/"
-    file_lines = []
-    for f in sorted(files):
-        rel = os.path.relpath(f, prefix) if f.startswith(prefix) else f
-        file_lines.append(f"- `{f}` — TODO: 설명 추가")
-    file_list = "\n".join(file_lines) if file_lines else "- (파일 없음)"
-    return _SECTION_INDEX_TEMPLATE.format(
-        section=section, timestamp=timestamp, file_list=file_list
-    )
+def _section_block(content: str, header: str) -> str:
+    """'## {header}'와 다음 '## ' 사이 본문 반환."""
+    m = re.search(rf"^##\s+{re.escape(header)}\s*$", content, re.MULTILINE)
+    if not m:
+        return ""
+    rest = content[m.end():]
+    nxt = re.search(r"^##\s", rest, re.MULTILINE)
+    return rest[:nxt.start()] if nxt else rest
+
+
+def _parse_dir_index(content: str) -> tuple:
+    """기존 디렉토리 INDEX에서 보존 대상 추출.
+
+    반환: (디렉토리목적, 최근변경, {파일경로: 줄}, {하위디렉토리: 표행})
+    파일경로·하위디렉토리를 키로, LLM이 채운 줄 전체를 보존하기 위함.
+    """
+    purpose = _section_block(content, "디렉토리 목적").strip()
+    recent = _section_block(content, "최근 변경").strip()
+    files = {}
+    for line in _section_block(content, "파일 목록").splitlines():
+        m = re.match(r"-\s+`([^`]+)`", line)
+        if m:
+            files[m.group(1)] = line.rstrip()
+    subdirs = {}
+    for line in _section_block(content, "하위 디렉토리").splitlines():
+        m = re.match(r"\|\s*`([^`]+?)/?`\s*\|", line)
+        if m:
+            subdirs[m.group(1).rstrip("/")] = line.rstrip()
+    return purpose, recent, files, subdirs
+
+
+def _render_dir_index(dir_rel: str, file_paths: set, subdir_names: set,
+                      existing: str, dir_label: str = "") -> str:
+    """디렉토리 INDEX(L1=청사진) 생성. 구조는 결정론, 의미는 보존((ㄴ)).
+
+    - 파일 목록: 직속 파일만. 기존 줄(LLM이 채운 정체성·주요함수 투영) 보존,
+      신규 파일은 placeholder([AUTO] TODO), 사라진 파일은 제거.
+    - 하위 디렉토리: 직속 하위만. 동일 보존 규칙.
+    - 디렉토리 목적: 기존 텍스트 보존(없으면 placeholder).
+    - 타임스탬프 없음 — 구조 무변경 시 출력이 동일해 재기록되지 않는다.
+
+    dir_label: 제목에 쓸 디렉토리 표시 이름(scope 루트는 'be'/'fe'). 비면 dir_rel에서 유추.
+    """
+    old_purpose, old_recent, old_files, old_subdirs = _parse_dir_index(existing or "")
+    if dir_label:
+        name = dir_label.rstrip("/") + "/"
+    else:
+        name = (dir_rel.rstrip("/").split("/")[-1] + "/") if dir_rel else "src/"
+
+    lines = [
+        f"# {name} — 디렉토리 인덱스",
+        "",
+        "> 상위: [../INDEX.md](../INDEX.md)",
+        "",
+        "## 디렉토리 목적",
+        "",
+        old_purpose if old_purpose
+        else f"{{이 디렉토리의 존재 이유·책임·경계를 충분히. {_DIR_INDEX_PH}}}",
+        "",
+        "## 최근 변경",
+        "",
+        # 변화 없는 디렉토리는 정당하게 비므로 [AUTO] TODO가 아니라 '(없음)'.
+        # propagation(meta-propagate §7)이 구조·의미 변화 시 'HISTORY {날짜} 참조'로 채운다.
+        old_recent if old_recent else "(없음)",
+        "",
+        "## 파일 목록",
+        "",
+    ]
+    if file_paths:
+        for fp in sorted(file_paths):
+            lines.append(old_files.get(
+                fp, f"- `{fp}` — {{정체성}} ({{주요함수}}: {{요약}}) {_DIR_INDEX_PH}"))
+    else:
+        lines.append("- (파일 없음)")
+
+    lines += ["", "## 하위 디렉토리", ""]
+    if subdir_names:
+        lines += ["| 디렉토리 | 목적 | 링크 |", "|---------|------|------|"]
+        for sd in sorted(subdir_names):
+            lines.append(old_subdirs.get(
+                sd, f"| `{sd}/` | {{목적}} {_DIR_INDEX_PH} | → `{sd}/INDEX.md` |"))
+    else:
+        lines.append("(하위 디렉토리 없음)")
+
+    return "\n".join(lines) + "\n"
 
 
 def parse_index_md(path: str) -> set[str]:
@@ -166,56 +219,6 @@ def parse_index_md(path: str) -> set[str]:
     return files
 
 
-def _parse_sections(content: str) -> dict:
-    """INDEX.md → {섹션명: [(파일경로, 설명), ...]}"""
-    sections = {}
-    current_section = None
-    for line in content.split("\n"):
-        m = _SECTION_RE.match(line.strip())
-        if m:
-            current_section = m.group(1).strip()
-            sections.setdefault(current_section, [])
-            continue
-        m = _INDEX_ENTRY_RE.match(line.strip())
-        if m and current_section is not None:
-            entry = m.group(1)
-            desc = line.strip().split(" — ", 1)[1] if " — " in line else ""
-            sections[current_section].append((entry, desc))
-    return sections
-
-
-def _regenerate_l1(scope: str, sections: dict, actual_files: set[str]) -> str:
-    indexed = {entry for entries in sections.values() for entry, _desc in entries}
-
-    # 추가
-    for f in sorted(actual_files - indexed):
-        section = _file_to_section(f, scope)
-        sections.setdefault(section, []).append((f, _auto_desc(f)))
-
-    # 제거 + 정렬
-    cleaned = {}
-    for sec, entries in sections.items():
-        kept = sorted([(e, d) for e, d in entries if e in actual_files], key=lambda x: x[0])
-        cleaned[sec] = kept
-
-    lines = [
-        f"# {scope} — 구현 메타 인덱스",
-        "",
-        f"> 마지막 갱신: {_TODAY}",
-        f"> 담당: {scope.upper()} 프로필",
-        "",
-    ]
-    for sec in sorted(cleaned):
-        if not cleaned[sec]:
-            continue
-        lines.append(f"## {sec}")
-        lines.append("")
-        for entry, desc in cleaned[sec]:
-            lines.append(f"- `{entry}` — {desc}")
-        lines.append("")
-    return "\n".join(lines) + "\n"
-
-
 def _init_empty_scope(meta_src: str, scope: str) -> bool:
     """scope 메타 디렉토리가 없으면 최소 INDEX.md 템플릿 생성."""
     if not os.path.isdir(meta_src):
@@ -233,28 +236,8 @@ def _init_empty_scope(meta_src: str, scope: str) -> bool:
     return False
 
 
-def sync_l1(harness_root: str, project_root: str, scope: str) -> tuple[int, int]:
-    """scope-level INDEX.md 동기화. (added, removed) 반환."""
-    index_path = os.path.join(harness_root, "state", "meta", "src", scope, "INDEX.md")
-    if not os.path.isfile(index_path):
-        return (0, 0)
-    src_dir = os.path.join(project_root, "src", scope)
-    actual_files = collect_actual_files(src_dir, project_root)
-    with open(index_path) as f:
-        content = f.read()
-    sections = _parse_sections(content)
-    before = {entry for entries in sections.values() for entry, _desc in entries}
-    new_content = _regenerate_l1(scope, sections, actual_files)
-    after = {entry for entries in _parse_sections(new_content).values() for entry, _desc in entries}
-    added, removed = len(after - before), len(before - after)
-    if added or removed:
-        with open(index_path, "w") as f:
-            f.write(new_content)
-    return (added, removed)
-
-
 # ═══════════════════════════════════════════════════════════
-# L2 — section-level DETAIL.md  (파일별 상세)
+# DETAIL.md — 디렉토리별 구성 (파일이 왜 존재하는가 + 주요 함수 계약)
 # ═══════════════════════════════════════════════════════════
 
 _AUTO_DETAIL_TEMPLATE = """## {cls_name}
@@ -262,6 +245,14 @@ _AUTO_DETAIL_TEMPLATE = """## {cls_name}
 - **용도**: [AUTO] TODO — 자동 생성됨, 검토 필요
 - **의존성**: TODO
 """
+
+
+def _detail_key_to_path(key: str) -> str:
+    """L2 블록 키('path — 상세' 또는 'path - 상세')에서 소스 경로만 복원.
+
+    em-dash·하이픈 모두 허용(F2: 대시 문자 드리프트로 인한 매칭 실패·블록 분열 방지).
+    """
+    return re.sub(r"\s+[—-]\s+상세\s*$", "", key).strip()
 
 
 def _parse_detail(content: str) -> dict:
@@ -311,7 +302,7 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
     dir_data = {}
     for root, dirs, files in os.walk(project_src):
         dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
-        files = [f for f in files if not f.startswith(".")]
+        files = [f for f in files if not f.startswith(".") and _is_code_file(f)]  # F3
         rel = os.path.relpath(root, project_src)
         if rel == ".":
             rel = ""
@@ -335,19 +326,23 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
         }
 
         # ── L3: 파일별 DETAIL.{stem}.md ──
+        # valid_stems는 가드 밖에서 계산한다: 디렉토리의 모든 파일이 삭제돼 files가 비어도
+        # (valid_stems = 빈 set → 전부 고아) 아래 고아 정리에 필요하기 때문.
+        valid_stems = {os.path.splitext(f)[0] for f in data["files"]}
         if actual_in_dir:
             os.makedirs(meta_dir, exist_ok=True)
-            valid_stems = {os.path.splitext(f)[0] for f in data["files"]}
-
             for fname in sorted(data["files"]):
                 stem = os.path.splitext(fname)[0]
                 l3_path = os.path.join(meta_dir, f"DETAIL.{stem}.md")
                 if not os.path.isfile(l3_path):
                     fpath = os.path.relpath(os.path.join(src_dir, fname), project_root)
-                    _write_l3_skeleton(l3_path, fpath)
+                    _write_l3_skeleton(l3_path, fpath, harness_root, scope)
                     l3_count += 1
 
-            # 고아 L3 정리
+        # 고아 L3 정리 — 가드 밖. skeleton '생성'은 파일이 있을 때만이지만, '정리'는 항상
+        # 돌아야 한다. 유일 파일이 삭제되면 files가 비어 if actual_in_dir이 False가 되는데,
+        # 정리가 가드 안에 있으면 바로 그때(가장 큰 변화) 고아가 남는 역설이 생긴다.
+        if os.path.isdir(meta_dir):
             for fname in os.listdir(meta_dir):
                 if fname.startswith("DETAIL.") and fname.endswith(".md") and fname != "DETAIL.md":
                     stem = fname[len("DETAIL."):-len(".md")]
@@ -355,23 +350,27 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
                         os.remove(os.path.join(meta_dir, fname))
                         l3_count += 1
 
-        # ── Section-level INDEX.md (L1) 동기화 ──
-        if dir_rel:  # scope 루트는 sync_l1에서 별도 처리
-            section_index_path = os.path.join(meta_dir, "INDEX.md")
-            is_new = not os.path.isfile(section_index_path)
-            new_idx = _generate_section_index(dir_rel, actual_in_dir, scope)
-            old_idx = None
-            if not is_new:
-                try:
-                    with open(section_index_path) as f:
-                        old_idx = f.read()
-                except Exception:
-                    pass
-            if is_new or old_idx != new_idx:
-                with open(section_index_path, "w") as f:
-                    f.write(new_idx)
-                if is_new:
-                    section_l1 += 1
+        # ── 디렉토리 INDEX.md (L1=청사진) 동기화 — scope 루트 포함 ──
+        os.makedirs(meta_dir, exist_ok=True)
+        section_index_path = os.path.join(meta_dir, "INDEX.md")
+        is_new = not os.path.isfile(section_index_path)
+        existing = ""
+        if not is_new:
+            try:
+                with open(section_index_path, encoding="utf-8") as f:
+                    existing = f.read()
+            except Exception:
+                pass
+        # 직속 하위 디렉토리 (os.walk가 제공한 직속 하위 이름)
+        subdir_names = set(data.get("dirs", set()))
+        dir_label = scope if not dir_rel else os.path.basename(dir_rel.rstrip("/"))
+        new_idx = _render_dir_index(dir_rel, actual_in_dir, subdir_names,
+                                    existing, dir_label)
+        if is_new or existing != new_idx:
+            with open(section_index_path, "w", encoding="utf-8") as f:
+                f.write(new_idx)
+            if is_new:
+                section_l1 += 1
 
         # ── L2: DETAIL.md 동기화 ──
         detail_path = os.path.join(meta_dir, "DETAIL.md")
@@ -387,7 +386,7 @@ def sync_l2(harness_root: str, project_root: str, scope: str) -> tuple[int, int,
                 old_keys.add(k)
                 continue
             for fpath in actual_in_dir:
-                if fpath.endswith(k.split(" — ")[0]):
+                if fpath.endswith(_detail_key_to_path(k)):
                     key_map[k] = fpath
                     old_keys.add(fpath)
                     break
@@ -473,18 +472,58 @@ def _purge_meta_dir(meta_dir: str) -> None:
         pass
 
 
-def _write_l3_skeleton(l3_path: str, file_path: str) -> None:
-    """[AUTO] TODO 마커가 포함된 L3 skeleton 파일 생성."""
-    content = _L3_TEMPLATE.format(file_path=file_path)
-    with open(l3_path, "w") as f:
+def _l3_template_path(harness_root: str, scope: str) -> str:
+    return os.path.join(harness_root, "state", "meta", "src", scope,
+                        "DETAIL.{filename}.md.template")
+
+
+def _render_l3_skeleton(template_text: str, source_path: str) -> str:
+    """scope .template을 복사하되 파서 호환을 위해 H1을 정규 소스경로로 치환하고
+    [AUTO] TODO 마커를 주입한다.
+
+    나머지 {name}·{ComponentName} 등 placeholder는 LLM이 채울 가이드이므로
+    그대로 둔다(.format() 미사용 — placeholder가 많아 format은 깨진다).
+    마커가 있는 동안에는 함수명 추출기들이 이 파일을 skip하므로 placeholder가
+    함수명으로 오추출되지 않는다.
+    """
+    marker_line = f"> {_AUTO_TODO_MARKER} — 자동 생성됨, LLM 검토 필요"
+    out, h1_done = [], False
+    for ln in template_text.splitlines():
+        if not h1_done and ln.startswith("# "):
+            out.append(f"# {source_path} — 상세")
+            out.append("")
+            out.append(marker_line)
+            h1_done = True
+            continue
+        out.append(ln)
+    if not h1_done:
+        out = [f"# {source_path} — 상세", "", marker_line, ""] + out
+    return "\n".join(out) + "\n"
+
+
+def _write_l3_skeleton(l3_path: str, file_path: str,
+                       harness_root: str = "", scope: str = "") -> None:
+    """[AUTO] TODO 마커가 포함된 L3 skeleton 생성.
+
+    scope의 DETAIL.{filename}.md.template을 읽어 복사한다(단일 SoT — README 설계).
+    템플릿이 없으면 최소 마커 skeleton으로 폴백(기존 동작 보존).
+    """
+    tpl_path = _l3_template_path(harness_root, scope) if harness_root and scope else ""
+    if tpl_path and os.path.isfile(tpl_path):
+        with open(tpl_path, encoding="utf-8") as f:
+            content = _render_l3_skeleton(f.read(), file_path)
+    else:
+        content = _L3_TEMPLATE.format(file_path=file_path)
+    with open(l3_path, "w", encoding="utf-8") as f:
         f.write(content)
 
 
 # ═══════════════════════════════════════════════════════════
-# L3 — top-level src/INDEX.md  (BE/FE 통합 개요)
+# 최상위 src/INDEX.md — 청사진의 루트 (전체 디렉토리 개요, 전파의 최종 도달점)
+#   주의: 함수는 sync_top_index/_check_top_index. 파일별 L3 상세는 _check_l3_integrity가 담당.
 # ═══════════════════════════════════════════════════════════
 
-def _generate_l3(harness_root: str, project_root: str) -> str:
+def _generate_top_index(harness_root: str, project_root: str) -> str:
     lines = ["# src/ — 전체 코드베이스 개요", ""]
 
     for scope in _SCOPES:
@@ -494,7 +533,7 @@ def _generate_l3(harness_root: str, project_root: str) -> str:
 
         lines.append(f"## {scope}/ — {scope_label}")
         lines.append("")
-        lines.append("| 디렉토리 | 한 줄 목적 |")
+        lines.append("| 디렉토리 | 목적 |")
         lines.append("|---------|-----------|")
 
         if not dirs:
@@ -509,10 +548,10 @@ def _generate_l3(harness_root: str, project_root: str) -> str:
     return "\n".join(lines) + "\n"
 
 
-def sync_l3(harness_root: str, project_root: str) -> bool:
-    """top-level INDEX.md 동기화. 변경 시 True 반환."""
+def sync_top_index(harness_root: str, project_root: str) -> bool:
+    """최상위 src/INDEX.md(청사진 루트) 동기화. 변경 시 True 반환."""
     index_path = os.path.join(harness_root, "state", "meta", "src", "INDEX.md")
-    new_content = _generate_l3(harness_root, project_root)
+    new_content = _generate_top_index(harness_root, project_root)
 
     if os.path.isfile(index_path):
         with open(index_path) as f:
@@ -549,22 +588,50 @@ def _levenshtein(s1: str, s2: str) -> int:
     return prev[-1]
 
 
-def _extract_function_names_from_l3(l3_path: str) -> set[str]:
-    """L3 파일에서 함수명 추출. '### {name}({params})' 패턴 파싱."""
-    names = set()
+def _l3_detail_section(content: str) -> str:
+    """'## ...상세' 헤더(BE '함수 상세' / FE '컴포넌트·훅·함수 상세')와
+    다음 '## ' 사이만 반환. 'Import' 등 다른 섹션 헤더 오추출을 방지한다."""
+    m = re.search(r"^##\s+.*상세\s*$", content, re.MULTILINE)
+    if not m:
+        return ""
+    rest = content[m.end():]
+    nxt = re.search(r"^##\s", rest, re.MULTILINE)
+    return rest[:nxt.start()] if nxt else rest
+
+
+def _extract_functions_from_l3(l3_path: str) -> list[dict]:
+    """L3에서 함수/컴포넌트 추출 → [{name, primary}]. skeleton은 빈 리스트.
+
+    '## ...상세' 섹션으로 한정(F1: 'Import'/'Imported by' 오추출 방지)하고,
+    각 항목의 '주요 여부' 값(주요/내부)을 함께 읽는다.
+    """
     if not os.path.isfile(l3_path):
-        return names
+        return []
     try:
-        with open(l3_path) as f:
+        with open(l3_path, encoding="utf-8") as f:
             content = f.read()
-        if _AUTO_TODO_MARKER in content:
-            return names  # 자동 생성된 skeleton은 skip
-        # "### {name}({params})" 또는 "### {name}" 패턴
-        for m in re.finditer(r"^###\s+(\w+)", content, re.MULTILINE):
-            names.add(m.group(1))
     except Exception:
-        pass
-    return names
+        return []
+    if _AUTO_TODO_MARKER in content:
+        return []  # 자동 생성 skeleton은 skip
+    sec = _l3_detail_section(content)
+    out = []
+    for block in re.split(r"^###\s+", sec, flags=re.MULTILINE)[1:]:
+        nm = re.match(r"([A-Za-z_]\w*)", block)
+        if not nm:
+            continue
+        pm = re.search(r"주요\s*여부\*\*\s*[:：]\s*(주요|내부)", block)
+        primary = (pm.group(1) == "주요") if pm else True  # 미기재는 보수적으로 주요
+        out.append({"name": nm.group(1), "primary": primary})
+    return out
+
+
+def _extract_function_names_from_l3(l3_path: str) -> set[str]:
+    """하위호환 — '주요' 함수명 집합만 반환(중복 검사용).
+
+    내부 헬퍼는 파일 간 동명이 정상이므로 중복 경고 대상에서 제외한다.
+    """
+    return {f["name"] for f in _extract_functions_from_l3(l3_path) if f["primary"]}
 
 
 def _check_duplicate_functions(meta_src: str) -> list[str]:
@@ -640,7 +707,7 @@ def check_consistency(harness_root: str, project_root: str, scope: str) -> list[
 
 def check_l3_consistency(harness_root: str, project_root: str) -> list[str]:
     """L3 검증 — src/INDEX.md vs 실제 디렉토리. scope 무관 전역 호출."""
-    return _check_l3(harness_root, project_root)
+    return _check_top_index(harness_root, project_root)
 
 
 def _check_l3_integrity(harness_root: str, project_root: str, scope: str) -> list[str]:
@@ -661,7 +728,7 @@ def _check_l3_integrity(harness_root: str, project_root: str, scope: str) -> lis
     for root, dirs, files in os.walk(project_src):
         dirs[:] = [d for d in dirs if not d.startswith(".") and d != "__pycache__"]
         for fname in files:
-            if fname.startswith("."):
+            if fname.startswith(".") or not _is_code_file(fname):  # F3
                 continue
             stem = os.path.splitext(fname)[0]
             rel = os.path.relpath(os.path.join(root, fname), project_root)
@@ -788,7 +855,8 @@ def _check_l2(harness_root: str, project_root: str, scope: str) -> list[str]:
         actual_in_dir = {
             os.path.relpath(os.path.join(src_dir, f), project_root)
             for f in os.listdir(src_dir)
-            if os.path.isfile(os.path.join(src_dir, f)) and not f.startswith(".")
+            if os.path.isfile(os.path.join(src_dir, f))
+            and not f.startswith(".") and _is_code_file(f)  # F3
         }
 
         if not os.path.isfile(detail_path):
@@ -852,8 +920,8 @@ def _check_l2(harness_root: str, project_root: str, scope: str) -> list[str]:
     return issues
 
 
-def _check_l3(harness_root: str, project_root: str) -> list[str]:
-    """L3 검증 — src/INDEX.md 테이블 vs 실제 디렉토리."""
+def _check_top_index(harness_root: str, project_root: str) -> list[str]:
+    """최상위 src/INDEX.md(청사진 루트) 검증 — 테이블 vs 실제 디렉토리."""
     issues = []
     index_path = os.path.join(harness_root, "state", "meta", "src", "INDEX.md")
 
@@ -934,17 +1002,12 @@ def _sync_all():
         if l2_a or l2_r or l3_c or sl1:
             any_l2_change = True
 
-    # L2 변경 → L1 갱신 (cascade)
-    if any_l2_change:
-        for scope in _SCOPES:
-            a, r = sync_l1(h, p, scope)
-            stats["L1_added"] += a
-            stats["L1_removed"] += r
+    # scope 루트 INDEX는 sync_l2가 _render_dir_index로 직접 생성한다(2b: F5 평면 집계 제거).
+    # L1_added/removed는 더 이상 별도 집계하지 않는다(디렉토리 INDEX는 section_l1에 포함).
 
-    # L1 변경 또는 L2 변경 → 최상위 L3 갱신 (cascade)
-    l1_changed = stats["L1_added"] > 0 or stats["L1_removed"] > 0
-    if any_l2_change or l1_changed:
-        stats["L3_changed"] = sync_l3(h, p)
+    # L2/L1 변경 → 최상위 src/INDEX.md 갱신 (cascade)
+    if any_l2_change:
+        stats["L3_changed"] = sync_top_index(h, p)
 
     return stats
 

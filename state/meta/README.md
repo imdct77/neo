@@ -40,6 +40,26 @@ harness/state/meta/
 
 ## 탐색 규칙
 
+### 의미 기반 질의 (권장) — meta_search
+
+구현 루프는 이 인덱스를 `meta_search`로 질의한다(수동 grep보다 먼저).
+
+```
+# 새 함수 작성 전 재사용 후보 확인 (DRY)
+python3 harness/hooks/meta_search.py reuse-check --name {함수명} --desc "{설명}"
+
+# 기능 영역 관련 코드 검색
+python3 harness/hooks/meta_search.py search "{키워드}"
+```
+
+- `reuse-check`: 동일 이름·유사 이름(Levenshtein)·설명 겹침으로 재사용 후보를 랭크 제안.
+- `search`: snake_case/camelCase 부분 토큰 + 한글 어간으로 의미 기반 검색.
+- L3 상세가 채워진 함수만 색인된다(skeleton 제외) → 상세 완성도가 높을수록 강력.
+
+### 수동 탐색 (보완)
+
+meta_search가 비거나(미색인) 더 깊이 봐야 할 때:
+
 1. `src/INDEX.md` → be/fe 선택
 2. `be/INDEX.md` → 하위 디렉토리 목록
 3. `{dir}/INDEX.md` → 파일 + 하위 디렉토리 목록

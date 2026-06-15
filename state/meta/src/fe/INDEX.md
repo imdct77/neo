@@ -1,4 +1,4 @@
-# services/ — 디렉토리 인덱스
+# fe/ — 디렉토리 인덱스
 
 > 상위: [../INDEX.md](../INDEX.md)
 
@@ -12,7 +12,7 @@
 
 ## 파일 목록
 
-- `src/be/services/auth.py` — TODO: 설명 추가
+- (파일 없음)
 
 ## 하위 디렉토리
 

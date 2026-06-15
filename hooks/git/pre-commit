@@ -196,12 +196,32 @@ else
 fi
 
 # --------------------------------------------------------
-# 6. 메타 인덱스 동기화
+# 6. 메타 인덱스 동기화 + 스테이징
+#    --sync는 메타 파일을 갱신만 한다. pre-commit 안에서 갱신된 파일은
+#    git add 하지 않으면 '이번 커밋'에 포함되지 않는다 → sync는 돌지만
+#    그 결과가 커밋에서 누락되어 소스↔메타 타임라인이 어긋난다. 그래서 반드시 stage한다.
+#    메타가 현재 repo 내부일 때만 add한다(2-repo: project 레포에선 메타가
+#    하네스(외부)에 있어 no-op).
 # --------------------------------------------------------
 META_CHECK="$HOOKS_DIR/meta_consistency_check.py"
+STATE_META="$HOOKS_DIR/../state/meta"
 if [ -f "$META_CHECK" ]; then
     python3 "$META_CHECK" --sync 2>/dev/null
-    pass "메타 인덱스 동기화"
+    REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "")"
+    if [ -n "$REPO_ROOT" ] && [ -d "$STATE_META" ]; then
+        META_ABS="$(cd "$STATE_META" && pwd)"
+        case "$META_ABS/" in
+            "$REPO_ROOT"/*)
+                git add "$META_ABS" 2>/dev/null || true
+                pass "메타 인덱스 동기화 + 스테이징"
+                ;;
+            *)
+                pass "메타 인덱스 동기화 (메타는 외부 repo — 스테이징 생략)"
+                ;;
+        esac
+    else
+        pass "메타 인덱스 동기화"
+    fi
 else
     warn "메타 동기화 스크립트 미발견: $META_CHECK"
 fi

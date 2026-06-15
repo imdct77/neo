@@ -549,7 +549,7 @@ hotfix/{이슈}      ← 긴급 수정 전용
 
 | 보장 항목 | 담당 |
 |-----------|------|
-| meta 인덱스 자동 동기화 (L1+L2+L3) | `project/.git/hooks/pre-commit` → `meta_consistency_check.py --sync` |
+| meta 인덱스 자동 동기화·스테이징 (L1+L2+L3) | `pre-commit` → `meta_consistency_check.py --sync` 후 메타를 `git add`(현재 repo 내부일 때) |
 | 보안 패턴 금지 (JWT 우회, 하드코딩 시크릿 등) | `harness/hooks/forbidden-check.py` |
 | 민감 키 미포함 | `pre-commit` bash 스크립트 |
 | main/develop 직접 push 금지 | `pre-commit` bash 스크립트 |

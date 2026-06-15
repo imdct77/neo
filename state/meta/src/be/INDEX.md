@@ -1,14 +1,22 @@
-# be — 구현 메타 인덱스
+# be/ — 디렉토리 인덱스
 
-> 마지막 갱신: 2026-06-13 07:35:21
-> 담당: BE 프로필
+> 상위: [../INDEX.md](../INDEX.md)
 
-## models/
+## 디렉토리 목적
 
-- `src/be/models/__init__.py` — models 패키지 초기화
-- `src/be/models/user.py` — 사용자 모델 (name, email, to_dict)
+{이 디렉토리의 존재 이유·책임·경계를 충분히. [AUTO] TODO}
 
-## services/
+## 최근 변경
 
-- `src/be/services/auth.py` — auth — TODO: 설명 추가
+(없음)
 
+## 파일 목록
+
+- (파일 없음)
+
+## 하위 디렉토리
+
+| 디렉토리 | 목적 | 링크 |
+|---------|------|------|
+| `models/` | {목적} [AUTO] TODO | → `models/INDEX.md` |
+| `services/` | {목적} [AUTO] TODO | → `services/INDEX.md` |
